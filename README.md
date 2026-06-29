@@ -22,11 +22,6 @@ npm install
 npm run dev
 ```
 
-Production Supabase project:
-
-```text
-https://qxtfzhdoxlgwfwgwpljd.supabase.co
-```
 
 Current verified dev URL:
 
