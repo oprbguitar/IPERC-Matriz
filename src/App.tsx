@@ -1,664 +1,1030 @@
 import {
+  Activity,
+  AlertCircle,
   AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
+  Archive,
   Bell,
+  Boxes,
+  BrainCircuit,
   Building2,
-  CalendarDays,
+  Camera,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleDot,
   ClipboardCheck,
+  ClipboardList,
+  Command,
   Download,
   FileSpreadsheet,
   FileText,
-  HelpCircle,
+  FolderOpen,
+  Layers3,
+  LayoutDashboard,
   LineChart,
+  Menu,
+  Radar,
   Save,
   Scale,
   Search,
+  Settings,
   Shield,
   ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
   Target,
-  Users,
+  UploadCloud,
+  UserCircle2,
+  X,
+  Zap,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import './App.css'
 import { legalNorms, sectorModules } from './data/legalDatabase'
 import { exportCsv, exportExcel, exportWord, printPdfReport } from './lib/exporters'
 import { buildDashboard, generateAssessments, validateBeforeExport } from './lib/riskEngine'
-import { isSupabaseConfigured, supabase } from './lib/supabaseClient'
-import type { ActivityKind, CompanyProfile, JobPosition, SectorId, WorkArea, WorkTask } from './types'
+import { supabase } from './lib/supabaseClient'
+import type { ActivityKind, CompanyProfile, GeneratedAssessment, JobPosition, RiskBand, SectorId, WorkArea, WorkTask } from './types'
 
-const steps = [
-  {
-    label: 'Datos de la empresa',
-    detail: 'Informacion general de la organizacion',
-    icon: Building2,
-  },
-  {
-    label: 'SGSST',
-    detail: 'Responsables, version y evidencia base',
-    icon: ShieldCheck,
-  },
-  {
-    label: 'Sector y modulo legal',
-    detail: 'Seleccionar sector y referencias aplicables',
-    icon: Scale,
-  },
-  {
-    label: 'Areas, puestos y tareas',
-    detail: 'Procesos, cargos, actividades y expuestos',
-    icon: Building2,
-  },
-  {
-    label: 'Identificacion de peligros',
-    detail: 'Taxonomia modular por sector y tarea',
-    icon: AlertTriangle,
-  },
-  {
-    label: 'Riesgo inicial',
-    detail: 'Probabilidad, severidad, exposicion y prioridad',
-    icon: LineChart,
-  },
-  {
-    label: 'Controles existentes',
-    detail: 'Controles actuales segun jerarquia',
-    icon: ShieldCheck,
-  },
-  {
-    label: 'Controles propuestos',
-    detail: 'Jerarquia de eliminacion a EPP',
-    icon: Target,
-  },
-  {
-    label: 'Riesgo residual',
-    detail: 'Reevaluar riesgo con controles',
-    icon: ClipboardCheck,
-  },
-  {
-    label: 'Validacion legal',
-    detail: 'Reglas, articulos y evidencia requerida',
-    icon: FileText,
-  },
-  {
-    label: 'Plan de accion',
-    detail: 'Medidas adicionales y responsables',
-    icon: Target,
-  },
-  {
-    label: 'Exportes e indicadores',
-    detail: 'Excel, PDF, Word, CSV y dashboard',
-    icon: Download,
-  },
+type ViewId = 'dashboard' | 'matrix' | 'analysis' | 'actions' | 'evidence' | 'normative' | 'reports' | 'settings'
+type ModalKind = 'scan' | 'load' | 'quick' | null
+
+const navItems: Array<{ id: ViewId; label: string; subtitle: string; icon: typeof LayoutDashboard }> = [
+  { id: 'dashboard', label: 'Dashboard', subtitle: 'Resumen ejecutivo', icon: LayoutDashboard },
+  { id: 'matrix', label: 'Matriz IPERC', subtitle: 'Ver y editar', icon: Boxes },
+  { id: 'analysis', label: 'Analisis', subtitle: 'Riesgos e indicadores', icon: LineChart },
+  { id: 'actions', label: 'Plan de accion', subtitle: 'Tareas y seguimiento', icon: ClipboardList },
+  { id: 'evidence', label: 'Evidencias', subtitle: 'Documentos y fotos', icon: Archive },
+  { id: 'normative', label: 'Normativa', subtitle: 'Legal y requisitos', icon: Scale },
+  { id: 'reports', label: 'Reportes', subtitle: 'Exportes y tableros', icon: FileText },
+  { id: 'settings', label: 'Configuracion', subtitle: 'Empresa y usuarios', icon: Settings },
 ]
 
 const initialProfile: CompanyProfile = {
-  name: '',
-  ruc: '',
+  name: 'Constructora Torre Sigma',
+  ruc: '20123456789',
   ownership: 'private',
-  businessActivity: '',
-  ciiu: '',
-  workplace: '',
-  workerCount: 0,
+  businessActivity: 'Construccion de edificios y obras civiles',
+  ciiu: '4100',
+  workplace: 'Edificacion Torre Sigma',
+  workerCount: 42,
+  sgsstResponsible: 'Ing. Alex Rivera',
+  preparedBy: 'Especialista SST',
+  reviewedBy: 'Comite SST',
+  approvedBy: 'Gerencia de operaciones',
 }
 
 const initialAreas: WorkArea[] = [
-  { id: 'area-1', name: 'Recepcion y administracion', process: 'Atencion, documentos y soporte interno' },
-  { id: 'area-2', name: 'Almacen', process: 'Recepcion, ubicacion y despacho' },
+  { id: 'area-1', name: 'Obra civil', process: 'Estructuras, altura y trabajos de campo' },
+  { id: 'area-2', name: 'Almacen de obra', process: 'Recepcion, izaje y despacho de materiales' },
+  { id: 'area-3', name: 'Mantenimiento', process: 'Instalaciones electricas y herramientas' },
 ]
 
 const initialPositions: JobPosition[] = [
-  { id: 'pos-1', areaId: 'area-1', title: 'Asistente administrativo', workerCount: 4 },
-  { id: 'pos-2', areaId: 'area-2', title: 'Auxiliar de almacen', workerCount: 3 },
+  { id: 'pos-1', areaId: 'area-1', title: 'Operario de altura', workerCount: 8 },
+  { id: 'pos-2', areaId: 'area-2', title: 'Auxiliar de almacen', workerCount: 6 },
+  { id: 'pos-3', areaId: 'area-3', title: 'Tecnico electricista', workerCount: 4 },
 ]
 
 const initialTasks: WorkTask[] = [
   {
     id: 'task-1',
     positionId: 'pos-1',
-    name: 'Digitacion diaria en computadora y archivo de documentos',
+    name: 'Trabajo en altura sobre andamio y borde abierto',
     activityKind: 'routine',
     frequency: 'Diaria',
-    exposedWorkers: 4,
-    existingControls: 'Sillas regulables, induccion basica y pausas no formalizadas',
+    exposedWorkers: 8,
+    existingControls: 'Arnes, linea de vida, charla inicial y supervision del capataz',
+    responsiblePerson: 'Jefe de obra',
   },
   {
     id: 'task-2',
     positionId: 'pos-2',
-    name: 'Descarga de materiales, ubicacion en almacen y despacho',
+    name: 'Izaje de materiales y descarga de cargas suspendidas',
     activityKind: 'routine',
     frequency: 'Diaria',
-    exposedWorkers: 3,
-    existingControls: 'Orden y limpieza, guantes y supervision directa',
+    exposedWorkers: 6,
+    existingControls: 'Senalero, delimitacion parcial y checklist visual',
+    responsiblePerson: 'Supervisor de almacen',
+  },
+  {
+    id: 'task-3',
+    positionId: 'pos-3',
+    name: 'Instalacion electrica temporal y conexion de tableros',
+    activityKind: 'non_routine',
+    frequency: 'Semanal',
+    exposedWorkers: 4,
+    existingControls: 'Herramientas aisladas y bloqueo operativo',
+    responsiblePerson: 'Tecnico lider',
+  },
+  {
+    id: 'task-4',
+    positionId: 'pos-3',
+    name: 'Uso de taladro, esmeril y herramientas portatiles',
+    activityKind: 'routine',
+    frequency: 'Diaria',
+    exposedWorkers: 5,
+    existingControls: 'Lentes, guantes y verificacion de discos',
+    responsiblePerson: 'Supervisor de mantenimiento',
+  },
+]
+
+const randomCases: Array<{ profile: CompanyProfile; sector: SectorId; areas: WorkArea[]; positions: JobPosition[]; tasks: WorkTask[] }> = [
+  {
+    profile: {
+      name: 'Minera Andina Norte',
+      ruc: '20555111444',
+      ownership: 'private',
+      businessActivity: 'Operacion minera y planta de concentrado',
+      ciiu: '0729',
+      workplace: 'Unidad San Rafael',
+      workerCount: 186,
+      sgsstResponsible: 'Ing. Valeria Ramos',
+      preparedBy: 'Equipo SST mina',
+      reviewedBy: 'Superintendencia HSE',
+      approvedBy: 'Gerencia de unidad',
+    },
+    sector: 'mining',
+    areas: [
+      { id: 'm-area-1', name: 'Planta concentradora', process: 'Chancado, molienda y mantenimiento' },
+      { id: 'm-area-2', name: 'Transporte interno', process: 'Acarreo y rutas operativas' },
+    ],
+    positions: [
+      { id: 'm-pos-1', areaId: 'm-area-1', title: 'Operador de planta', workerCount: 24 },
+      { id: 'm-pos-2', areaId: 'm-area-2', title: 'Conductor de camion', workerCount: 18 },
+    ],
+    tasks: [
+      { id: 'm-task-1', positionId: 'm-pos-1', name: 'Mantenimiento de faja, chancadora y partes moviles', activityKind: 'non_routine', frequency: 'Semanal', exposedWorkers: 6, existingControls: 'Bloqueo verbal, guardas parciales y EPP', responsiblePerson: 'Supervisor de planta' },
+      { id: 'm-task-2', positionId: 'm-pos-2', name: 'Conduccion de camion por ruta interna y zona de acarreo', activityKind: 'routine', frequency: 'Diaria continua', exposedWorkers: 18, existingControls: 'Check preuso, radio y limite de velocidad', responsiblePerson: 'Jefe de guardia' },
+    ],
+  },
+  {
+    profile: {
+      name: 'Clinica Salud Futuro',
+      ruc: '20666777888',
+      ownership: 'private',
+      businessActivity: 'Servicios de salud y laboratorio',
+      ciiu: '8610',
+      workplace: 'Sede Miraflores',
+      workerCount: 95,
+      sgsstResponsible: 'Lic. Monica Paz',
+      preparedBy: 'Coordinacion SST',
+      reviewedBy: 'Direccion medica',
+      approvedBy: 'Administracion general',
+    },
+    sector: 'health',
+    areas: [
+      { id: 'h-area-1', name: 'Emergencia', process: 'Atencion asistencial y triaje' },
+      { id: 'h-area-2', name: 'Laboratorio', process: 'Muestras y residuos biologicos' },
+    ],
+    positions: [
+      { id: 'h-pos-1', areaId: 'h-area-1', title: 'Tecnico de enfermeria', workerCount: 16 },
+      { id: 'h-pos-2', areaId: 'h-area-2', title: 'Tecnologo medico', workerCount: 9 },
+    ],
+    tasks: [
+      { id: 'h-task-1', positionId: 'h-pos-1', name: 'Atencion de paciente, fluidos y punzocortantes', activityKind: 'routine', frequency: 'Diaria', exposedWorkers: 16, existingControls: 'Guantes, contenedores y segregacion inicial', responsiblePerson: 'Jefa de enfermeria' },
+      { id: 'h-task-2', positionId: 'h-pos-2', name: 'Manipulacion de reactivos quimicos y muestras biologicas', activityKind: 'routine', frequency: 'Diaria', exposedWorkers: 9, existingControls: 'SDS, mascarilla y cabina parcial', responsiblePerson: 'Jefe de laboratorio' },
+    ],
+  },
+  {
+    profile: {
+      name: 'Logistica Pacifico 2040',
+      ruc: '20444555666',
+      ownership: 'private',
+      businessActivity: 'Almacenamiento, transporte y distribucion',
+      ciiu: '5210',
+      workplace: 'Hub Callao',
+      workerCount: 74,
+      sgsstResponsible: 'Ing. Diego Luna',
+      preparedBy: 'Analista SST',
+      reviewedBy: 'Jefatura de operaciones',
+      approvedBy: 'Gerencia logistica',
+    },
+    sector: 'transport_logistics',
+    areas: [
+      { id: 'l-area-1', name: 'Patio de maniobras', process: 'Rutas internas y carga vehicular' },
+      { id: 'l-area-2', name: 'Almacen', process: 'Picking y despacho' },
+    ],
+    positions: [
+      { id: 'l-pos-1', areaId: 'l-area-1', title: 'Operador de montacarga', workerCount: 12 },
+      { id: 'l-pos-2', areaId: 'l-area-2', title: 'Auxiliar de picking', workerCount: 20 },
+    ],
+    tasks: [
+      { id: 'l-task-1', positionId: 'l-pos-1', name: 'Movimiento de montacarga, rutas internas y cruce peatonal', activityKind: 'routine', frequency: 'Diaria continua', exposedWorkers: 20, existingControls: 'Licencia, claxon y demarcacion parcial', responsiblePerson: 'Coordinador de patio' },
+      { id: 'l-task-2', positionId: 'l-pos-2', name: 'Manipulacion manual de cajas, carga y despacho', activityKind: 'routine', frequency: 'Diaria', exposedWorkers: 20, existingControls: 'Guantes, pausas informales y supervision', responsiblePerson: 'Jefe de almacen' },
+    ],
   },
 ]
 
 function App() {
-  const [step, setStep] = useState(0)
-  const [sector, setSector] = useState<SectorId>('offices')
+  const [view, setView] = useState<ViewId>('dashboard')
+  const [expertMode, setExpertMode] = useState(false)
+  const [sector, setSector] = useState<SectorId>('construction')
   const [profile, setProfile] = useState(initialProfile)
   const [areas, setAreas] = useState(initialAreas)
   const [positions, setPositions] = useState(initialPositions)
   const [tasks, setTasks] = useState(initialTasks)
+  const [modal, setModal] = useState<ModalKind>(null)
+  const [query, setQuery] = useState('')
+  const [riskFilter, setRiskFilter] = useState('todos')
+  const [legalFilter, setLegalFilter] = useState('todos')
+  const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [caseCursor, setCaseCursor] = useState(0)
 
   const assessments = useMemo(
     () => generateAssessments(profile, sector, areas, positions, tasks),
     [profile, sector, areas, positions, tasks],
   )
-  const selectedModule = sectorModules.find((item) => item.id === sector) ?? sectorModules[0]
-  const activeStep = steps[step]
   const dashboard = useMemo(() => buildDashboard(assessments), [assessments])
   const exportWarnings = useMemo(() => validateBeforeExport(profile, assessments), [profile, assessments])
-  const pendingLegalCount = assessments.flatMap((row) => row.legalMatches).filter((match) => match.status === 'pending_validation').length
+  const filteredRows = useMemo(
+    () => assessments.filter((row) => {
+      const text = `${row.task.name} ${row.hazard.name} ${row.area.name}`.toLowerCase()
+      const matchesQuery = text.includes(query.toLowerCase())
+      const matchesRisk = riskFilter === 'todos' || row.initialLevel === riskFilter
+      const matchesLegal = legalFilter === 'todos' || (legalFilter === 'pendiente' ? row.legalValidationMissing : !row.legalValidationMissing)
+      return matchesQuery && matchesRisk && matchesLegal
+    }),
+    [assessments, query, riskFilter, legalFilter],
+  )
+  const riskIndex = computeRiskIndex(assessments)
+  const assistantItems = buildAssistantItems(assessments)
+  const activeTitle = navItems.find((item) => item.id === view)?.label ?? 'Dashboard'
 
   async function saveDraft() {
     if (!supabase) {
       setSaveState('error')
       return
     }
-
     setSaveState('saving')
     const { error } = await supabase.from('iperc_snapshots').insert({
       company_name: profile.name || 'Sin razon social',
       ruc: profile.ruc || null,
       sector,
-      payload: {
-        profile,
-        areas,
-        positions,
-        tasks,
-        assessments,
-      },
+      payload: { profile, areas, positions, tasks, assessments },
       status: 'draft',
     })
-
     setSaveState(error ? 'error' : 'saved')
   }
 
+  function generateRandomCase() {
+    const next = randomCases[caseCursor % randomCases.length]
+    setProfile(next.profile)
+    setSector(next.sector)
+    setAreas(next.areas)
+    setPositions(next.positions)
+    setTasks(next.tasks)
+    setCaseCursor((value) => value + 1)
+    setView('dashboard')
+  }
+
   return (
-    <main className="app-frame">
-      <header className="app-topbar">
-        <div className="product-lockup">
-          <div className="logo-mark">
-            <Shield size={30} />
-          </div>
-          <strong>IPERC Peru</strong>
+    <main className="app-shell">
+      <div className="orb orb-purple" />
+      <div className="orb orb-cyan" />
+      <Sidebar activeView={view} onChange={setView} />
+      <section className="app-canvas">
+        <TopBar
+          title={activeTitle}
+          profile={profile}
+          expertMode={expertMode}
+          setExpertMode={setExpertMode}
+          saveState={saveState}
+          onSave={saveDraft}
+        />
+        <div className="content-grid">
+          <section className="view-stage">
+            {view === 'dashboard' && (
+              <DashboardHome
+                profile={profile}
+                rows={assessments}
+                dashboard={dashboard}
+                riskIndex={riskIndex}
+                onGenerate={() => setView('matrix')}
+                onRandom={generateRandomCase}
+                onLoad={() => setModal('load')}
+                onScan={() => setModal('scan')}
+                onViewMatrix={() => setView('matrix')}
+              />
+            )}
+            {view === 'matrix' && (
+              <MatrixView
+                rows={filteredRows}
+                allRows={assessments}
+                expertMode={expertMode}
+                query={query}
+                setQuery={setQuery}
+                riskFilter={riskFilter}
+                setRiskFilter={setRiskFilter}
+                legalFilter={legalFilter}
+                setLegalFilter={setLegalFilter}
+                expandedRow={expandedRow}
+                setExpandedRow={setExpandedRow}
+                onExport={() => exportExcel(profile, assessments)}
+              />
+            )}
+            {view === 'analysis' && <AnalysisView rows={assessments} dashboard={dashboard} riskIndex={riskIndex} />}
+            {view === 'actions' && <ActionPlanBoard rows={assessments} />}
+            {view === 'evidence' && <EvidencePanel rows={assessments} />}
+            {view === 'normative' && <NormativeSection sector={sector} />}
+            {view === 'reports' && (
+              <ReportsPanel profile={profile} rows={assessments} warnings={exportWarnings} />
+            )}
+            {view === 'settings' && (
+              <SettingsPanel
+                profile={profile}
+                setProfile={setProfile}
+                sector={sector}
+                setSector={setSector}
+                tasks={tasks}
+                setTasks={setTasks}
+                positions={positions}
+              />
+            )}
+          </section>
+          <AssistantPanel items={assistantItems} rows={assessments} />
         </div>
-        <div className="topbar-title">Generador de Matriz IPERC</div>
-        <div className="topbar-actions">
-          <button type="button" className="topbar-tool"><HelpCircle size={18} /> Ayuda</button>
-          <button type="button" className="topbar-tool notification"><Bell size={18} /> Notificaciones <span>3</span></button>
-          <div className="user-chip"><b>AD</b><span>Admin Demo<small>Administrador</small></span></div>
-        </div>
-      </header>
-
-      <div className="app-body">
-        <aside className="process-sidebar">
-          <h2>Pasos del proceso</h2>
-          <nav aria-label="Pasos del proceso">
-            {steps.map((item, index) => {
-              const Icon = item.icon
-              return (
-                <button
-                  type="button"
-                  key={item.label}
-                  className={`process-step ${index === step ? 'active' : ''}`}
-                  onClick={() => setStep(index)}
-                >
-                  <span className="step-number">{index + 1}</span>
-                  <Icon className="step-icon" size={22} />
-                  <span>
-                    <strong>{item.label}</strong>
-                    <small>{item.detail}</small>
-                  </span>
-                </button>
-              )
-            })}
-          </nav>
-        </aside>
-
-        <section className="work-area">
-          <div className="main-layout">
-            <section className="wizard-card">
-              <div className="wizard-heading">
-                <span>Paso {step + 1} de {steps.length}</span>
-                <h1>{activeStep.label}</h1>
-                <p>{step === 0 ? 'Complete la informacion general de la organizacion para iniciar el IPERC.' : activeStep.detail}</p>
-              </div>
-              <StatusBadges dashboard={dashboard} warnings={exportWarnings} />
-
-              {step === 0 && <CompanyStep profile={profile} setProfile={setProfile} sector={sector} setSector={setSector} />}
-              {step === 1 && <SgsstStep profile={profile} setProfile={setProfile} />}
-              {step === 2 && <SectorStep sector={sector} setSector={setSector} />}
-              {step === 3 && <TaskStep positions={positions} tasks={tasks} setTasks={setTasks} />}
-              {step === 4 && <MatrixPreview rows={assessments} mode="hazard" />}
-              {step === 5 && <MatrixPreview rows={assessments} mode="risk" />}
-              {step === 6 && <MatrixPreview rows={assessments} mode="existing" />}
-              {step === 7 && <MatrixPreview rows={assessments} mode="controls" />}
-              {step === 8 && <MatrixPreview rows={assessments} mode="residual" />}
-              {step === 9 && <LegalStep rows={assessments} sector={sector} />}
-              {step === 10 && <PlanStep rows={assessments} />}
-              {step === 11 && <ExportStep profile={profile} rows={assessments} warnings={exportWarnings} />}
-
-              <div className="form-note">
-                <span><HelpCircle size={16} /> La informacion registrada sera utilizada en todos los documentos y reportes generados.</span>
-                <span>* Campos obligatorios</span>
-              </div>
-            </section>
-
-            <aside className="right-rail">
-              <LegalRail normIds={selectedModule.normIds} />
-              <EvidenceRail />
-            </aside>
-          </div>
-
-          <footer className="wizard-actions">
-            <button type="button" className="muted-action" onClick={() => setStep(Math.max(0, step - 1))}>
-              <ArrowLeft size={18} /> Atras
-            </button>
-            <button type="button" className="outline-action" onClick={saveDraft}>
-              <Save size={18} /> {saveState === 'saving' ? 'Guardando...' : saveState === 'saved' ? 'Guardado' : 'Guardar borrador'}
-            </button>
-            <button type="button" className="primary-action" onClick={() => setStep(Math.min(steps.length - 1, step + 1))}>
-              Siguiente <ArrowRight size={18} />
-            </button>
-          </footer>
-
-          <Overview
-            areas={areas}
-            positions={positions}
-            tasks={tasks}
-            pendingLegalCount={pendingLegalCount}
-            supabaseReady={isSupabaseConfigured}
-            setAreas={setAreas}
-            setPositions={setPositions}
-          />
-        </section>
-      </div>
+      </section>
+      <MobileBottomNav activeView={view} onChange={setView} onQuick={() => setModal('quick')} />
+      <Modal kind={modal} onClose={() => setModal(null)} onRandom={generateRandomCase} />
     </main>
   )
 }
 
-function CompanyStep({
+function Sidebar({ activeView, onChange }: { activeView: ViewId; onChange: (view: ViewId) => void }) {
+  return (
+    <aside className="sidebar">
+      <div className="brand">
+        <div className="brand-mark"><Shield size={24} /></div>
+        <strong>IPERC <span>2040</span></strong>
+      </div>
+      <nav className="side-nav" aria-label="Navegacion principal">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          return (
+            <button type="button" key={item.id} className={`nav-item ${activeView === item.id ? 'active' : ''}`} onClick={() => onChange(item.id)}>
+              <Icon size={20} />
+              <span><b>{item.label}</b><small>{item.subtitle}</small></span>
+            </button>
+          )
+        })}
+      </nav>
+      <div className="assistant-status">
+        <div className="pulse-ring"><CircleDot size={24} /></div>
+        <strong>Asistente SST</strong>
+        <span>Activo 24/7</span>
+      </div>
+    </aside>
+  )
+}
+
+function TopBar({
+  title,
+  profile,
+  expertMode,
+  setExpertMode,
+  saveState,
+  onSave,
+}: {
+  title: string
+  profile: CompanyProfile
+  expertMode: boolean
+  setExpertMode: (value: boolean) => void
+  saveState: string
+  onSave: () => void
+}) {
+  return (
+    <header className="topbar">
+      <button type="button" className="icon-button mobile-menu" aria-label="Abrir menu"><Menu size={20} /></button>
+      <div>
+        <span className="view-label">Vista general</span>
+        <h1>{title}</h1>
+      </div>
+      <div className="topbar-tools">
+        <label className="plant-selector">
+          <Building2 size={16} />
+          <select value={profile.workplace || 'Principal'} aria-label="Seleccionar planta" onChange={() => undefined}>
+            <option>{profile.workplace || 'Planta principal'}</option>
+          </select>
+        </label>
+        <label className="search-box">
+          <Search size={16} />
+          <input aria-label="Buscar en IPERC" placeholder="Buscar riesgo, tarea o area" />
+        </label>
+        <button type="button" className={`expert-toggle ${expertMode ? 'on' : ''}`} onClick={() => setExpertMode(!expertMode)} aria-pressed={expertMode}>
+          <span>Modo experto</span><i />
+        </button>
+        <button type="button" className="icon-button" aria-label="Notificaciones"><Bell size={19} /><em /></button>
+        <button type="button" className="icon-button" aria-label="Guardar borrador" onClick={onSave}><Save size={19} /></button>
+        <div className="user-profile"><UserCircle2 size={34} /><span>Ing. Alex Rivera<small>{saveState === 'saved' ? 'Borrador guardado' : 'Especialista SST'}</small></span><ChevronDown size={16} /></div>
+      </div>
+    </header>
+  )
+}
+
+function DashboardHome({
+  profile,
+  rows,
+  dashboard,
+  riskIndex,
+  onGenerate,
+  onRandom,
+  onLoad,
+  onScan,
+  onViewMatrix,
+}: {
+  profile: CompanyProfile
+  rows: GeneratedAssessment[]
+  dashboard: ReturnType<typeof buildDashboard>
+  riskIndex: number
+  onGenerate: () => void
+  onRandom: () => void
+  onLoad: () => void
+  onScan: () => void
+  onViewMatrix: () => void
+}) {
+  return (
+    <div className="dashboard-view">
+      <section className="welcome-row">
+        <div>
+          <h2>Hola, Ingeniero</h2>
+          <p>Panel preventivo de riesgos y acciones</p>
+        </div>
+        <span>{profile.name} · {profile.workplace}</span>
+      </section>
+      <section className="action-grid">
+        <ActionCard title="Generar IPERC" subtitle="Nuevo analisis" icon={Layers3} tone="purple" onClick={onGenerate} />
+        <ActionCard title="Caso al azar" subtitle="Generar ejemplo" icon={Sparkles} tone="blue" onClick={onRandom} />
+        <ActionCard title="Cargar proyecto" subtitle="Desde plantilla" icon={UploadCloud} tone="green" onClick={onLoad} />
+        <ActionCard title="Escanear area" subtitle="Registro de campo" icon={Camera} tone="orange" onClick={onScan} />
+      </section>
+      <section className="mobile-quick-actions" aria-label="Acciones rapidas">
+        <button type="button" onClick={onRandom}><Sparkles size={18} />Caso al azar</button>
+        <button type="button" onClick={onScan}><Camera size={18} />Escanear area</button>
+        <button type="button" onClick={onLoad}><FolderOpen size={18} />Mis proyectos</button>
+        <button type="button" onClick={onGenerate}><Boxes size={18} />Matriz rapida</button>
+      </section>
+      <section className="kpi-strip">
+        <MetricCard label="Riesgos totales" value={String(dashboard.totalRisks)} delta="+12% vs ultima revision" tone="purple" />
+        <MetricCard label="Criticos" value={String(rows.filter((row) => row.initialLevel === 'Intolerable').length)} delta="Atencion inmediata" tone="red" />
+        <RiskIndexCard value={riskIndex} level={riskIndex > 72 ? 'Intolerable' : riskIndex > 55 ? 'Importante' : 'Moderado'} />
+        <MetricCard label="Controles efectivos" value={`${Math.max(0, 100 - dashboard.reductionPercent / 2).toFixed(0)}%`} delta={`-${dashboard.reductionPercent}% riesgo residual`} tone="green" />
+        <MetricCard label="Evidencias pendientes" value={String(dashboard.controlsPendingEvidence)} delta="Por subir" tone="yellow" />
+      </section>
+      <section className="dashboard-lower">
+        <RecentMatrixCard rows={rows.slice(0, 5)} onViewMatrix={onViewMatrix} />
+        <CompactAssistant rows={rows} />
+        <DistributionCard rows={rows} />
+        <ProgressCard rows={rows} />
+        <NextActions rows={rows} />
+      </section>
+    </div>
+  )
+}
+
+function ActionCard({ title, subtitle, icon: Icon, tone, onClick }: { title: string; subtitle: string; icon: typeof Layers3; tone: string; onClick: () => void }) {
+  return (
+    <button type="button" className={`action-card ${tone}`} onClick={onClick}>
+      <span><Icon size={28} /></span>
+      <b>{title}</b>
+      <small>{subtitle}</small>
+    </button>
+  )
+}
+
+function MetricCard({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
+  return (
+    <article className={`metric-card ${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{delta}</small>
+      <div className="sparkline"><i /><i /><i /><i /><i /></div>
+    </article>
+  )
+}
+
+function RiskIndexCard({ value, level }: { value: number; level: string }) {
+  return (
+    <article className="risk-index-card" style={{ '--risk-value': `${value * 3.6}deg` } as React.CSSProperties}>
+      <div className="risk-ring">
+        <span>{value}<small>/100</small></span>
+        <b>{level}</b>
+      </div>
+      <p>Indice de riesgo</p>
+    </article>
+  )
+}
+
+function RecentMatrixCard({ rows, onViewMatrix }: { rows: GeneratedAssessment[]; onViewMatrix: () => void }) {
+  return (
+    <article className="glass-card recent-matrix">
+      <header><div><h3>Matriz IPERC reciente</h3><p>Construccion · Edificacion Torre Sigma</p></div></header>
+      <div className="matrix-mini">
+        <div className="mini-head"><span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span></div>
+        {rows.map((row) => (
+          <div className="mini-row" key={row.id}>
+            <span>{shortText(row.task.name, 28)}</span>
+            <span>{shortText(row.hazard.name, 24)}</span>
+            <RiskBadge level={row.initialLevel} score={row.initialScore} />
+            <RiskBadge level={row.residualLevel} score={row.residualScore} />
+            <StatusBadge label={row.legalValidationMissing ? 'Pendiente' : 'En control'} tone={row.legalValidationMissing ? 'yellow' : 'green'} />
+          </div>
+        ))}
+      </div>
+      <button type="button" className="ghost-button" onClick={onViewMatrix}>Ver matriz completa <ChevronRight size={16} /></button>
+    </article>
+  )
+}
+
+function CompactAssistant({ rows }: { rows: GeneratedAssessment[] }) {
+  const items = buildAssistantItems(rows).slice(0, 4)
+  return (
+    <article className="glass-card compact-assistant">
+      <header><BrainCircuit size={22} /><div><h3>Asistente SST</h3><p>Sugerencias inteligentes</p></div></header>
+      <div className="assistant-list">
+        {items.map((item) => (
+          <button type="button" key={item.title}>
+            <item.icon size={16} />
+            <span><b>{item.title}</b><small>{item.text}</small></span>
+          </button>
+        ))}
+      </div>
+      <div className="assistant-glow" />
+    </article>
+  )
+}
+
+function DistributionCard({ rows }: { rows: GeneratedAssessment[] }) {
+  const categories = Object.entries(countBy(rows, (row) => row.hazardCategory)).slice(0, 5)
+  return (
+    <article className="glass-card chart-card">
+      <h3>Distribucion de riesgos</h3>
+      <p>Por categoria</p>
+      <div className="donut-wrap"><div className="donut-chart"><span>{rows.length}<small>Total</small></span></div>
+        <ul>{categories.map(([name, count]) => <li key={name}><i />{name}<b>{Math.round((count / Math.max(1, rows.length)) * 100)}%</b></li>)}</ul>
+      </div>
+    </article>
+  )
+}
+
+function ProgressCard({ rows }: { rows: GeneratedAssessment[] }) {
+  const complete = Math.max(22, Math.round(rows.filter((row) => row.residualAcceptability === 'Aceptable').length / Math.max(1, rows.length) * 100))
+  return (
+    <article className="glass-card progress-card">
+      <h3>Progreso del plan de accion</h3>
+      <div className="progress-layout">
+        <div className="progress-ring" style={{ '--progress': `${complete * 3.6}deg` } as React.CSSProperties}><span>{complete}%<small>Completado</small></span></div>
+        <ul>
+          <li><CheckCircle2 size={15} /> Completadas <b>{Math.floor(rows.length * 0.4)}</b></li>
+          <li><Activity size={15} /> En progreso <b>{Math.ceil(rows.length * 0.35)}</b></li>
+          <li><AlertCircle size={15} /> Pendientes <b>{Math.ceil(rows.length * 0.25)}</b></li>
+          <li><AlertTriangle size={15} /> Vencidas <b>{rows.filter((row) => row.proposedControlsInsufficient).length}</b></li>
+        </ul>
+      </div>
+    </article>
+  )
+}
+
+function NextActions({ rows }: { rows: GeneratedAssessment[] }) {
+  return (
+    <article className="glass-card next-actions">
+      <h3>Proximas acciones</h3>
+      {rows.slice(0, 4).map((row, index) => (
+        <div className="next-item" key={row.id}>
+          <ClipboardCheck size={16} />
+          <span><b>{shortText(row.proposedControls[0]?.description ?? 'Revisar control', 36)}</b><small>{index === 0 ? 'Hoy, 09:00 AM' : 'Manana, 10:00 AM'}</small></span>
+          <StatusBadge label={row.initialLevel === 'Intolerable' ? 'Alta' : row.initialLevel === 'Importante' ? 'Media' : 'Baja'} tone={row.initialLevel === 'Intolerable' ? 'red' : row.initialLevel === 'Importante' ? 'orange' : 'blue'} />
+        </div>
+      ))}
+    </article>
+  )
+}
+
+function MatrixView({
+  rows,
+  allRows,
+  expertMode,
+  query,
+  setQuery,
+  riskFilter,
+  setRiskFilter,
+  legalFilter,
+  setLegalFilter,
+  expandedRow,
+  setExpandedRow,
+  onExport,
+}: {
+  rows: GeneratedAssessment[]
+  allRows: GeneratedAssessment[]
+  expertMode: boolean
+  query: string
+  setQuery: (value: string) => void
+  riskFilter: string
+  setRiskFilter: (value: string) => void
+  legalFilter: string
+  setLegalFilter: (value: string) => void
+  expandedRow: string | null
+  setExpandedRow: (value: string | null) => void
+  onExport: () => void
+}) {
+  return (
+    <section className="matrix-view">
+      <ViewHeader title="Matriz IPERC" text="Gestion tecnica con filtros, trazabilidad y lectura ejecutiva." />
+      <div className="filter-bar">
+        <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar tarea, peligro o area" /></label>
+        <select value={riskFilter} onChange={(event) => setRiskFilter(event.target.value)} aria-label="Filtrar por riesgo">
+          <option value="todos">Todos los riesgos</option>
+          <option value="Bajo">Bajo</option>
+          <option value="Moderado">Moderado</option>
+          <option value="Importante">Importante</option>
+          <option value="Intolerable">Intolerable</option>
+        </select>
+        <select value={legalFilter} onChange={(event) => setLegalFilter(event.target.value)} aria-label="Filtrar por estado legal">
+          <option value="todos">Estado legal</option>
+          <option value="pendiente">Validacion legal pendiente</option>
+          <option value="validado">Validado</option>
+        </select>
+        <button type="button" className="primary-neon" onClick={onExport}><Download size={16} /> Exportar</button>
+      </div>
+      <div className="matrix-table glass-card">
+        <div className={`table-head ${expertMode ? 'expert' : ''}`}>
+          <span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span>{expertMode && <><span>P x S x E</span><span>Legal</span></>}
+        </div>
+        {rows.map((row) => (
+          <div key={row.id} className={`table-row ${expandedRow === row.id ? 'open' : ''}`}>
+            <button type="button" className={`row-main ${expertMode ? 'expert' : ''}`} onClick={() => setExpandedRow(expandedRow === row.id ? null : row.id)}>
+              <span><b>{shortText(row.task.name, 34)}</b><small>{row.area.name}</small></span>
+              <span>{row.hazard.name}</span>
+              <RiskBadge level={row.initialLevel} score={row.initialScore} />
+              <RiskBadge level={row.residualLevel} score={row.residualScore} />
+              <StatusBadge label={statusLabel(row)} tone={statusTone(row)} />
+              {expertMode && <><span className="formula">{row.probability} x {row.severity} x {row.exposureFrequency}</span><span>{row.legalValidationMissing ? 'Validacion legal pendiente' : 'Validado'}</span></>}
+            </button>
+            {expandedRow === row.id && <MatrixDetail row={row} expertMode={expertMode} />}
+          </div>
+        ))}
+      </div>
+      <div className="matrix-mobile-list">
+        {allRows.map((row) => <MatrixRowCard key={row.id} row={row} open={expandedRow === row.id} onToggle={() => setExpandedRow(expandedRow === row.id ? null : row.id)} expertMode={expertMode} />)}
+      </div>
+    </section>
+  )
+}
+
+function MatrixRowCard({ row, open, onToggle, expertMode }: { row: GeneratedAssessment; open: boolean; onToggle: () => void; expertMode: boolean }) {
+  return (
+    <article className="matrix-row-card">
+      <button type="button" onClick={onToggle}>
+        <span><b>{row.task.name}</b><small>{row.hazard.name}</small></span>
+        <ChevronDown size={18} className={open ? 'rotated' : ''} />
+      </button>
+      <div className="mobile-badges"><RiskBadge level={row.initialLevel} score={row.initialScore} /><RiskBadge level={row.residualLevel} score={row.residualScore} /><StatusBadge label={statusLabel(row)} tone={statusTone(row)} /></div>
+      {open && <MatrixDetail row={row} expertMode={expertMode} />}
+    </article>
+  )
+}
+
+function MatrixDetail({ row, expertMode }: { row: GeneratedAssessment; expertMode: boolean }) {
+  return (
+    <div className="row-detail">
+      <Detail label="Controles existentes" value={row.existingControls} />
+      <Detail label="Controles propuestos" value={row.proposedControls.map((control) => `${control.level}: ${control.description}`).join(' | ')} />
+      <Detail label="Responsable" value={row.responsiblePerson} />
+      <Detail label="Plazo" value={row.deadline} />
+      <Detail label="Evidencia requerida" value={row.requiredEvidence.join(' | ')} />
+      <Detail label="Sustento normativo" value={row.legalValidationMissing ? 'Referencia normativa pendiente de validacion.' : row.legalNorm} />
+      <Detail label="Observaciones" value={row.observations || 'Sin observaciones'} />
+      {expertMode && (
+        <>
+          <Detail label="Formula inicial" value={`${row.probability} x ${row.severity} x ${row.exposureFrequency} = ${row.initialScore}`} />
+          <Detail label="Formula residual" value={`${row.residualProbability} x ${row.residualSeverity} x ${row.residualExposureFrequency} = ${row.residualScore}`} />
+          <Detail label="Jerarquia principal" value={row.controlHierarchyLevel} />
+        </>
+      )}
+    </div>
+  )
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <p><b>{label}</b><span>{value}</span></p>
+}
+
+function AssistantPanel({ items, rows }: { items: ReturnType<typeof buildAssistantItems>; rows: GeneratedAssessment[] }) {
+  return (
+    <aside className="assistant-panel">
+      <header><BrainCircuit size={24} /><div><h2>Asistente SST</h2><p>Motor de apoyo tecnico</p></div></header>
+      <div className="assistant-score"><RiskIndexCard value={computeRiskIndex(rows)} level="Preventivo" /></div>
+      <div className="assistant-cards">
+        {items.map((item) => (
+          <article key={item.title}>
+            <item.icon size={18} />
+            <div><h3>{item.title}</h3><p>{item.text}</p><button type="button">{item.action}</button></div>
+          </article>
+        ))}
+      </div>
+    </aside>
+  )
+}
+
+function AnalysisView({ rows, dashboard, riskIndex }: { rows: GeneratedAssessment[]; dashboard: ReturnType<typeof buildDashboard>; riskIndex: number }) {
+  return (
+    <section>
+      <ViewHeader title="Analisis preventivo" text="Lectura sintetica de exposicion, severidad y controles residuales." />
+      <div className="analysis-grid">
+        <RiskIndexCard value={riskIndex} level={riskIndex > 60 ? 'Importante' : 'Moderado'} />
+        <MetricCard label="Promedio inicial" value={String(dashboard.averageInitialRisk)} delta="Puntaje tecnico" tone="orange" />
+        <MetricCard label="Promedio residual" value={String(dashboard.averageResidualRisk)} delta="Despues de controles" tone="green" />
+        <MetricCard label="Legal pendiente" value={String(dashboard.risksWithoutValidatedLegalSupport)} delta="Requiere revision" tone="yellow" />
+      </div>
+      <DistributionCard rows={rows} />
+    </section>
+  )
+}
+
+function ActionPlanBoard({ rows }: { rows: GeneratedAssessment[] }) {
+  const columns = [
+    { title: 'Pendiente', rows: rows.filter((row) => row.legalValidationMissing).slice(0, 5) },
+    { title: 'En ejecucion', rows: rows.filter((row) => row.proposedControlsInsufficient).slice(0, 5) },
+    { title: 'Verificado', rows: rows.filter((row) => row.residualAcceptability === 'Aceptable').slice(0, 5) },
+    { title: 'Vencido', rows: rows.filter((row) => row.initialLevel === 'Intolerable').slice(0, 5) },
+  ]
+  return (
+    <section>
+      <ViewHeader title="Plan de accion" text="Tablero operativo de controles, responsables, plazos y evidencias." />
+      <div className="board-grid">
+        {columns.map((column) => (
+          <div className="board-column" key={column.title}>
+            <h3>{column.title}<span>{column.rows.length}</span></h3>
+            {column.rows.map((row) => (
+              <article className="task-board-card" key={row.id}>
+                <b>{shortText(row.proposedControls[0]?.description ?? 'Control por definir', 58)}</b>
+                <p>{shortText(row.riskDescription, 72)}</p>
+                <span>{row.responsiblePerson}</span>
+                <small>{row.deadline} · {row.verificationStatus}</small>
+              </article>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function EvidencePanel({ rows }: { rows: GeneratedAssessment[] }) {
+  return (
+    <section>
+      <ViewHeader title="Evidencias" text="Registro preparado para documentos, fotos y validacion de campo." />
+      <div className="evidence-grid">
+        {rows.slice(0, 12).map((row) => (
+          <article className="evidence-card" key={row.id}>
+            <UploadCloud size={22} />
+            <div>
+              <h3>{row.requiredEvidence[0] ?? 'Evidencia requerida'}</h3>
+              <p>{shortText(row.riskDescription, 74)}</p>
+              <span>{row.responsiblePerson} · {row.deadline}</span>
+            </div>
+            <StatusBadge label="Carga pendiente" tone="yellow" />
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function NormativeSection({ sector }: { sector: SectorId }) {
+  const module = sectorModules.find((item) => item.id === sector) ?? sectorModules[0]
+  const normCards = [...module.normIds.slice(0, 4), 'sectorial-validation']
+  return (
+    <section>
+      <ViewHeader title="Normativa" text="Trazabilidad legal sin inventar articulos ni obligaciones." />
+      <div className="norm-grid">
+        {normCards.map((id) => {
+          const norm = legalNorms.find((item) => item.id === id)
+          return (
+            <article className="norm-card" key={id}>
+              <Scale size={24} />
+              <h3>{norm?.shortName ?? 'Normativa sectorial'}</h3>
+              <p>{norm?.title ?? module.label}</p>
+              <span>Referencia normativa pendiente de validacion.</span>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function ReportsPanel({ profile, rows, warnings }: { profile: CompanyProfile; rows: GeneratedAssessment[]; warnings: ReturnType<typeof validateBeforeExport> }) {
+  const checks = [
+    ['Datos completos', warnings.some((warning) => warning.code === 'company-data') ? 'pendiente' : 'listo'],
+    ['Riesgos evaluados', rows.length > 0 ? 'listo' : 'pendiente'],
+    ['Controles definidos', rows.every((row) => row.proposedControls.length > 0) ? 'listo' : 'pendiente'],
+    ['Riesgo residual calculado', rows.every((row) => row.residualScore > 0) ? 'listo' : 'pendiente'],
+    ['Evidencias revisadas', warnings.some((warning) => warning.code === 'control-strength') ? 'pendiente' : 'listo'],
+    ['Sustento normativo revisado', warnings.some((warning) => warning.code === 'legal-validation') ? 'pendiente' : 'listo'],
+  ]
+  const reports = [
+    ['Resumen ejecutivo', FileText],
+    ['Matriz completa', FileSpreadsheet],
+    ['Riesgos criticos', AlertTriangle],
+    ['Controles vencidos', Target],
+    ['Evidencia pendiente', UploadCloud],
+    ['Validacion legal', Scale],
+    ['Plan de accion', ClipboardList],
+  ] as const
+  return (
+    <section>
+      <ViewHeader title="Reportes" text="Exportes ejecutivos y tecnicos con alertas legales visibles." />
+      <div className="report-layout">
+        <article className="glass-card checklist-card">
+          <h3>Lista de validacion</h3>
+          {checks.map(([label, status]) => <p key={label}><CheckCircle2 size={16} className={status === 'listo' ? 'ok' : 'warn'} />{label}<span>{status}</span></p>)}
+        </article>
+        <div className="report-grid">
+          {reports.map(([label, Icon]) => (
+            <button type="button" key={label} onClick={() => handleReport(label, profile, rows)}>
+              <Icon size={24} /><span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SettingsPanel({
   profile,
   setProfile,
   sector,
   setSector,
+  tasks,
+  setTasks,
+  positions,
 }: {
   profile: CompanyProfile
   setProfile: (profile: CompanyProfile) => void
   sector: SectorId
   setSector: (sector: SectorId) => void
-}) {
-  return (
-    <div className="company-form">
-      <Field required label="Razon social" placeholder="Ingrese la razon social de la empresa" value={profile.name} onChange={(name) => setProfile({ ...profile, name })} />
-      <Field required label="RUC" placeholder="Ej. 20123456789" value={profile.ruc} onChange={(ruc) => setProfile({ ...profile, ruc })} />
-      <div className="field full">
-        <span>Tipo de organizacion *</span>
-        <div className="choice-row">
-          <button type="button" className={profile.ownership === 'public' ? 'selected' : ''} onClick={() => setProfile({ ...profile, ownership: 'public' })}>
-            <Building2 size={18} /> Sector publico
-          </button>
-          <button type="button" className={profile.ownership === 'private' ? 'selected' : ''} onClick={() => setProfile({ ...profile, ownership: 'private' })}>
-            <Building2 size={18} /> Sector privado
-          </button>
-        </div>
-      </div>
-      <label className="field">
-        <span>Actividad economica principal *</span>
-        <select value={sector} onChange={(event) => setSector(event.target.value as SectorId)}>
-          {sectorModules.map((module) => <option key={module.id} value={module.id}>{module.label}</option>)}
-        </select>
-      </label>
-      <div className="field search-field">
-        <span>Codigo CIIU *</span>
-        <div>
-          <input placeholder="Ej. 4690 - Venta al por mayor no especializada" value={profile.ciiu} onChange={(event) => setProfile({ ...profile, ciiu: event.target.value })} />
-          <button type="button"><Search size={18} /></button>
-        </div>
-      </div>
-      <Field required label="Sede / Centro de trabajo" placeholder="Seleccione la sede o centro de trabajo" value={profile.workplace} onChange={(workplace) => setProfile({ ...profile, workplace })} />
-      <div className="field icon-field">
-        <span>Numero de trabajadores *</span>
-        <div>
-          <input type="number" min={0} placeholder="Ej. 120" value={profile.workerCount || ''} onChange={(event) => setProfile({ ...profile, workerCount: Number(event.target.value) })} />
-          <Users size={18} />
-        </div>
-      </div>
-      <Field label="Direccion" className="full" placeholder="Ingrese la direccion fiscal de la empresa" value={profile.businessActivity} onChange={(businessActivity) => setProfile({ ...profile, businessActivity })} />
-      <label className="field">
-        <span>Departamento *</span>
-        <select defaultValue=""><option value="">Seleccione</option><option>Lima</option><option>Arequipa</option><option>La Libertad</option></select>
-      </label>
-      <label className="field">
-        <span>Provincia *</span>
-        <select defaultValue=""><option value="">Seleccione</option><option>Lima</option><option>Callao</option></select>
-      </label>
-      <label className="field">
-        <span>Distrito *</span>
-        <select defaultValue=""><option value="">Seleccione</option><option>Miraflores</option><option>San Isidro</option></select>
-      </label>
-      <Field label="Representante legal" placeholder="Ingrese el nombre del representante legal" value="" onChange={() => undefined} />
-      <Field label="Correo electronico" placeholder="Ej. contacto@empresa.com" value="" onChange={() => undefined} />
-      <Field label="Telefono" placeholder="Ej. (01) 123-4567" value="" onChange={() => undefined} />
-      <div className="field icon-field">
-        <span>Fecha de inicio del IPERC *</span>
-        <div>
-          <input type="date" defaultValue="2026-06-29" />
-          <CalendarDays size={18} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SgsstStep({
-  profile,
-  setProfile,
-}: {
-  profile: CompanyProfile
-  setProfile: (profile: CompanyProfile) => void
-}) {
-  return (
-    <div className="company-form">
-      <Field label="Responsable SGSST" placeholder="Nombre del responsable o supervisor SST" value={profile.sgsstResponsible ?? ''} onChange={(sgsstResponsible) => setProfile({ ...profile, sgsstResponsible })} />
-      <Field label="Elaborado por" placeholder="Profesional que prepara la matriz" value={profile.preparedBy ?? ''} onChange={(preparedBy) => setProfile({ ...profile, preparedBy })} />
-      <Field label="Revisado por" placeholder="Responsable que revisa la matriz" value={profile.reviewedBy ?? ''} onChange={(reviewedBy) => setProfile({ ...profile, reviewedBy })} />
-      <Field label="Aprobado por" placeholder="Representante que aprueba la matriz" value={profile.approvedBy ?? ''} onChange={(approvedBy) => setProfile({ ...profile, approvedBy })} />
-      <div className="validation-banner full">
-        <ClipboardCheck size={20} />
-        <span>Registre organigrama, politica SST, mapa de procesos, comite o supervisor SST y capacitaciones como evidencia base del SGSST.</span>
-      </div>
-    </div>
-  )
-}
-
-function SectorStep({ sector, setSector }: { sector: SectorId; setSector: (sector: SectorId) => void }) {
-  const selected = sectorModules.find((item) => item.id === sector) ?? sectorModules[0]
-  return (
-    <div className="sector-grid">
-      {sectorModules.map((module) => (
-        <button type="button" key={module.id} className={`sector-option ${module.id === sector ? 'selected' : ''}`} onClick={() => setSector(module.id)}>
-          <strong>{module.label}</strong>
-          <span>{module.description}</span>
-        </button>
-      ))}
-      <div className="validation-banner full">
-        <Scale size={20} />
-        <span>{selected.validationWarning} Las obligaciones especificas no se inventan: se muestran como Requires legal validation hasta cargar fuente oficial validada.</span>
-      </div>
-    </div>
-  )
-}
-
-function TaskStep({ positions, tasks, setTasks }: { positions: JobPosition[]; tasks: WorkTask[]; setTasks: (tasks: WorkTask[]) => void }) {
-  return (
-    <div className="task-stack">
-      {tasks.map((task, index) => (
-        <div className="task-card" key={task.id}>
-          <Field label="Actividad / tarea" value={task.name} onChange={(name) => updateTask(tasks, setTasks, index, { name })} />
-          <label className="field">
-            <span>Puesto</span>
-            <select value={task.positionId} onChange={(event) => updateTask(tasks, setTasks, index, { positionId: event.target.value })}>
-              {positions.map((position) => <option key={position.id} value={position.id}>{position.title}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>Tipo</span>
-            <select value={task.activityKind} onChange={(event) => updateTask(tasks, setTasks, index, { activityKind: event.target.value as ActivityKind })}>
-              <option value="routine">Rutinaria</option>
-              <option value="non_routine">No rutinaria</option>
-              <option value="emergency">Emergencia</option>
-            </select>
-          </label>
-          <Field label="Frecuencia" value={task.frequency} onChange={(frequency) => updateTask(tasks, setTasks, index, { frequency })} />
-          <div className="field">
-            <span>Expuestos</span>
-            <input type="number" min={1} value={task.exposedWorkers} onChange={(event) => updateTask(tasks, setTasks, index, { exposedWorkers: Number(event.target.value) })} />
-          </div>
-          <label className="field full">
-            <span>Controles existentes</span>
-            <textarea value={task.existingControls} onChange={(event) => updateTask(tasks, setTasks, index, { existingControls: event.target.value })} />
-          </label>
-        </div>
-      ))}
-      <button type="button" className="link-action" onClick={() => setTasks([...tasks, {
-        id: `task-${tasks.length + 1}`,
-        positionId: positions[0]?.id ?? 'pos-1',
-        name: 'Nueva actividad',
-        activityKind: 'routine',
-        frequency: 'Diaria',
-        exposedWorkers: 1,
-        existingControls: '',
-      }])}>+ Agregar actividad</button>
-    </div>
-  )
-}
-
-function MatrixPreview({ rows, mode }: { rows: ReturnType<typeof generateAssessments>; mode: 'hazard' | 'risk' | 'existing' | 'controls' | 'residual' }) {
-  return (
-    <div className="matrix-shell">
-      <table>
-        <thead>
-          <tr>
-            <th>Area</th>
-            <th>Puesto</th>
-            <th>Tarea</th>
-            <th>Peligro</th>
-            <th>{mode === 'risk' || mode === 'residual' ? 'Nivel' : mode === 'existing' ? 'Controles existentes' : mode === 'controls' ? 'Controles propuestos' : 'Consecuencias'}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.area.name}</td>
-              <td>{row.position.title}</td>
-              <td>{row.task.name}</td>
-              <td><b>{row.hazard.name}</b><small>{row.hazard.category}</small></td>
-              <td>
-                {mode === 'hazard' && row.consequences}
-                {mode === 'risk' && <RiskCell label={row.initialLevel} score={row.initialScore} />}
-                {mode === 'residual' && <RiskCell label={row.residualLevel} score={row.residualScore} />}
-                {mode === 'existing' && row.existingControls}
-                {mode === 'controls' && row.proposedControls.map((control) => `${control.level}: ${control.description}`).join(' ')}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function PlanStep({ rows }: { rows: ReturnType<typeof generateAssessments> }) {
-  return (
-    <div className="matrix-shell">
-      <table>
-        <thead><tr><th>Riesgo</th><th>Control propuesto</th><th>Responsable</th><th>Plazo</th><th>Evidencia</th></tr></thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.riskDescription}</td>
-              <td>{row.proposedControls.map((control) => `${control.level}: ${control.description}`).join(' ')}</td>
-              <td>{row.responsible}</td>
-              <td>{row.deadline}</td>
-              <td>{row.requiredEvidence.slice(0, 3).join(', ')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function LegalStep({ rows, sector }: { rows: ReturnType<typeof generateAssessments>; sector: SectorId }) {
-  const module = sectorModules.find((item) => item.id === sector)
-  return (
-    <div className="legal-review">
-      <div className="validation-banner">
-        <AlertTriangle size={20} />
-        <span>{module?.label}: solo se citan articulos verificados. Lo pendiente queda marcado como Requires legal validation.</span>
-      </div>
-      <div className="matrix-shell">
-        <table>
-          <thead><tr><th>Riesgo</th><th>Norma</th><th>Articulo</th><th>Obligacion</th><th>Evidencia</th></tr></thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td>{row.riskDescription}</td>
-                <td>{row.legalNorm}</td>
-                <td>{row.legalArticle}</td>
-                <td>{row.legalMatches[0]?.obligation ?? 'Normative reference pending validation'}</td>
-                <td>{row.requiredEvidence.slice(0, 3).join(', ')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function ExportStep({ profile, rows, warnings }: { profile: CompanyProfile; rows: ReturnType<typeof generateAssessments>; warnings: ReturnType<typeof validateBeforeExport> }) {
-  return (
-    <div className="export-panel">
-      {warnings.length > 0 && (
-        <div className="validation-banner full">
-          <AlertTriangle size={20} />
-          <span>{warnings.map((warning) => warning.label).join(' ')}</span>
-        </div>
-      )}
-      <button type="button" onClick={() => exportExcel(profile, rows)}><FileSpreadsheet /> Excel IPERC</button>
-      <button type="button" onClick={printPdfReport}><FileText /> PDF legal</button>
-      <button type="button" onClick={() => exportWord(profile, rows)}><FileText /> Word tecnico</button>
-      <button type="button" onClick={() => exportCsv(profile, rows)}><Download /> CSV dataset</button>
-    </div>
-  )
-}
-
-function StatusBadges({ dashboard, warnings }: { dashboard: ReturnType<typeof buildDashboard>; warnings: ReturnType<typeof validateBeforeExport> }) {
-  return (
-    <div className="status-badges">
-      <span>Riesgos: {dashboard.totalRisks}</span>
-      <span>Criticos: {dashboard.criticalRisks}</span>
-      <span>Reduccion residual: {dashboard.reductionPercent}%</span>
-      <span>Validacion legal pendiente: {dashboard.risksWithoutValidatedLegalSupport}</span>
-      <span>Evidencia pendiente: {dashboard.controlsPendingEvidence}</span>
-      {warnings.map((warning) => <span key={warning.code} className={warning.severity}>{warning.label}</span>)}
-    </div>
-  )
-}
-
-function LegalRail({ normIds }: { normIds: string[] }) {
-  return (
-    <section className="side-card">
-      <h2><Scale size={22} /> Marco legal aplicable</h2>
-      {normIds.map((normId) => {
-        const norm = legalNorms.find((item) => item.id === normId)
-        return (
-          <div className="legal-item" key={normId}>
-            <FileText size={24} />
-            <div>
-              <strong>{norm?.shortName}</strong>
-              <span>{norm?.title.replace(`${norm.shortName}, `, '')}</span>
-            </div>
-            <em>{norm?.module === 'general' ? 'Ley' : 'Modulo'}</em>
-          </div>
-        )
-      })}
-      <a href="#legal">Ver documentos y enlaces</a>
-    </section>
-  )
-}
-
-function EvidenceRail() {
-  const evidence = ['Organigrama de la empresa', 'Mapa de procesos', 'Descripcion de actividades', 'Registros de capacitacion en SST', 'Politica de SST vigente']
-  return (
-    <section className="side-card">
-      <h2><ClipboardCheck size={22} /> Evidencias requeridas</h2>
-      <ul className="evidence-list">
-        {evidence.map((item) => <li key={item}><CheckCircle2 size={17} /> {item}</li>)}
-      </ul>
-      <div className="rail-warning"><AlertTriangle size={18} /> Asegurese de contar con la informacion y evidencias antes de continuar con el proceso.</div>
-    </section>
-  )
-}
-
-function Overview({
-  areas,
-  positions,
-  tasks,
-  pendingLegalCount,
-  supabaseReady,
-  setAreas,
-  setPositions,
-}: {
-  areas: WorkArea[]
-  positions: JobPosition[]
   tasks: WorkTask[]
-  pendingLegalCount: number
-  supabaseReady: boolean
-  setAreas: (areas: WorkArea[]) => void
-  setPositions: (positions: JobPosition[]) => void
+  setTasks: (tasks: WorkTask[]) => void
+  positions: JobPosition[]
 }) {
   return (
-    <section className="overview-card">
-      <h2>Vista general de lo que construiremos</h2>
-      <div className="overview-grid">
-        <div className="mini-panel">
-          <h3>1. Tareas / actividades</h3>
-          <table><tbody>{tasks.slice(0, 3).map((task, index) => <tr key={task.id}><td>{index + 1}</td><td>{task.name.split(',')[0]}</td></tr>)}</tbody></table>
-          <button type="button" onClick={() => setAreas([...areas, { id: `area-${areas.length + 1}`, name: 'Nueva area', process: 'Proceso' }])}>+ Agregar area</button>
-          <button type="button" onClick={() => setPositions([...positions, { id: `pos-${positions.length + 1}`, areaId: areas[0]?.id ?? 'area-1', title: 'Nuevo puesto', workerCount: 1 }])}>+ Agregar puesto</button>
+    <section>
+      <ViewHeader title="Configuracion" text="Datos base para generar matrices coherentes y exportables." />
+      <div className="settings-grid">
+        <div className="glass-card form-card">
+          <h3>Empresa y sede</h3>
+          <Field label="Razon social" value={profile.name} onChange={(name) => setProfile({ ...profile, name })} />
+          <Field label="RUC" value={profile.ruc} onChange={(ruc) => setProfile({ ...profile, ruc })} />
+          <Field label="Centro de trabajo" value={profile.workplace} onChange={(workplace) => setProfile({ ...profile, workplace })} />
+          <label className="field"><span>Sector</span><select value={sector} onChange={(event) => setSector(event.target.value as SectorId)}>{sectorModules.map((module) => <option key={module.id} value={module.id}>{module.label}</option>)}</select></label>
         </div>
-        <div className="mini-panel">
-          <h3>2. Taxonomia de peligros</h3>
-          <div className="taxonomy-tags">
-            {['Fisicos', 'Quimicos', 'Biologicos', 'Ergonomicos', 'Mecanicos', 'Electricos', 'Incendio / Explosion', 'Psicosociales'].map((tag) => <span key={tag}>{tag}</span>)}
-          </div>
-          <button type="button">+ Catalogo SUNAFIL</button>
-        </div>
-        <div className="mini-panel risk-map">
-          <h3>3. Matriz de evaluacion de riesgos</h3>
-          <div className="heatmap">{Array.from({ length: 25 }).map((_, index) => <span key={index} className={`c${Math.floor(index / 5) + Math.floor(index % 5)}`} />)}</div>
-          <p>B: Bajo · M: Medio · A: Alto · E: Extremo</p>
-        </div>
-        <div className="mini-panel hierarchy">
-          <h3>4. Jerarquia de controles</h3>
-          {['Eliminacion', 'Sustitucion', 'Controles de ingenieria', 'Controles administrativos', 'EPP'].map((item, index) => <span key={item} style={{ width: `${100 - index * 10}%` }}>{index + 1}. {item}</span>)}
-          <p>{pendingLegalCount} citas requieren validacion · Supabase {supabaseReady ? 'conectado' : 'pendiente'}</p>
+        <div className="glass-card form-card">
+          <h3>Tareas operativas</h3>
+          {tasks.map((task, index) => (
+            <div className="task-edit" key={task.id}>
+              <Field label="Tarea" value={task.name} onChange={(name) => updateTask(tasks, setTasks, index, { name })} />
+              <label className="field"><span>Puesto</span><select value={task.positionId} onChange={(event) => updateTask(tasks, setTasks, index, { positionId: event.target.value })}>{positions.map((position) => <option key={position.id} value={position.id}>{position.title}</option>)}</select></label>
+              <label className="field"><span>Tipo</span><select value={task.activityKind} onChange={(event) => updateTask(tasks, setTasks, index, { activityKind: event.target.value as ActivityKind })}><option value="routine">Rutinaria</option><option value="non_routine">No rutinaria</option><option value="emergency">Emergencia</option></select></label>
+              <Field label="Controles existentes" value={task.existingControls} onChange={(existingControls) => updateTask(tasks, setTasks, index, { existingControls })} />
+            </div>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  className = '',
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  required?: boolean
-  className?: string
-}) {
+function MobileBottomNav({ activeView, onChange, onQuick }: { activeView: ViewId; onChange: (view: ViewId) => void; onQuick: () => void }) {
   return (
-    <label className={`field ${className}`}>
-      <span>{label}{required ? ' *' : ''}</span>
-      <input placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
+    <nav className="mobile-bottom-nav" aria-label="Navegacion movil">
+      <button type="button" className={activeView === 'dashboard' ? 'active' : ''} onClick={() => onChange('dashboard')}><LayoutDashboard size={18} />Inicio</button>
+      <button type="button" className={activeView === 'matrix' ? 'active' : ''} onClick={() => onChange('matrix')}><Boxes size={18} />Matriz</button>
+      <button type="button" className="mobile-fab" onClick={onQuick} aria-label="Nuevo IPERC"><Zap size={22} /></button>
+      <button type="button" className={activeView === 'actions' ? 'active' : ''} onClick={() => onChange('actions')}><ClipboardList size={18} />Acciones</button>
+      <button type="button" className={activeView === 'reports' ? 'active' : ''} onClick={() => onChange('reports')}><Command size={18} />Mas</button>
+    </nav>
   )
 }
 
-function RiskCell({ label, score }: { label: string; score: number }) {
-  return <span className={`risk-token ${label.toLowerCase()}`}>{label} · {score}</span>
+function Modal({ kind, onClose, onRandom }: { kind: ModalKind; onClose: () => void; onRandom: () => void }) {
+  if (!kind) return null
+  const content = {
+    scan: ['Escanear area', 'Funcion preparada para captura de evidencias. Disponible para integracion futura.'],
+    load: ['Cargar proyecto', 'Modulo listo para plantillas y proyectos guardados. Por ahora use Caso al azar o configure la empresa manualmente.'],
+    quick: ['Nuevo IPERC', 'Inicia una matriz rapida desde un caso de ejemplo coherente.'],
+  }[kind]
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
+      <div className="modal-card">
+        <button type="button" className="icon-button close" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+        <Radar size={32} />
+        <h2>{content[0]}</h2>
+        <p>{content[1]}</p>
+        <div>
+          {kind === 'quick' && <button type="button" className="primary-neon" onClick={() => { onRandom(); onClose() }}>Generar caso</button>}
+          <button type="button" className="ghost-button" onClick={onClose}>Entendido</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ViewHeader({ title, text }: { title: string; text: string }) {
+  return <header className="view-header"><div><h2>{title}</h2><p>{text}</p></div><button type="button" className="ghost-button"><SlidersHorizontal size={16} /> Ajustes</button></header>
+}
+
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <label className="field"><span>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} /></label>
+}
+
+function RiskBadge({ level, score }: { level: RiskBand; score: number }) {
+  return <span className={`risk-badge ${level.toLowerCase()}`}>{level === 'Intolerable' ? 'Critico' : level} <b>{score}</b></span>
+}
+
+function StatusBadge({ label, tone }: { label: string; tone: string }) {
+  return <span className={`status-badge ${tone}`}>{label}</span>
+}
+
+function computeRiskIndex(rows: GeneratedAssessment[]) {
+  if (!rows.length) return 0
+  const maxScore = 125
+  const average = rows.reduce((total, row) => total + row.initialScore, 0) / rows.length
+  return Math.min(100, Math.max(1, Math.round((average / maxScore) * 100 * 2.1)))
+}
+
+function buildAssistantItems(rows: GeneratedAssessment[]) {
+  const critical = rows.find((row) => row.initialLevel === 'Intolerable' || row.initialLevel === 'Importante')
+  const ppe = rows.find((row) => row.ppeOnlyWarning)
+  const evidence = rows.filter((row) => row.requiredEvidence.length > 0)
+  const legal = rows.find((row) => row.legalValidationMissing)
+  const weak = rows.find((row) => row.proposedControlsInsufficient)
+  const overdue = rows.find((row) => new Date(row.deadline).getTime() < Date.now())
+  return [
+    {
+      title: critical ? 'Riesgo critico sin control suficiente' : 'Riesgo importante detectado',
+      text: critical ? 'Este riesgo requiere controles de mayor jerarquia antes de cerrar la matriz.' : 'Mantenga seguimiento preventivo de las tareas principales.',
+      action: 'Revisar controles',
+      icon: AlertTriangle,
+    },
+    {
+      title: evidence.length ? `Faltan evidencias en ${Math.min(3, evidence.length)} tareas` : 'Evidencias al dia',
+      text: 'Priorice fotos, checklists y registros de capacitacion para sustentar controles.',
+      action: 'Subir evidencias',
+      icon: UploadCloud,
+    },
+    {
+      title: legal ? 'Validacion legal pendiente' : 'Trazabilidad normativa revisada',
+      text: legal ? 'No se citan articulos sin fuente oficial validada.' : 'Las referencias cargadas mantienen trazabilidad.',
+      action: 'Ver normativa',
+      icon: Scale,
+    },
+    {
+      title: ppe || weak ? 'Control preventivo debil' : 'Controles en seguimiento',
+      text: ppe ? 'Este riesgo no deberia quedar solo con EPP.' : 'Revise eficacia despues de implementar medidas.',
+      action: 'Ajustar plan',
+      icon: ShieldCheck,
+    },
+    {
+      title: overdue ? 'Control vencido' : 'Planifica charla de seguridad',
+      text: overdue ? 'Hay acciones fuera de plazo que requieren responsable.' : 'El area operativa necesita refuerzo preventivo semanal.',
+      action: 'Programar accion',
+      icon: ClipboardCheck,
+    },
+  ]
+}
+
+function handleReport(label: string, profile: CompanyProfile, rows: GeneratedAssessment[]) {
+  if (label.includes('Matriz') || label.includes('Excel')) exportExcel(profile, rows)
+  else if (label.includes('CSV')) exportCsv(profile, rows)
+  else if (label.includes('Informe') || label.includes('Resumen')) exportWord(profile, rows)
+  else printPdfReport()
+}
+
+function countBy(rows: GeneratedAssessment[], getKey: (row: GeneratedAssessment) => string): Record<string, number> {
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    const key = getKey(row)
+    acc[key] = (acc[key] ?? 0) + 1
+    return acc
+  }, {})
+}
+
+function statusLabel(row: GeneratedAssessment) {
+  if (row.legalValidationMissing) return 'Validacion legal pendiente'
+  if (row.proposedControlsInsufficient) return 'En revision'
+  return 'En control'
+}
+
+function statusTone(row: GeneratedAssessment) {
+  if (row.legalValidationMissing) return 'yellow'
+  if (row.proposedControlsInsufficient) return 'orange'
+  return 'green'
+}
+
+function shortText(value: string, length: number) {
+  return value.length > length ? `${value.slice(0, length - 1)}...` : value
 }
 
 function updateTask(tasks: WorkTask[], setTasks: (tasks: WorkTask[]) => void, index: number, patch: Partial<WorkTask>) {
