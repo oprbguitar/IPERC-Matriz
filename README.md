@@ -27,11 +27,6 @@ VITE_SUPABASE_ANON_KEY=
 
 Para GitHub Pages, configure en el repositorio las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `Settings > Secrets and variables > Actions > Variables`. No se publica ningun `.env` en el repositorio.
 
-Proyecto indicado por el usuario:
-
-```text
-https://qxtfzhdoxlgwfwgwpljd.supabase.co
-```
 
 ## Ejecutar
 
