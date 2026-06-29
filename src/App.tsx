@@ -15,6 +15,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Command,
+  Copy,
   Download,
   FileSpreadsheet,
   FileText,
@@ -23,6 +24,7 @@ import {
   LayoutDashboard,
   LineChart,
   Menu,
+  Plus,
   Radar,
   Save,
   Scale,
@@ -30,24 +32,63 @@ import {
   Settings,
   Shield,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Target,
+  Trash2,
   UploadCloud,
   UserCircle2,
   X,
   Zap,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { legalNorms, sectorModules } from './data/legalDatabase'
-import { exportCsv, exportExcel, exportWord, printPdfReport } from './lib/exporters'
-import { buildDashboard, generateAssessments, validateBeforeExport } from './lib/riskEngine'
-import { supabase } from './lib/supabaseClient'
-import type { ActivityKind, CompanyProfile, GeneratedAssessment, JobPosition, RiskBand, SectorId, WorkArea, WorkTask } from './types'
+import type { ExportContext, ReportKind } from './lib/exporters'
+
+// xlsx is heavy; load the export module only when the user actually exports.
+const loadExporters = () => import('./lib/exporters')
+import {
+  deleteProject,
+  duplicateProject,
+  listProjects,
+  saveDraftLocal,
+  saveProject,
+  type ProjectStatus,
+  type SavedProject,
+} from './lib/projectStore'
+import { buildDashboard, evaluateRisk, generateAssessments, validateBeforeExport } from './lib/riskEngine'
+import { isSupabaseConfigured } from './lib/supabaseClient'
+import { validateRegistration } from './lib/validation'
+import type {
+  ActionStatus,
+  ActivityKind,
+  CompanyProfile,
+  GeneratedAssessment,
+  JobPosition,
+  RiskBand,
+  SectorId,
+  WorkArea,
+  WorkTask,
+} from './types'
 
 type ViewId = 'dashboard' | 'matrix' | 'analysis' | 'actions' | 'evidence' | 'normative' | 'reports' | 'settings'
-type ModalKind = 'scan' | 'load' | 'quick' | null
+type ModalKind = 'scan' | 'projects' | 'quick' | null
+
+interface RowOverride {
+  probability?: number
+  severity?: number
+  exposureFrequency?: number
+  residualProbability?: number
+  residualSeverity?: number
+  residualExposureFrequency?: number
+  actionStatus?: ActionStatus
+  verificationStatus?: string
+}
+
+interface Notice {
+  text: string
+  tone: 'info' | 'success' | 'warning' | 'error'
+}
 
 const navItems: Array<{ id: ViewId; label: string; subtitle: string; icon: typeof LayoutDashboard }> = [
   { id: 'dashboard', label: 'Dashboard', subtitle: 'Resumen ejecutivo', icon: LayoutDashboard },
@@ -57,8 +98,17 @@ const navItems: Array<{ id: ViewId; label: string; subtitle: string; icon: typeo
   { id: 'evidence', label: 'Evidencias', subtitle: 'Documentos y fotos', icon: Archive },
   { id: 'normative', label: 'Normativa', subtitle: 'Legal y requisitos', icon: Scale },
   { id: 'reports', label: 'Reportes', subtitle: 'Exportes y tableros', icon: FileText },
-  { id: 'settings', label: 'Configuracion', subtitle: 'Empresa y usuarios', icon: Settings },
+  { id: 'settings', label: 'Registro', subtitle: 'Empresa, areas y tareas', icon: Settings },
 ]
+
+const ACTION_STATUS_LABELS: Record<ActionStatus, string> = {
+  pending: 'Pendiente',
+  in_progress: 'En ejecucion',
+  implemented: 'Implementado',
+  verified: 'Verificado',
+  overdue: 'Vencido',
+  not_applicable: 'No aplica',
+}
 
 const initialProfile: CompanyProfile = {
   name: 'Constructora Torre Sigma',
@@ -216,6 +266,42 @@ const randomCases: Array<{ profile: CompanyProfile; sector: SectorId; areas: Wor
   },
 ]
 
+function newId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function applyOverride(row: GeneratedAssessment, override?: RowOverride): GeneratedAssessment {
+  if (!override) return row
+  const probability = override.probability ?? row.probability
+  const severity = override.severity ?? row.severity
+  const exposure = override.exposureFrequency ?? row.exposureFrequency
+  const initial = evaluateRisk(probability, severity, exposure)
+  const residualProbability = override.residualProbability ?? row.residualProbability
+  const residualSeverity = override.residualSeverity ?? row.residualSeverity
+  const residualExposure = override.residualExposureFrequency ?? row.residualExposureFrequency
+  const residual = evaluateRisk(residualProbability, residualSeverity, residualExposure)
+  return {
+    ...row,
+    probability,
+    severity,
+    exposureFrequency: exposure,
+    initialScore: initial.score,
+    initialLevel: initial.level,
+    initialEvaluation: initial,
+    riskAcceptability: initial.acceptability,
+    residualProbability,
+    residualSeverity,
+    residualExposureFrequency: residualExposure,
+    residualScore: residual.score,
+    residualLevel: residual.level,
+    residualEvaluation: residual,
+    residualAcceptability: residual.acceptability,
+    actionStatus: override.actionStatus ?? row.actionStatus,
+    verificationStatus: override.verificationStatus ?? row.verificationStatus,
+  }
+}
+
 function App() {
   const [view, setView] = useState<ViewId>('dashboard')
   const [expertMode, setExpertMode] = useState(false)
@@ -224,20 +310,33 @@ function App() {
   const [areas, setAreas] = useState(initialAreas)
   const [positions, setPositions] = useState(initialPositions)
   const [tasks, setTasks] = useState(initialTasks)
+  const [overrides, setOverrides] = useState<Record<string, RowOverride>>({})
   const [modal, setModal] = useState<ModalKind>(null)
   const [query, setQuery] = useState('')
   const [riskFilter, setRiskFilter] = useState('todos')
   const [legalFilter, setLegalFilter] = useState('todos')
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [notice, setNotice] = useState<Notice | null>(null)
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus>('draft')
+  const [currentProjectId, setCurrentProjectId] = useState<string | undefined>(undefined)
   const [caseCursor, setCaseCursor] = useState(0)
+  const noticeTimer = useRef<number | undefined>(undefined)
 
-  const assessments = useMemo(
+  const baseAssessments = useMemo(
     () => generateAssessments(profile, sector, areas, positions, tasks),
     [profile, sector, areas, positions, tasks],
   )
+  const assessments = useMemo(
+    () => baseAssessments.map((row) => applyOverride(row, overrides[row.id])),
+    [baseAssessments, overrides],
+  )
   const dashboard = useMemo(() => buildDashboard(assessments), [assessments])
   const exportWarnings = useMemo(() => validateBeforeExport(profile, assessments), [profile, assessments])
+  const registrationErrors = useMemo(
+    () => validateRegistration(profile, areas, positions, tasks),
+    [profile, areas, positions, tasks],
+  )
   const filteredRows = useMemo(
     () => assessments.filter((row) => {
       const text = `${row.task.name} ${row.hazard.name} ${row.area.name}`.toLowerCase()
@@ -252,21 +351,60 @@ function App() {
   const assistantItems = buildAssistantItems(assessments)
   const activeTitle = navItems.find((item) => item.id === view)?.label ?? 'Dashboard'
 
-  async function saveDraft() {
-    if (!supabase) {
-      setSaveState('error')
+  const showNotice = useCallback((next: Notice) => {
+    setNotice(next)
+    if (noticeTimer.current) window.clearTimeout(noticeTimer.current)
+    noticeTimer.current = window.setTimeout(() => setNotice(null), 5000)
+  }, [])
+
+  const exportContext = useCallback(
+    (rows: GeneratedAssessment[] = assessments, appliedFilters?: string): ExportContext => ({
+      profile,
+      sector,
+      areas,
+      positions,
+      tasks,
+      rows,
+      appliedFilters,
+    }),
+    [profile, sector, areas, positions, tasks, assessments],
+  )
+
+  // Autosave draft locally whenever the working data changes.
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      saveDraftLocal({ profile, sector, areas, positions, tasks })
+    }, 1200)
+    return () => window.clearTimeout(handle)
+  }, [profile, sector, areas, positions, tasks])
+
+  const handleManualSave = useCallback(async () => {
+    const errors = validateRegistration(profile, areas, positions, tasks)
+    if (errors.length > 0) {
+      showNotice({ text: `Complete el registro antes de guardar: ${errors[0].message}`, tone: 'warning' })
+      setView('settings')
       return
     }
     setSaveState('saving')
-    const { error } = await supabase.from('iperc_snapshots').insert({
-      company_name: profile.name || 'Sin razon social',
-      ruc: profile.ruc || null,
-      sector,
-      payload: { profile, areas, positions, tasks, assessments },
-      status: 'draft',
-    })
-    setSaveState(error ? 'error' : 'saved')
-  }
+    const result = await saveProject({ profile, sector, areas, positions, tasks }, projectStatus, currentProjectId)
+    if (result.data) setCurrentProjectId(result.data.id)
+    setSaveState(result.ok ? 'saved' : 'error')
+    showNotice({ text: result.message, tone: result.mode === 'supabase' ? 'success' : 'info' })
+  }, [profile, sector, areas, positions, tasks, projectStatus, currentProjectId, showNotice])
+
+  const loadProject = useCallback((project: SavedProject) => {
+    setProfile(project.payload.profile)
+    setSector(project.payload.sector)
+    setAreas(project.payload.areas)
+    setPositions(project.payload.positions)
+    setTasks(project.payload.tasks)
+    setOverrides({})
+    setProjectStatus(project.status)
+    setCurrentProjectId(project.id)
+    setModal(null)
+    setView('matrix')
+    showNotice({ text: `Proyecto "${project.companyName}" cargado.`, tone: 'success' })
+  }, [showNotice])
 
   function generateRandomCase() {
     const next = randomCases[caseCursor % randomCases.length]
@@ -275,9 +413,29 @@ function App() {
     setAreas(next.areas)
     setPositions(next.positions)
     setTasks(next.tasks)
+    setOverrides({})
+    setCurrentProjectId(undefined)
+    setProjectStatus('draft')
     setCaseCursor((value) => value + 1)
     setView('dashboard')
   }
+
+  const handleOverride = useCallback((rowId: string, patch: RowOverride) => {
+    setOverrides((prev) => ({ ...prev, [rowId]: { ...prev[rowId], ...patch } }))
+  }, [])
+
+  const handleExportExcel = useCallback(
+    async (rows: GeneratedAssessment[], filters?: string) => {
+      if (rows.length === 0) {
+        showNotice({ text: 'No hay filas para exportar.', tone: 'warning' })
+        return
+      }
+      const exporters = await loadExporters()
+      exporters.exportExcel(exportContext(rows, filters))
+      showNotice({ text: 'Excel (.xlsx) generado.', tone: 'success' })
+    },
+    [exportContext, showNotice],
+  )
 
   return (
     <main className="app-shell">
@@ -291,8 +449,17 @@ function App() {
           expertMode={expertMode}
           setExpertMode={setExpertMode}
           saveState={saveState}
-          onSave={saveDraft}
+          onSave={handleManualSave}
+          query={query}
+          setQuery={setQuery}
+          onSearch={() => setView('matrix')}
         />
+        {notice && (
+          <div className={`app-notice ${notice.tone}`} role="status">
+            <span>{notice.text}</span>
+            <button type="button" onClick={() => setNotice(null)} aria-label="Cerrar aviso"><X size={14} /></button>
+          </div>
+        )}
         <div className="content-grid">
           <section className="view-stage">
             {view === 'dashboard' && (
@@ -301,11 +468,13 @@ function App() {
                 rows={assessments}
                 dashboard={dashboard}
                 riskIndex={riskIndex}
+                registrationErrors={registrationErrors.length}
                 onGenerate={() => setView('matrix')}
                 onRandom={generateRandomCase}
-                onLoad={() => setModal('load')}
+                onLoad={() => setModal('projects')}
                 onScan={() => setModal('scan')}
                 onViewMatrix={() => setView('matrix')}
+                onStep={setView}
               />
             )}
             {view === 'matrix' && (
@@ -321,35 +490,93 @@ function App() {
                 setLegalFilter={setLegalFilter}
                 expandedRow={expandedRow}
                 setExpandedRow={setExpandedRow}
-                onExport={() => exportExcel(profile, assessments)}
+                onOverride={handleOverride}
+                onExport={() => handleExportExcel(filteredRows, describeFilters(query, riskFilter, legalFilter))}
+                onExportAll={() => handleExportExcel(assessments)}
               />
             )}
             {view === 'analysis' && <AnalysisView rows={assessments} dashboard={dashboard} riskIndex={riskIndex} />}
             {view === 'actions' && <ActionPlanBoard rows={assessments} />}
             {view === 'evidence' && <EvidencePanel rows={assessments} />}
-            {view === 'normative' && <NormativeSection sector={sector} />}
+            {view === 'normative' && <NormativeSection sector={sector} rows={assessments} />}
             {view === 'reports' && (
-              <ReportsPanel profile={profile} rows={assessments} warnings={exportWarnings} />
+              <ReportsPanel
+                rows={assessments}
+                warnings={exportWarnings}
+                onReport={async (kind) => {
+                  const exporters = await loadExporters()
+                  exporters.exportReport(kind, exportContext())
+                  showNotice({ text: 'Reporte exportado en Excel (.xlsx).', tone: 'success' })
+                }}
+                onWord={async () => {
+                  const exporters = await loadExporters()
+                  exporters.exportWord(exportContext())
+                }}
+                onCsv={async () => {
+                  const exporters = await loadExporters()
+                  exporters.exportCsv(exportContext())
+                }}
+                onPdf={() => window.print()}
+              />
             )}
             {view === 'settings' && (
-              <SettingsPanel
+              <RegistrationPanel
                 profile={profile}
                 setProfile={setProfile}
                 sector={sector}
                 setSector={setSector}
+                areas={areas}
+                setAreas={setAreas}
+                positions={positions}
+                setPositions={setPositions}
                 tasks={tasks}
                 setTasks={setTasks}
-                positions={positions}
+                errors={registrationErrors}
+                projectStatus={projectStatus}
+                setProjectStatus={setProjectStatus}
+                onSave={handleManualSave}
+                saveState={saveState}
               />
             )}
           </section>
-          <AssistantPanel items={assistantItems} rows={assessments} />
+          <AssistantPanel items={assistantItems} rows={assessments} onAction={setView} />
         </div>
       </section>
       <MobileBottomNav activeView={view} onChange={setView} onQuick={() => setModal('quick')} />
-      <Modal kind={modal} onClose={() => setModal(null)} onRandom={generateRandomCase} />
+      <Modal
+        kind={modal}
+        onClose={() => setModal(null)}
+        onRandom={generateRandomCase}
+        onLoadProject={loadProject}
+        onDuplicated={(message) => showNotice({ text: message, tone: 'info' })}
+        onExportProject={async (project) => {
+          const exporters = await loadExporters()
+          exporters.exportExcel({
+            profile: project.payload.profile,
+            sector: project.payload.sector,
+            areas: project.payload.areas,
+            positions: project.payload.positions,
+            tasks: project.payload.tasks,
+            rows: generateAssessments(
+              project.payload.profile,
+              project.payload.sector,
+              project.payload.areas,
+              project.payload.positions,
+              project.payload.tasks,
+            ),
+          })
+        }}
+      />
     </main>
   )
+}
+
+function describeFilters(query: string, riskFilter: string, legalFilter: string): string {
+  const parts: string[] = []
+  if (query) parts.push(`busqueda "${query}"`)
+  if (riskFilter !== 'todos') parts.push(`riesgo ${riskFilter}`)
+  if (legalFilter !== 'todos') parts.push(`legal ${legalFilter}`)
+  return parts.length ? parts.join(', ') : 'sin filtros (todas las filas)'
 }
 
 function Sidebar({ activeView, onChange }: { activeView: ViewId; onChange: (view: ViewId) => void }) {
@@ -373,7 +600,7 @@ function Sidebar({ activeView, onChange }: { activeView: ViewId; onChange: (view
       <div className="assistant-status">
         <div className="pulse-ring"><CircleDot size={24} /></div>
         <strong>Asistente SST</strong>
-        <span>Activo 24/7</span>
+        <span>{isSupabaseConfigured ? 'Supabase conectado' : 'Modo local'}</span>
       </div>
     </aside>
   )
@@ -386,6 +613,9 @@ function TopBar({
   setExpertMode,
   saveState,
   onSave,
+  query,
+  setQuery,
+  onSearch,
 }: {
   title: string
   profile: CompanyProfile
@@ -393,6 +623,9 @@ function TopBar({
   setExpertMode: (value: boolean) => void
   saveState: string
   onSave: () => void
+  query: string
+  setQuery: (value: string) => void
+  onSearch: () => void
 }) {
   return (
     <header className="topbar">
@@ -404,20 +637,41 @@ function TopBar({
       <div className="topbar-tools">
         <label className="plant-selector">
           <Building2 size={16} />
-          <select value={profile.workplace || 'Principal'} aria-label="Seleccionar planta" onChange={() => undefined}>
+          <select value={profile.workplace || 'Principal'} aria-label="Centro de trabajo" disabled>
             <option>{profile.workplace || 'Planta principal'}</option>
           </select>
         </label>
-        <label className="search-box">
+        <form
+          className="search-box"
+          onSubmit={(event) => {
+            event.preventDefault()
+            onSearch()
+          }}
+        >
           <Search size={16} />
-          <input aria-label="Buscar en IPERC" placeholder="Buscar riesgo, tarea o area" />
-        </label>
+          <input
+            aria-label="Buscar en IPERC"
+            placeholder="Buscar riesgo, tarea o area"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={onSearch}
+          />
+        </form>
         <button type="button" className={`expert-toggle ${expertMode ? 'on' : ''}`} onClick={() => setExpertMode(!expertMode)} aria-pressed={expertMode}>
           <span>Modo experto</span><i />
         </button>
-        <button type="button" className="icon-button" aria-label="Notificaciones"><Bell size={19} /><em /></button>
-        <button type="button" className="icon-button" aria-label="Guardar borrador" onClick={onSave}><Save size={19} /></button>
-        <div className="user-profile"><UserCircle2 size={34} /><span>Ing. Alex Rivera<small>{saveState === 'saved' ? 'Borrador guardado' : 'Especialista SST'}</small></span><ChevronDown size={16} /></div>
+        <button type="button" className="icon-button" aria-label="Notificaciones (proximamente)" title="Notificaciones (proximamente)" disabled><Bell size={19} /><em /></button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Guardar proyecto"
+          title="Guardar proyecto"
+          onClick={onSave}
+          disabled={saveState === 'saving'}
+        >
+          <Save size={19} />
+        </button>
+        <div className="user-profile"><UserCircle2 size={34} /><span>Ing. Alex Rivera<small>{saveState === 'saving' ? 'Guardando...' : saveState === 'saved' ? 'Proyecto guardado' : 'Especialista SST'}</small></span><ChevronDown size={16} /></div>
       </div>
     </header>
   )
@@ -428,21 +682,25 @@ function DashboardHome({
   rows,
   dashboard,
   riskIndex,
+  registrationErrors,
   onGenerate,
   onRandom,
   onLoad,
   onScan,
   onViewMatrix,
+  onStep,
 }: {
   profile: CompanyProfile
   rows: GeneratedAssessment[]
   dashboard: ReturnType<typeof buildDashboard>
   riskIndex: number
+  registrationErrors: number
   onGenerate: () => void
   onRandom: () => void
   onLoad: () => void
   onScan: () => void
   onViewMatrix: () => void
+  onStep: (view: ViewId) => void
 }) {
   return (
     <div className="dashboard-view">
@@ -453,11 +711,12 @@ function DashboardHome({
         </div>
         <span>{profile.name} · {profile.workplace}</span>
       </section>
+      <StepFlow registrationErrors={registrationErrors} rowCount={rows.length} onStep={onStep} />
       <section className="action-grid">
         <ActionCard title="Generar IPERC" subtitle="Nuevo analisis" icon={Layers3} tone="purple" onClick={onGenerate} />
         <ActionCard title="Caso al azar" subtitle="Generar ejemplo" icon={Sparkles} tone="blue" onClick={onRandom} />
-        <ActionCard title="Cargar proyecto" subtitle="Desde plantilla" icon={UploadCloud} tone="green" onClick={onLoad} />
-        <ActionCard title="Escanear area" subtitle="Registro de campo" icon={Camera} tone="orange" onClick={onScan} />
+        <ActionCard title="Mis proyectos" subtitle="Guardados" icon={FolderOpen} tone="green" onClick={onLoad} />
+        <ActionCard title="Escanear area" subtitle="Proximamente" icon={Camera} tone="orange" onClick={onScan} />
       </section>
       <section className="mobile-quick-actions" aria-label="Acciones rapidas">
         <button type="button" onClick={onRandom}><Sparkles size={18} />Caso al azar</button>
@@ -466,20 +725,42 @@ function DashboardHome({
         <button type="button" onClick={onGenerate}><Boxes size={18} />Matriz rapida</button>
       </section>
       <section className="kpi-strip">
-        <MetricCard label="Riesgos totales" value={String(dashboard.totalRisks)} delta="+12% vs ultima revision" tone="purple" />
+        <MetricCard label="Riesgos totales" value={String(dashboard.totalRisks)} delta="Filas generadas" tone="purple" />
         <MetricCard label="Criticos" value={String(rows.filter((row) => row.initialLevel === 'Intolerable').length)} delta="Atencion inmediata" tone="red" />
         <RiskIndexCard value={riskIndex} level={riskIndex > 72 ? 'Intolerable' : riskIndex > 55 ? 'Importante' : 'Moderado'} />
-        <MetricCard label="Controles efectivos" value={`${Math.max(0, 100 - dashboard.reductionPercent / 2).toFixed(0)}%`} delta={`-${dashboard.reductionPercent}% riesgo residual`} tone="green" />
+        <MetricCard label="Reduccion residual" value={`${dashboard.reductionPercent}%`} delta="Tras controles" tone="green" />
         <MetricCard label="Evidencias pendientes" value={String(dashboard.controlsPendingEvidence)} delta="Por subir" tone="yellow" />
       </section>
       <section className="dashboard-lower">
-        <RecentMatrixCard rows={rows.slice(0, 5)} onViewMatrix={onViewMatrix} />
-        <CompactAssistant rows={rows} />
+        <RecentMatrixCard rows={rows.slice(0, 5)} profile={profile} onViewMatrix={onViewMatrix} />
+        <CompactAssistant rows={rows} onAction={onStep} />
         <DistributionCard rows={rows} />
         <ProgressCard rows={rows} />
         <NextActions rows={rows} />
       </section>
     </div>
+  )
+}
+
+function StepFlow({ registrationErrors, rowCount, onStep }: { registrationErrors: number; rowCount: number; onStep: (view: ViewId) => void }) {
+  const steps: Array<{ label: string; view: ViewId; done: boolean }> = [
+    { label: '1. Registrar empresa', view: 'settings', done: registrationErrors === 0 },
+    { label: '2. Areas y puestos', view: 'settings', done: registrationErrors === 0 },
+    { label: '3. Tareas', view: 'settings', done: registrationErrors === 0 },
+    { label: '4. Generar IPERC', view: 'matrix', done: rowCount > 0 },
+    { label: '5. Revisar controles', view: 'matrix', done: rowCount > 0 },
+    { label: '6. Validar legal', view: 'normative', done: false },
+    { label: '7. Plan de accion', view: 'actions', done: rowCount > 0 },
+    { label: '8. Exportar', view: 'reports', done: false },
+  ]
+  return (
+    <section className="step-flow" aria-label="Flujo de trabajo IPERC">
+      {steps.map((step) => (
+        <button type="button" key={step.label} className={`step-chip ${step.done ? 'done' : ''}`} onClick={() => onStep(step.view)}>
+          {step.done ? <CheckCircle2 size={14} /> : <CircleDot size={14} />} {step.label}
+        </button>
+      ))}
+    </section>
   )
 }
 
@@ -516,10 +797,10 @@ function RiskIndexCard({ value, level }: { value: number; level: string }) {
   )
 }
 
-function RecentMatrixCard({ rows, onViewMatrix }: { rows: GeneratedAssessment[]; onViewMatrix: () => void }) {
+function RecentMatrixCard({ rows, profile, onViewMatrix }: { rows: GeneratedAssessment[]; profile: CompanyProfile; onViewMatrix: () => void }) {
   return (
     <article className="glass-card recent-matrix">
-      <header><div><h3>Matriz IPERC reciente</h3><p>Construccion · Edificacion Torre Sigma</p></div></header>
+      <header><div><h3>Matriz IPERC reciente</h3><p>{profile.businessActivity} · {profile.workplace}</p></div></header>
       <div className="matrix-mini">
         <div className="mini-head"><span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span></div>
         {rows.map((row) => (
@@ -537,14 +818,14 @@ function RecentMatrixCard({ rows, onViewMatrix }: { rows: GeneratedAssessment[];
   )
 }
 
-function CompactAssistant({ rows }: { rows: GeneratedAssessment[] }) {
+function CompactAssistant({ rows, onAction }: { rows: GeneratedAssessment[]; onAction: (view: ViewId) => void }) {
   const items = buildAssistantItems(rows).slice(0, 4)
   return (
     <article className="glass-card compact-assistant">
-      <header><BrainCircuit size={22} /><div><h3>Asistente SST</h3><p>Sugerencias inteligentes</p></div></header>
+      <header><BrainCircuit size={22} /><div><h3>Asistente SST</h3><p>Sugerencias del motor</p></div></header>
       <div className="assistant-list">
         {items.map((item) => (
-          <button type="button" key={item.title}>
+          <button type="button" key={item.title} onClick={() => onAction(item.view)}>
             <item.icon size={16} />
             <span><b>{item.title}</b><small>{item.text}</small></span>
           </button>
@@ -569,17 +850,22 @@ function DistributionCard({ rows }: { rows: GeneratedAssessment[] }) {
 }
 
 function ProgressCard({ rows }: { rows: GeneratedAssessment[] }) {
-  const complete = Math.max(22, Math.round(rows.filter((row) => row.residualAcceptability === 'Aceptable').length / Math.max(1, rows.length) * 100))
+  const total = Math.max(1, rows.length)
+  const verified = rows.filter((row) => row.actionStatus === 'verified' || row.actionStatus === 'implemented').length
+  const inProgress = rows.filter((row) => row.actionStatus === 'in_progress').length
+  const overdue = rows.filter((row) => row.actionStatus === 'overdue').length
+  const pending = rows.filter((row) => row.actionStatus === 'pending').length
+  const complete = Math.round((verified / total) * 100)
   return (
     <article className="glass-card progress-card">
       <h3>Progreso del plan de accion</h3>
       <div className="progress-layout">
         <div className="progress-ring" style={{ '--progress': `${complete * 3.6}deg` } as React.CSSProperties}><span>{complete}%<small>Completado</small></span></div>
         <ul>
-          <li><CheckCircle2 size={15} /> Completadas <b>{Math.floor(rows.length * 0.4)}</b></li>
-          <li><Activity size={15} /> En progreso <b>{Math.ceil(rows.length * 0.35)}</b></li>
-          <li><AlertCircle size={15} /> Pendientes <b>{Math.ceil(rows.length * 0.25)}</b></li>
-          <li><AlertTriangle size={15} /> Vencidas <b>{rows.filter((row) => row.proposedControlsInsufficient).length}</b></li>
+          <li><CheckCircle2 size={15} /> Verificadas <b>{verified}</b></li>
+          <li><Activity size={15} /> En progreso <b>{inProgress}</b></li>
+          <li><AlertCircle size={15} /> Pendientes <b>{pending}</b></li>
+          <li><AlertTriangle size={15} /> Vencidas <b>{overdue}</b></li>
         </ul>
       </div>
     </article>
@@ -587,13 +873,16 @@ function ProgressCard({ rows }: { rows: GeneratedAssessment[] }) {
 }
 
 function NextActions({ rows }: { rows: GeneratedAssessment[] }) {
+  const priority = [...rows]
+    .sort((a, b) => b.initialScore - a.initialScore)
+    .slice(0, 4)
   return (
     <article className="glass-card next-actions">
       <h3>Proximas acciones</h3>
-      {rows.slice(0, 4).map((row, index) => (
+      {priority.map((row) => (
         <div className="next-item" key={row.id}>
           <ClipboardCheck size={16} />
-          <span><b>{shortText(row.proposedControls[0]?.description ?? 'Revisar control', 36)}</b><small>{index === 0 ? 'Hoy, 09:00 AM' : 'Manana, 10:00 AM'}</small></span>
+          <span><b>{shortText(row.proposedControls[0]?.description ?? 'Revisar control', 36)}</b><small>Plazo: {row.deadline}</small></span>
           <StatusBadge label={row.initialLevel === 'Intolerable' ? 'Alta' : row.initialLevel === 'Importante' ? 'Media' : 'Baja'} tone={row.initialLevel === 'Intolerable' ? 'red' : row.initialLevel === 'Importante' ? 'orange' : 'blue'} />
         </div>
       ))}
@@ -613,7 +902,9 @@ function MatrixView({
   setLegalFilter,
   expandedRow,
   setExpandedRow,
+  onOverride,
   onExport,
+  onExportAll,
 }: {
   rows: GeneratedAssessment[]
   allRows: GeneratedAssessment[]
@@ -626,11 +917,13 @@ function MatrixView({
   setLegalFilter: (value: string) => void
   expandedRow: string | null
   setExpandedRow: (value: string | null) => void
+  onOverride: (rowId: string, patch: RowOverride) => void
   onExport: () => void
+  onExportAll: () => void
 }) {
   return (
     <section className="matrix-view">
-      <ViewHeader title="Matriz IPERC" text="Gestion tecnica con filtros, trazabilidad y lectura ejecutiva." />
+      <ViewHeader title="Matriz IPERC" text="Gestion tecnica con filtros, edicion inline y trazabilidad." />
       <div className="filter-bar">
         <label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar tarea, peligro o area" /></label>
         <select value={riskFilter} onChange={(event) => setRiskFilter(event.target.value)} aria-label="Filtrar por riesgo">
@@ -645,8 +938,10 @@ function MatrixView({
           <option value="pendiente">Validacion legal pendiente</option>
           <option value="validado">Validado</option>
         </select>
-        <button type="button" className="primary-neon" onClick={onExport}><Download size={16} /> Exportar</button>
+        <button type="button" className="ghost-button" onClick={onExportAll}><Download size={16} /> Todas</button>
+        <button type="button" className="primary-neon" onClick={onExport}><Download size={16} /> Exportar filtradas</button>
       </div>
+      <p className="result-count">{rows.length} de {allRows.length} filas</p>
       <div className="matrix-table glass-card">
         <div className={`table-head ${expertMode ? 'expert' : ''}`}>
           <span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span>{expertMode && <><span>P x S x E</span><span>Legal</span></>}
@@ -661,18 +956,19 @@ function MatrixView({
               <StatusBadge label={statusLabel(row)} tone={statusTone(row)} />
               {expertMode && <><span className="formula">{row.probability} x {row.severity} x {row.exposureFrequency}</span><span>{row.legalValidationMissing ? 'Validacion legal pendiente' : 'Validado'}</span></>}
             </button>
-            {expandedRow === row.id && <MatrixDetail row={row} expertMode={expertMode} />}
+            {expandedRow === row.id && <MatrixDetail row={row} expertMode={expertMode} onOverride={onOverride} />}
           </div>
         ))}
+        {rows.length === 0 && <EmptyState text="No hay filas que coincidan con los filtros. Ajuste la busqueda o registre tareas." />}
       </div>
       <div className="matrix-mobile-list">
-        {allRows.map((row) => <MatrixRowCard key={row.id} row={row} open={expandedRow === row.id} onToggle={() => setExpandedRow(expandedRow === row.id ? null : row.id)} expertMode={expertMode} />)}
+        {allRows.map((row) => <MatrixRowCard key={row.id} row={row} open={expandedRow === row.id} onToggle={() => setExpandedRow(expandedRow === row.id ? null : row.id)} expertMode={expertMode} onOverride={onOverride} />)}
       </div>
     </section>
   )
 }
 
-function MatrixRowCard({ row, open, onToggle, expertMode }: { row: GeneratedAssessment; open: boolean; onToggle: () => void; expertMode: boolean }) {
+function MatrixRowCard({ row, open, onToggle, expertMode, onOverride }: { row: GeneratedAssessment; open: boolean; onToggle: () => void; expertMode: boolean; onOverride: (rowId: string, patch: RowOverride) => void }) {
   return (
     <article className="matrix-row-card">
       <button type="button" onClick={onToggle}>
@@ -680,12 +976,12 @@ function MatrixRowCard({ row, open, onToggle, expertMode }: { row: GeneratedAsse
         <ChevronDown size={18} className={open ? 'rotated' : ''} />
       </button>
       <div className="mobile-badges"><RiskBadge level={row.initialLevel} score={row.initialScore} /><RiskBadge level={row.residualLevel} score={row.residualScore} /><StatusBadge label={statusLabel(row)} tone={statusTone(row)} /></div>
-      {open && <MatrixDetail row={row} expertMode={expertMode} />}
+      {open && <MatrixDetail row={row} expertMode={expertMode} onOverride={onOverride} />}
     </article>
   )
 }
 
-function MatrixDetail({ row, expertMode }: { row: GeneratedAssessment; expertMode: boolean }) {
+function MatrixDetail({ row, expertMode, onOverride }: { row: GeneratedAssessment; expertMode: boolean; onOverride: (rowId: string, patch: RowOverride) => void }) {
   return (
     <div className="row-detail">
       <Detail label="Controles existentes" value={row.existingControls} />
@@ -695,6 +991,26 @@ function MatrixDetail({ row, expertMode }: { row: GeneratedAssessment; expertMod
       <Detail label="Evidencia requerida" value={row.requiredEvidence.join(' | ')} />
       <Detail label="Sustento normativo" value={row.legalValidationMissing ? 'Referencia normativa pendiente de validacion.' : row.legalNorm} />
       <Detail label="Observaciones" value={row.observations || 'Sin observaciones'} />
+      <div className="row-editor">
+        <h4>Ajuste manual del riesgo</h4>
+        <div className="row-editor-grid">
+          <ScoreInput label="Prob. inicial" value={row.probability} onChange={(value) => onOverride(row.id, { probability: value })} />
+          <ScoreInput label="Severidad inicial" value={row.severity} onChange={(value) => onOverride(row.id, { severity: value })} />
+          <ScoreInput label="Exp. inicial" value={row.exposureFrequency} onChange={(value) => onOverride(row.id, { exposureFrequency: value })} />
+          <ScoreInput label="Prob. residual" value={row.residualProbability} onChange={(value) => onOverride(row.id, { residualProbability: value })} />
+          <ScoreInput label="Sev. residual" value={row.residualSeverity} onChange={(value) => onOverride(row.id, { residualSeverity: value })} />
+          <ScoreInput label="Exp. residual" value={row.residualExposureFrequency} onChange={(value) => onOverride(row.id, { residualExposureFrequency: value })} />
+        </div>
+        <label className="field">
+          <span>Estado del control</span>
+          <select value={row.actionStatus} onChange={(event) => onOverride(row.id, { actionStatus: event.target.value as ActionStatus })}>
+            {(Object.keys(ACTION_STATUS_LABELS) as ActionStatus[]).map((status) => (
+              <option key={status} value={status}>{ACTION_STATUS_LABELS[status]}</option>
+            ))}
+          </select>
+        </label>
+        <p className="recalc-line">Inicial: <b>{row.initialLevel} ({row.initialScore})</b> · Residual: <b>{row.residualLevel} ({row.residualScore})</b></p>
+      </div>
       {expertMode && (
         <>
           <Detail label="Formula inicial" value={`${row.probability} x ${row.severity} x ${row.exposureFrequency} = ${row.initialScore}`} />
@@ -706,11 +1022,22 @@ function MatrixDetail({ row, expertMode }: { row: GeneratedAssessment; expertMod
   )
 }
 
+function ScoreInput({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
+  return (
+    <label className="score-input">
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(Number(event.target.value))}>
+        {[1, 2, 3, 4, 5].map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  )
+}
+
 function Detail({ label, value }: { label: string; value: string }) {
   return <p><b>{label}</b><span>{value}</span></p>
 }
 
-function AssistantPanel({ items, rows }: { items: ReturnType<typeof buildAssistantItems>; rows: GeneratedAssessment[] }) {
+function AssistantPanel({ items, rows, onAction }: { items: ReturnType<typeof buildAssistantItems>; rows: GeneratedAssessment[]; onAction: (view: ViewId) => void }) {
   return (
     <aside className="assistant-panel">
       <header><BrainCircuit size={24} /><div><h2>Asistente SST</h2><p>Motor de apoyo tecnico</p></div></header>
@@ -719,7 +1046,7 @@ function AssistantPanel({ items, rows }: { items: ReturnType<typeof buildAssista
         {items.map((item) => (
           <article key={item.title}>
             <item.icon size={18} />
-            <div><h3>{item.title}</h3><p>{item.text}</p><button type="button">{item.action}</button></div>
+            <div><h3>{item.title}</h3><p>{item.text}</p><button type="button" onClick={() => onAction(item.view)}>{item.action}</button></div>
           </article>
         ))}
       </div>
@@ -743,11 +1070,12 @@ function AnalysisView({ rows, dashboard, riskIndex }: { rows: GeneratedAssessmen
 }
 
 function ActionPlanBoard({ rows }: { rows: GeneratedAssessment[] }) {
+  const today = new Date().toISOString().slice(0, 10)
   const columns = [
-    { title: 'Pendiente', rows: rows.filter((row) => row.legalValidationMissing).slice(0, 5) },
-    { title: 'En ejecucion', rows: rows.filter((row) => row.proposedControlsInsufficient).slice(0, 5) },
-    { title: 'Verificado', rows: rows.filter((row) => row.residualAcceptability === 'Aceptable').slice(0, 5) },
-    { title: 'Vencido', rows: rows.filter((row) => row.initialLevel === 'Intolerable').slice(0, 5) },
+    { title: 'Pendiente', rows: rows.filter((row) => row.actionStatus === 'pending') },
+    { title: 'En ejecucion', rows: rows.filter((row) => row.actionStatus === 'in_progress') },
+    { title: 'Verificado', rows: rows.filter((row) => row.actionStatus === 'verified' || row.actionStatus === 'implemented') },
+    { title: 'Vencido', rows: rows.filter((row) => row.actionStatus === 'overdue' || (row.deadline < today && row.actionStatus !== 'verified')) },
   ]
   return (
     <section>
@@ -756,7 +1084,8 @@ function ActionPlanBoard({ rows }: { rows: GeneratedAssessment[] }) {
         {columns.map((column) => (
           <div className="board-column" key={column.title}>
             <h3>{column.title}<span>{column.rows.length}</span></h3>
-            {column.rows.map((row) => (
+            {column.rows.length === 0 && <p className="board-empty">Sin elementos</p>}
+            {column.rows.slice(0, 8).map((row) => (
               <article className="task-board-card" key={row.id}>
                 <b>{shortText(row.proposedControls[0]?.description ?? 'Control por definir', 58)}</b>
                 <p>{shortText(row.riskDescription, 72)}</p>
@@ -772,11 +1101,13 @@ function ActionPlanBoard({ rows }: { rows: GeneratedAssessment[] }) {
 }
 
 function EvidencePanel({ rows }: { rows: GeneratedAssessment[] }) {
+  const withEvidence = rows.filter((row) => row.requiredEvidence.length > 0)
   return (
     <section>
       <ViewHeader title="Evidencias" text="Registro preparado para documentos, fotos y validacion de campo." />
+      {withEvidence.length === 0 && <EmptyState text="No hay evidencias requeridas. Genere la matriz para listar la documentacion necesaria." />}
       <div className="evidence-grid">
-        {rows.slice(0, 12).map((row) => (
+        {withEvidence.slice(0, 12).map((row) => (
           <article className="evidence-card" key={row.id}>
             <UploadCloud size={22} />
             <div>
@@ -792,21 +1123,28 @@ function EvidencePanel({ rows }: { rows: GeneratedAssessment[] }) {
   )
 }
 
-function NormativeSection({ sector }: { sector: SectorId }) {
+function NormativeSection({ sector, rows }: { sector: SectorId; rows: GeneratedAssessment[] }) {
   const module = sectorModules.find((item) => item.id === sector) ?? sectorModules[0]
-  const normCards = [...module.normIds.slice(0, 4), 'sectorial-validation']
+  const normCards = module.normIds.slice(0, 6)
+  const pending = rows.filter((row) => row.legalValidationMissing).length
   return (
     <section>
       <ViewHeader title="Normativa" text="Trazabilidad legal sin inventar articulos ni obligaciones." />
+      <p className="legal-banner">{pending} fila(s) con validacion legal pendiente. La herramienta no cita articulos sin fuente oficial validada.</p>
       <div className="norm-grid">
         {normCards.map((id) => {
           const norm = legalNorms.find((item) => item.id === id)
+          const validated = norm?.sourceStatus === 'internal_verified' && norm.sourceUrl
           return (
             <article className="norm-card" key={id}>
               <Scale size={24} />
               <h3>{norm?.shortName ?? 'Normativa sectorial'}</h3>
               <p>{norm?.title ?? module.label}</p>
-              <span>Referencia normativa pendiente de validacion.</span>
+              {validated ? (
+                <a href={norm!.sourceUrl} target="_blank" rel="noopener noreferrer">Ver fuente oficial</a>
+              ) : (
+                <span>Requiere validacion legal</span>
+              )}
             </article>
           )
         })}
@@ -815,24 +1153,37 @@ function NormativeSection({ sector }: { sector: SectorId }) {
   )
 }
 
-function ReportsPanel({ profile, rows, warnings }: { profile: CompanyProfile; rows: GeneratedAssessment[]; warnings: ReturnType<typeof validateBeforeExport> }) {
+function ReportsPanel({
+  rows,
+  warnings,
+  onReport,
+  onWord,
+  onCsv,
+  onPdf,
+}: {
+  rows: GeneratedAssessment[]
+  warnings: ReturnType<typeof validateBeforeExport>
+  onReport: (kind: ReportKind) => void
+  onWord: () => void
+  onCsv: () => void
+  onPdf: () => void
+}) {
   const checks = [
     ['Datos completos', warnings.some((warning) => warning.code === 'company-data') ? 'pendiente' : 'listo'],
     ['Riesgos evaluados', rows.length > 0 ? 'listo' : 'pendiente'],
     ['Controles definidos', rows.every((row) => row.proposedControls.length > 0) ? 'listo' : 'pendiente'],
     ['Riesgo residual calculado', rows.every((row) => row.residualScore > 0) ? 'listo' : 'pendiente'],
-    ['Evidencias revisadas', warnings.some((warning) => warning.code === 'control-strength') ? 'pendiente' : 'listo'],
     ['Sustento normativo revisado', warnings.some((warning) => warning.code === 'legal-validation') ? 'pendiente' : 'listo'],
   ]
-  const reports = [
-    ['Resumen ejecutivo', FileText],
-    ['Matriz completa', FileSpreadsheet],
-    ['Riesgos criticos', AlertTriangle],
-    ['Controles vencidos', Target],
-    ['Evidencia pendiente', UploadCloud],
-    ['Validacion legal', Scale],
-    ['Plan de accion', ClipboardList],
-  ] as const
+  const reports: Array<{ label: string; icon: typeof FileText; kind: ReportKind }> = [
+    { label: 'Resumen ejecutivo', icon: FileText, kind: 'executive' },
+    { label: 'Matriz completa', icon: FileSpreadsheet, kind: 'matrix' },
+    { label: 'Riesgos criticos', icon: AlertTriangle, kind: 'critical' },
+    { label: 'Controles vencidos', icon: Target, kind: 'overdue' },
+    { label: 'Evidencia pendiente', icon: UploadCloud, kind: 'pending-evidence' },
+    { label: 'Validacion legal', icon: Scale, kind: 'legal-pending' },
+    { label: 'Plan de accion', icon: ClipboardList, kind: 'action-plan' },
+  ]
   return (
     <section>
       <ViewHeader title="Reportes" text="Exportes ejecutivos y tecnicos con alertas legales visibles." />
@@ -840,10 +1191,15 @@ function ReportsPanel({ profile, rows, warnings }: { profile: CompanyProfile; ro
         <article className="glass-card checklist-card">
           <h3>Lista de validacion</h3>
           {checks.map(([label, status]) => <p key={label}><CheckCircle2 size={16} className={status === 'listo' ? 'ok' : 'warn'} />{label}<span>{status}</span></p>)}
+          <div className="report-extra">
+            <button type="button" className="ghost-button" onClick={onWord}>Word tecnico</button>
+            <button type="button" className="ghost-button" onClick={onCsv}>CSV dataset</button>
+            <button type="button" className="ghost-button" onClick={onPdf}>PDF (imprimir)</button>
+          </div>
         </article>
         <div className="report-grid">
-          {reports.map(([label, Icon]) => (
-            <button type="button" key={label} onClick={() => handleReport(label, profile, rows)}>
+          {reports.map(({ label, icon: Icon, kind }) => (
+            <button type="button" key={label} onClick={() => onReport(kind)}>
               <Icon size={24} /><span>{label}</span>
             </button>
           ))}
@@ -853,42 +1209,188 @@ function ReportsPanel({ profile, rows, warnings }: { profile: CompanyProfile; ro
   )
 }
 
-function SettingsPanel({
+function RegistrationPanel({
   profile,
   setProfile,
   sector,
   setSector,
+  areas,
+  setAreas,
+  positions,
+  setPositions,
   tasks,
   setTasks,
-  positions,
+  errors,
+  projectStatus,
+  setProjectStatus,
+  onSave,
+  saveState,
 }: {
   profile: CompanyProfile
   setProfile: (profile: CompanyProfile) => void
   sector: SectorId
   setSector: (sector: SectorId) => void
+  areas: WorkArea[]
+  setAreas: (areas: WorkArea[]) => void
+  positions: JobPosition[]
+  setPositions: (positions: JobPosition[]) => void
   tasks: WorkTask[]
   setTasks: (tasks: WorkTask[]) => void
-  positions: JobPosition[]
+  errors: ReturnType<typeof validateRegistration>
+  projectStatus: ProjectStatus
+  setProjectStatus: (status: ProjectStatus) => void
+  onSave: () => void
+  saveState: string
 }) {
+  const rucInvalid = profile.ruc.length > 0 && !/^[0-9]{11}$/.test(profile.ruc)
+
+  function addArea() {
+    setAreas([...areas, { id: newId('area'), name: 'Nueva area', process: '' }])
+  }
+  function updateArea(id: string, patch: Partial<WorkArea>) {
+    setAreas(areas.map((area) => (area.id === id ? { ...area, ...patch } : area)))
+  }
+  function removeArea(id: string) {
+    setAreas(areas.filter((area) => area.id !== id))
+    setPositions(positions.filter((position) => position.areaId !== id))
+  }
+  function duplicateArea(area: WorkArea) {
+    setAreas([...areas, { ...area, id: newId('area'), name: `${area.name} (copia)` }])
+  }
+
+  function addPosition() {
+    setPositions([...positions, { id: newId('pos'), areaId: areas[0]?.id ?? '', title: 'Nuevo puesto', workerCount: 1 }])
+  }
+  function updatePosition(id: string, patch: Partial<JobPosition>) {
+    setPositions(positions.map((position) => (position.id === id ? { ...position, ...patch } : position)))
+  }
+  function removePosition(id: string) {
+    setPositions(positions.filter((position) => position.id !== id))
+    setTasks(tasks.filter((task) => task.positionId !== id))
+  }
+  function duplicatePosition(position: JobPosition) {
+    setPositions([...positions, { ...position, id: newId('pos'), title: `${position.title} (copia)` }])
+  }
+
+  function addTask() {
+    setTasks([
+      ...tasks,
+      { id: newId('task'), positionId: positions[0]?.id ?? '', name: 'Nueva tarea', activityKind: 'routine', frequency: 'Diaria', exposedWorkers: 1, existingControls: '', responsiblePerson: '' },
+    ])
+  }
+  function updateTaskField(id: string, patch: Partial<WorkTask>) {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, ...patch } : task)))
+  }
+  function removeTask(id: string) {
+    setTasks(tasks.filter((task) => task.id !== id))
+  }
+  function duplicateTask(task: WorkTask) {
+    setTasks([...tasks, { ...task, id: newId('task'), name: `${task.name} (copia)` }])
+  }
+
   return (
     <section>
-      <ViewHeader title="Configuracion" text="Datos base para generar matrices coherentes y exportables." />
+      <ViewHeader title="Registro del proyecto IPERC" text="Datos de empresa, areas, puestos y tareas para generar la matriz." />
+
+      {errors.length > 0 ? (
+        <div className="reg-alert warning">
+          <AlertTriangle size={16} /> Faltan datos: {errors.slice(0, 3).map((error) => error.message).join(' ')}
+          {errors.length > 3 ? ` (+${errors.length - 3} mas)` : ''}
+        </div>
+      ) : (
+        <div className="reg-alert ok"><CheckCircle2 size={16} /> Registro completo. Puede generar y exportar la matriz.</div>
+      )}
+
       <div className="settings-grid">
         <div className="glass-card form-card">
-          <h3>Empresa y sede</h3>
+          <h3>Empresa</h3>
           <Field label="Razon social" value={profile.name} onChange={(name) => setProfile({ ...profile, name })} />
-          <Field label="RUC" value={profile.ruc} onChange={(ruc) => setProfile({ ...profile, ruc })} />
+          <label className="field">
+            <span>RUC (11 digitos)</span>
+            <input value={profile.ruc} onChange={(event) => setProfile({ ...profile, ruc: event.target.value.replace(/[^0-9]/g, '').slice(0, 11) })} inputMode="numeric" />
+            {rucInvalid && <small className="field-error">El RUC debe tener 11 digitos.</small>}
+          </label>
+          <label className="field">
+            <span>Tipo de propiedad</span>
+            <select value={profile.ownership} onChange={(event) => setProfile({ ...profile, ownership: event.target.value as 'public' | 'private' })}>
+              <option value="private">Privada</option>
+              <option value="public">Publica</option>
+            </select>
+          </label>
+          <Field label="Actividad economica" value={profile.businessActivity} onChange={(businessActivity) => setProfile({ ...profile, businessActivity })} />
+          <Field label="CIIU" value={profile.ciiu} onChange={(ciiu) => setProfile({ ...profile, ciiu })} />
           <Field label="Centro de trabajo" value={profile.workplace} onChange={(workplace) => setProfile({ ...profile, workplace })} />
+          <label className="field">
+            <span>N. de trabajadores</span>
+            <input type="number" min={1} value={profile.workerCount} onChange={(event) => setProfile({ ...profile, workerCount: Number(event.target.value) || 0 })} />
+          </label>
           <label className="field"><span>Sector</span><select value={sector} onChange={(event) => setSector(event.target.value as SectorId)}>{sectorModules.map((module) => <option key={module.id} value={module.id}>{module.label}</option>)}</select></label>
         </div>
+
         <div className="glass-card form-card">
-          <h3>Tareas operativas</h3>
-          {tasks.map((task, index) => (
+          <h3>Responsables y estado</h3>
+          <Field label="Responsable SST" value={profile.sgsstResponsible ?? ''} onChange={(sgsstResponsible) => setProfile({ ...profile, sgsstResponsible })} />
+          <Field label="Elaborado por" value={profile.preparedBy ?? ''} onChange={(preparedBy) => setProfile({ ...profile, preparedBy })} />
+          <Field label="Revisado por" value={profile.reviewedBy ?? ''} onChange={(reviewedBy) => setProfile({ ...profile, reviewedBy })} />
+          <Field label="Aprobado por" value={profile.approvedBy ?? ''} onChange={(approvedBy) => setProfile({ ...profile, approvedBy })} />
+          <label className="field">
+            <span>Estado del proyecto</span>
+            <select value={projectStatus} onChange={(event) => setProjectStatus(event.target.value as ProjectStatus)}>
+              <option value="draft">Borrador</option>
+              <option value="submitted">Enviado</option>
+              <option value="approved">Aprobado</option>
+              <option value="archived">Archivado</option>
+            </select>
+          </label>
+          <button type="button" className="primary-neon" onClick={onSave} disabled={saveState === 'saving'}>
+            <Save size={16} /> {saveState === 'saving' ? 'Guardando...' : 'Guardar proyecto'}
+          </button>
+        </div>
+
+        <div className="glass-card form-card span-2">
+          <div className="card-head"><h3>Areas y procesos</h3><button type="button" className="ghost-button" onClick={addArea}><Plus size={14} /> Agregar area</button></div>
+          {areas.map((area) => (
+            <div className="crud-row" key={area.id}>
+              <Field label="Area" value={area.name} onChange={(name) => updateArea(area.id, { name })} />
+              <Field label="Proceso" value={area.process} onChange={(process) => updateArea(area.id, { process })} />
+              <div className="crud-actions">
+                <button type="button" aria-label="Duplicar area" onClick={() => duplicateArea(area)}><Copy size={15} /></button>
+                <button type="button" aria-label="Eliminar area" onClick={() => removeArea(area.id)}><Trash2 size={15} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="glass-card form-card span-2">
+          <div className="card-head"><h3>Puestos de trabajo</h3><button type="button" className="ghost-button" onClick={addPosition}><Plus size={14} /> Agregar puesto</button></div>
+          {positions.map((position) => (
+            <div className="crud-row" key={position.id}>
+              <Field label="Puesto" value={position.title} onChange={(title) => updatePosition(position.id, { title })} />
+              <label className="field"><span>Area</span><select value={position.areaId} onChange={(event) => updatePosition(position.id, { areaId: event.target.value })}>{areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}</select></label>
+              <label className="field"><span>Trabajadores</span><input type="number" min={1} value={position.workerCount} onChange={(event) => updatePosition(position.id, { workerCount: Number(event.target.value) || 1 })} /></label>
+              <div className="crud-actions">
+                <button type="button" aria-label="Duplicar puesto" onClick={() => duplicatePosition(position)}><Copy size={15} /></button>
+                <button type="button" aria-label="Eliminar puesto" onClick={() => removePosition(position.id)}><Trash2 size={15} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="glass-card form-card span-2">
+          <div className="card-head"><h3>Tareas operativas</h3><button type="button" className="ghost-button" onClick={addTask}><Plus size={14} /> Agregar tarea</button></div>
+          {tasks.map((task) => (
             <div className="task-edit" key={task.id}>
-              <Field label="Tarea" value={task.name} onChange={(name) => updateTask(tasks, setTasks, index, { name })} />
-              <label className="field"><span>Puesto</span><select value={task.positionId} onChange={(event) => updateTask(tasks, setTasks, index, { positionId: event.target.value })}>{positions.map((position) => <option key={position.id} value={position.id}>{position.title}</option>)}</select></label>
-              <label className="field"><span>Tipo</span><select value={task.activityKind} onChange={(event) => updateTask(tasks, setTasks, index, { activityKind: event.target.value as ActivityKind })}><option value="routine">Rutinaria</option><option value="non_routine">No rutinaria</option><option value="emergency">Emergencia</option></select></label>
-              <Field label="Controles existentes" value={task.existingControls} onChange={(existingControls) => updateTask(tasks, setTasks, index, { existingControls })} />
+              <Field label="Tarea" value={task.name} onChange={(name) => updateTaskField(task.id, { name })} />
+              <label className="field"><span>Puesto</span><select value={task.positionId} onChange={(event) => updateTaskField(task.id, { positionId: event.target.value })}>{positions.map((position) => <option key={position.id} value={position.id}>{position.title}</option>)}</select></label>
+              <label className="field"><span>Tipo</span><select value={task.activityKind} onChange={(event) => updateTaskField(task.id, { activityKind: event.target.value as ActivityKind })}><option value="routine">Rutinaria</option><option value="non_routine">No rutinaria</option><option value="emergency">Emergencia</option></select></label>
+              <label className="field"><span>Expuestos</span><input type="number" min={1} value={task.exposedWorkers} onChange={(event) => updateTaskField(task.id, { exposedWorkers: Number(event.target.value) || 1 })} /></label>
+              <Field label="Frecuencia" value={task.frequency} onChange={(frequency) => updateTaskField(task.id, { frequency })} />
+              <Field label="Controles existentes" value={task.existingControls} onChange={(existingControls) => updateTaskField(task.id, { existingControls })} />
+              <Field label="Responsable" value={task.responsiblePerson ?? ''} onChange={(responsiblePerson) => updateTaskField(task.id, { responsiblePerson })} />
+              <div className="crud-actions">
+                <button type="button" aria-label="Duplicar tarea" onClick={() => duplicateTask(task)}><Copy size={15} /></button>
+                <button type="button" aria-label="Eliminar tarea" onClick={() => removeTask(task.id)}><Trash2 size={15} /></button>
+              </div>
             </div>
           ))}
         </div>
@@ -909,16 +1411,32 @@ function MobileBottomNav({ activeView, onChange, onQuick }: { activeView: ViewId
   )
 }
 
-function Modal({ kind, onClose, onRandom }: { kind: ModalKind; onClose: () => void; onRandom: () => void }) {
+function Modal({
+  kind,
+  onClose,
+  onRandom,
+  onLoadProject,
+  onDuplicated,
+  onExportProject,
+}: {
+  kind: ModalKind
+  onClose: () => void
+  onRandom: () => void
+  onLoadProject: (project: SavedProject) => void
+  onDuplicated: (message: string) => void
+  onExportProject: (project: SavedProject) => void
+}) {
   if (!kind) return null
+  if (kind === 'projects') {
+    return <ProjectsModal onClose={onClose} onLoadProject={onLoadProject} onDuplicated={onDuplicated} onExportProject={onExportProject} />
+  }
   const content = {
-    scan: ['Escanear area', 'Funcion preparada para captura de evidencias. Disponible para integracion futura.'],
-    load: ['Cargar proyecto', 'Modulo listo para plantillas y proyectos guardados. Por ahora use Caso al azar o configure la empresa manualmente.'],
-    quick: ['Nuevo IPERC', 'Inicia una matriz rapida desde un caso de ejemplo coherente.'],
+    scan: ['Escanear area', 'La captura de evidencias por camara aun no esta disponible. Use la seccion Evidencias para registrar la documentacion requerida.'],
+    quick: ['Nuevo IPERC', 'Inicia una matriz rapida desde un caso de ejemplo coherente o registra tu empresa en la seccion Registro.'],
   }[kind]
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card">
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
         <button type="button" className="icon-button close" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
         <Radar size={32} />
         <h2>{content[0]}</h2>
@@ -932,8 +1450,98 @@ function Modal({ kind, onClose, onRandom }: { kind: ModalKind; onClose: () => vo
   )
 }
 
+function ProjectsModal({
+  onClose,
+  onLoadProject,
+  onDuplicated,
+  onExportProject,
+}: {
+  onClose: () => void
+  onLoadProject: (project: SavedProject) => void
+  onDuplicated: (message: string) => void
+  onExportProject: (project: SavedProject) => void
+}) {
+  const [projects, setProjects] = useState<SavedProject[]>([])
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'todos'>('todos')
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    const result = await listProjects({ query: search, status: statusFilter })
+    setProjects(result.data ?? [])
+    setMessage(result.message)
+    setLoading(false)
+  }, [search, statusFilter])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  async function handleDelete(project: SavedProject) {
+    const result = await deleteProject(project)
+    setMessage(result.message)
+    void refresh()
+  }
+
+  async function handleDuplicate(project: SavedProject) {
+    const result = await duplicateProject(project)
+    onDuplicated(result.message)
+    void refresh()
+  }
+
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="modal-card projects-modal" onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="icon-button close" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+        <FolderOpen size={30} />
+        <h2>Mis proyectos</h2>
+        <p>{message || 'Proyectos guardados localmente y en Supabase.'}</p>
+        <div className="projects-filters">
+          <label className="search-box"><Search size={14} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Empresa, RUC o sector" /></label>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ProjectStatus | 'todos')}>
+            <option value="todos">Todos los estados</option>
+            <option value="draft">Borrador</option>
+            <option value="submitted">Enviado</option>
+            <option value="approved">Aprobado</option>
+            <option value="archived">Archivado</option>
+          </select>
+        </div>
+        <div className="projects-list">
+          {loading && <p className="board-empty">Cargando...</p>}
+          {!loading && projects.length === 0 && <p className="board-empty">Aun no hay proyectos guardados. Use "Guardar proyecto" en Registro.</p>}
+          {!loading && projects.map((project) => (
+            <article className="project-item" key={project.id}>
+              <div>
+                <b>{project.companyName}</b>
+                <small>{project.ruc ?? 'Sin RUC'} · {project.sector} · {project.status} · {project.updatedAt.slice(0, 10)} · {project.source === 'supabase' ? 'Supabase' : 'Local'}</small>
+              </div>
+              <div className="project-actions">
+                <button type="button" onClick={() => onLoadProject(project)} title="Cargar"><FolderOpen size={15} /></button>
+                <button type="button" onClick={() => handleDuplicate(project)} title="Duplicar"><Copy size={15} /></button>
+                <button type="button" onClick={() => onExportProject(project)} title="Exportar Excel"><Download size={15} /></button>
+                <button type="button" onClick={() => handleDelete(project)} title="Eliminar"><Trash2 size={15} /></button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ViewHeader({ title, text }: { title: string; text: string }) {
-  return <header className="view-header"><div><h2>{title}</h2><p>{text}</p></div><button type="button" className="ghost-button"><SlidersHorizontal size={16} /> Ajustes</button></header>
+  return <header className="view-header"><div><h2>{title}</h2><p>{text}</p></div></header>
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="empty-state">
+      <Layers3 size={28} />
+      <p>{text}</p>
+    </div>
+  )
 }
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
@@ -955,7 +1563,7 @@ function computeRiskIndex(rows: GeneratedAssessment[]) {
   return Math.min(100, Math.max(1, Math.round((average / maxScore) * 100 * 2.1)))
 }
 
-function buildAssistantItems(rows: GeneratedAssessment[]) {
+function buildAssistantItems(rows: GeneratedAssessment[]): Array<{ title: string; text: string; action: string; icon: typeof AlertTriangle; view: ViewId }> {
   const critical = rows.find((row) => row.initialLevel === 'Intolerable' || row.initialLevel === 'Importante')
   const ppe = rows.find((row) => row.ppeOnlyWarning)
   const evidence = rows.filter((row) => row.requiredEvidence.length > 0)
@@ -968,39 +1576,37 @@ function buildAssistantItems(rows: GeneratedAssessment[]) {
       text: critical ? 'Este riesgo requiere controles de mayor jerarquia antes de cerrar la matriz.' : 'Mantenga seguimiento preventivo de las tareas principales.',
       action: 'Revisar controles',
       icon: AlertTriangle,
+      view: 'matrix',
     },
     {
       title: evidence.length ? `Faltan evidencias en ${Math.min(3, evidence.length)} tareas` : 'Evidencias al dia',
       text: 'Priorice fotos, checklists y registros de capacitacion para sustentar controles.',
       action: 'Subir evidencias',
       icon: UploadCloud,
+      view: 'evidence',
     },
     {
       title: legal ? 'Validacion legal pendiente' : 'Trazabilidad normativa revisada',
       text: legal ? 'No se citan articulos sin fuente oficial validada.' : 'Las referencias cargadas mantienen trazabilidad.',
       action: 'Ver normativa',
       icon: Scale,
+      view: 'normative',
     },
     {
       title: ppe || weak ? 'Control preventivo debil' : 'Controles en seguimiento',
       text: ppe ? 'Este riesgo no deberia quedar solo con EPP.' : 'Revise eficacia despues de implementar medidas.',
       action: 'Ajustar plan',
       icon: ShieldCheck,
+      view: 'actions',
     },
     {
       title: overdue ? 'Control vencido' : 'Planifica charla de seguridad',
       text: overdue ? 'Hay acciones fuera de plazo que requieren responsable.' : 'El area operativa necesita refuerzo preventivo semanal.',
       action: 'Programar accion',
       icon: ClipboardCheck,
+      view: 'actions',
     },
   ]
-}
-
-function handleReport(label: string, profile: CompanyProfile, rows: GeneratedAssessment[]) {
-  if (label.includes('Matriz') || label.includes('Excel')) exportExcel(profile, rows)
-  else if (label.includes('CSV')) exportCsv(profile, rows)
-  else if (label.includes('Informe') || label.includes('Resumen')) exportWord(profile, rows)
-  else printPdfReport()
 }
 
 function countBy(rows: GeneratedAssessment[], getKey: (row: GeneratedAssessment) => string): Record<string, number> {
@@ -1012,12 +1618,16 @@ function countBy(rows: GeneratedAssessment[], getKey: (row: GeneratedAssessment)
 }
 
 function statusLabel(row: GeneratedAssessment) {
+  if (row.actionStatus === 'verified') return 'Verificado'
+  if (row.actionStatus === 'overdue') return 'Vencido'
   if (row.legalValidationMissing) return 'Validacion legal pendiente'
   if (row.proposedControlsInsufficient) return 'En revision'
   return 'En control'
 }
 
 function statusTone(row: GeneratedAssessment) {
+  if (row.actionStatus === 'verified') return 'green'
+  if (row.actionStatus === 'overdue') return 'red'
   if (row.legalValidationMissing) return 'yellow'
   if (row.proposedControlsInsufficient) return 'orange'
   return 'green'
@@ -1025,12 +1635,6 @@ function statusTone(row: GeneratedAssessment) {
 
 function shortText(value: string, length: number) {
   return value.length > length ? `${value.slice(0, length - 1)}...` : value
-}
-
-function updateTask(tasks: WorkTask[], setTasks: (tasks: WorkTask[]) => void, index: number, patch: Partial<WorkTask>) {
-  const next = [...tasks]
-  next[index] = { ...next[index], ...patch }
-  setTasks(next)
 }
 
 export default App
