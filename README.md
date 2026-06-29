@@ -37,11 +37,6 @@ Para desarrollo local cree un archivo `.env` (ignorado por git) con esas dos var
 
 Si las variables faltan, la app funciona en **modo local**: los proyectos se guardan en `localStorage` del navegador y "Mis proyectos" sigue operativo. La barra lateral muestra "Modo local" o "Supabase conectado" segun corresponda.
 
-Proyecto indicado por el usuario:
-
-```text
-https://qxtfzhdoxlgwfwgwpljd.supabase.co
-```
 
 ### Migraciones
 
