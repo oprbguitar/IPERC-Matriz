@@ -313,6 +313,19 @@ create policy "public_read_legal_articles" on public.legal_articles for select t
 create policy "public_read_sector_modules" on public.sector_modules for select to anon, authenticated using (true);
 create policy "public_read_evidence_requirements" on public.evidence_requirements for select to anon, authenticated using (true);
 
+create policy "private_no_direct_access_companies" on public.companies for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_workplaces" on public.workplaces for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_areas" on public.areas for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_job_positions" on public.job_positions for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_tasks" on public.tasks for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_risk_assessments" on public.risk_assessments for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_risk_control_links" on public.risk_control_links for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_risk_legal_links" on public.risk_legal_links for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_evidence_records" on public.evidence_records for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_action_plan_items" on public.action_plan_items for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_versions" on public.versions for all to anon, authenticated using (false) with check (false);
+create policy "private_no_direct_access_approvals" on public.approvals for all to anon, authenticated using (false) with check (false);
+
 create policy "anon_insert_iperc_snapshots" on public.iperc_snapshots for insert to anon, authenticated
 with check (
   char_length(company_name) between 1 and 180
