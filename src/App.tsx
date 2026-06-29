@@ -711,6 +711,7 @@ function DashboardHome({
         </div>
         <span>{profile.name} · {profile.workplace}</span>
       </section>
+      <TemplateDownloadPanel />
       <StepFlow registrationErrors={registrationErrors} rowCount={rows.length} onStep={onStep} />
       <section className="action-grid">
         <ActionCard title="Generar IPERC" subtitle="Nuevo analisis" icon={Layers3} tone="purple" onClick={onGenerate} />
@@ -739,6 +740,34 @@ function DashboardHome({
         <NextActions rows={rows} />
       </section>
     </div>
+  )
+}
+
+function TemplateDownloadPanel() {
+  const baseUrl = import.meta.env.BASE_URL
+
+  return (
+    <section className="template-download-panel" aria-label="Descargar plantillas IPERC">
+      <a className="template-download-main" href={`${baseUrl}templates/IPERC_Generador_Normativo_Peru.xlsx`} download>
+        <span><Download size={22} /></span>
+        <div>
+          <strong>Descarga plantilla</strong>
+          <small>Word + Excel IPERC</small>
+        </div>
+      </a>
+      <div className="template-download-copy">
+        <b>Formatos base listos</b>
+        <p>Generador normativo y guia tecnica para completar fuera de linea.</p>
+      </div>
+      <div className="template-download-actions" aria-label="Archivos disponibles">
+        <a href={`${baseUrl}templates/IPERC_Generador_Normativo_Peru.xlsx`} download>
+          <FileSpreadsheet size={18} /> Excel
+        </a>
+        <a href={`${baseUrl}templates/IPERC_Informe_Guia.docx`} download>
+          <FileText size={18} /> Word
+        </a>
+      </div>
+    </section>
   )
 }
 

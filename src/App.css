@@ -427,6 +427,143 @@ textarea:focus-visible {
   font-size: 12px;
 }
 
+.template-download-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin: -4px 0 18px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(6, 182, 212, 0.46);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(139, 92, 246, 0.32), transparent 32%),
+    radial-gradient(circle at 88% 12%, rgba(34, 197, 94, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(16, 28, 52, 0.9), rgba(5, 8, 18, 0.74));
+  box-shadow: 0 0 28px rgba(6, 182, 212, 0.16), inset 0 1px 0 rgba(248, 250, 252, 0.08);
+  animation: templateGlow 1.7s ease-in-out infinite;
+}
+
+.template-download-panel::before {
+  content: "";
+  position: absolute;
+  inset: -80% -30%;
+  background: linear-gradient(90deg, transparent 38%, rgba(248, 250, 252, 0.16), transparent 62%);
+  transform: rotate(8deg);
+  animation: templateSweep 2.6s linear infinite;
+}
+
+.template-download-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.template-download-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.template-download-main span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  color: white;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+  box-shadow: 0 0 28px rgba(139, 92, 246, 0.56);
+  animation: templateBlink 1.05s ease-in-out infinite;
+}
+
+.template-download-main strong,
+.template-download-copy b {
+  display: block;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.template-download-main small,
+.template-download-copy p {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.template-download-copy p {
+  max-width: 420px;
+}
+
+.template-download-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.template-download-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(248, 250, 252, 0.18);
+  border-radius: 14px;
+  color: var(--text-main);
+  background: rgba(12, 20, 38, 0.72);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 900;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.template-download-actions a:hover,
+.template-download-actions a:focus-visible,
+.template-download-main:focus-visible {
+  border-color: rgba(6, 182, 212, 0.72);
+  box-shadow: 0 0 22px rgba(6, 182, 212, 0.28);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+@keyframes templateGlow {
+  0%, 100% {
+    border-color: rgba(6, 182, 212, 0.42);
+    box-shadow: 0 0 22px rgba(6, 182, 212, 0.14), inset 0 1px 0 rgba(248, 250, 252, 0.08);
+  }
+  50% {
+    border-color: rgba(139, 92, 246, 0.82);
+    box-shadow: 0 0 34px rgba(139, 92, 246, 0.28), 0 0 22px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(248, 250, 252, 0.12);
+  }
+}
+
+@keyframes templateBlink {
+  0%, 100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: brightness(1.35);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes templateSweep {
+  from {
+    transform: translateX(-45%) rotate(8deg);
+  }
+  to {
+    transform: translateX(45%) rotate(8deg);
+  }
+}
+
 .action-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1492,6 +1629,25 @@ textarea:focus-visible {
 
   .welcome-row span {
     width: fit-content;
+  }
+
+  .template-download-panel {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .template-download-copy p {
+    max-width: none;
+  }
+
+  .template-download-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .template-download-actions a {
+    width: 100%;
   }
 
   .dashboard-view .action-grid {
