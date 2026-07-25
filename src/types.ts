@@ -89,15 +89,64 @@ export interface ControlTemplate {
   requiredEvidence: string[]
 }
 
+/** Thematic family used by the "Normativa" filters and by the diagnostic rules. */
+export type LegalCategory =
+  | 'general-sst'
+  | 'iperc'
+  | 'committee-supervisor'
+  | 'records'
+  | 'occupational-health'
+  | 'accidents-incidents'
+  | 'ergonomics'
+  | 'sectoral'
+  | 'environmental'
+
+/** Current standing of the norm itself. */
+export type LegalEffectiveStatus = 'vigente' | 'modificada' | 'derogada' | 'verification-required'
+
+/** Confidence on the source we link to, never on the legal interpretation. */
+export type LegalSourceStatus = 'official-verified' | 'verification-required'
+
+/**
+ * How a statement derived from the norm must be presented to the reader.
+ * Keeping this explicit avoids showing a recommendation as if it were mandatory.
+ */
+export type ObligationKind =
+  | 'obligacion-legal'
+  | 'recomendacion'
+  | 'buena-practica'
+  | 'requisito-sectorial'
+  | 'pendiente-verificacion'
+
 export interface LegalNorm {
   id: string
-  title: string
   shortName: string
+  officialTitle: string
+  /** Legacy alias of `officialTitle`, still consumed by the risk engine and the Excel exporters. */
+  title: string
+  category: LegalCategory
   jurisdiction: 'Peru'
+  /** Legacy grouping used by the sector modules of the IPERC engine. */
   module: 'general' | SectorId
-  sourceStatus: 'internal_verified' | 'official_uploaded_required'
+  authority: string
+  publicationDate?: string
+  effectiveStatus: LegalEffectiveStatus
+  sourceStatus: LegalSourceStatus
+  officialPageUrl: string
+  officialDocumentUrl?: string
+  /** Legacy alias of `officialPageUrl`. */
   sourceUrl?: string
-  notes: string
+  plainLanguageSummary: string
+  /** Short bullets answering "¿Qué regula?" without copying legal text. */
+  whatItRegulates: string[]
+  appliesTo: string[]
+  keyTopics: string[]
+  obligationKind: ObligationKind
+  relatedNormIds?: string[]
+  relatedTemplateIds?: string[]
+  relatedRouteId?: string
+  lastVerifiedAt: string
+  notes?: string
 }
 
 export interface LegalArticle {
@@ -138,7 +187,7 @@ export interface GeneratedAssessment {
   workplace: string
   economicActivity: string
   sector: SectorId
-  area: WorkArea
+  área: WorkArea
   process: string
   position: JobPosition
   jobPosition: string
@@ -181,7 +230,7 @@ export interface GeneratedAssessment {
   legalSourceUrl: string
   legalValidationStatus: LegalValidationStatus
   observations: string
-  version: string
+  versión: string
   preparedBy: string
   reviewedBy: string
   approvedBy: string

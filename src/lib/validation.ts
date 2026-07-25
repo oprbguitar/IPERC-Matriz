@@ -15,23 +15,23 @@ export function isValidRuc(ruc: string): boolean {
  */
 export function validateRegistration(
   profile: CompanyProfile,
-  areas: WorkArea[],
+  áreas: WorkArea[],
   positions: JobPosition[],
   tasks: WorkTask[],
 ): FieldError[] {
   const errors: FieldError[] = []
 
-  if (!profile.name.trim()) errors.push({ field: 'name', message: 'Ingrese la razon social.' })
+  if (!profile.name.trim()) errors.push({ field: 'name', message: 'Ingrese la razón social.' })
   if (!profile.ruc.trim()) {
     errors.push({ field: 'ruc', message: 'Ingrese el RUC.' })
   } else if (!isValidRuc(profile.ruc)) {
     errors.push({ field: 'ruc', message: 'El RUC debe tener 11 digitos numericos.' })
   }
-  if (!profile.businessActivity.trim()) errors.push({ field: 'businessActivity', message: 'Ingrese la actividad economica.' })
+  if (!profile.businessActivity.trim()) errors.push({ field: 'businessActivity', message: 'Ingrese la actividad económica.' })
   if (!profile.workplace.trim()) errors.push({ field: 'workplace', message: 'Ingrese el centro de trabajo.' })
-  if (!profile.workerCount || profile.workerCount < 1) errors.push({ field: 'workerCount', message: 'Indique el numero de trabajadores.' })
+  if (!profile.workerCount || profile.workerCount < 1) errors.push({ field: 'workerCount', message: 'Indique el número de trabajadores.' })
 
-  if (areas.length === 0) errors.push({ field: 'areas', message: 'Registre al menos un area.' })
+  if (áreas.length === 0) errors.push({ field: 'areas', message: 'Registre al menos un área.' })
   if (positions.length === 0) errors.push({ field: 'positions', message: 'Registre al menos un puesto.' })
   if (tasks.length === 0) errors.push({ field: 'tasks', message: 'Registre al menos una tarea.' })
 

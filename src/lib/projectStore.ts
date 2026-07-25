@@ -7,7 +7,7 @@ export type StorageMode = 'supabase' | 'local'
 export interface ProjectPayload {
   profile: CompanyProfile
   sector: SectorId
-  areas: WorkArea[]
+  áreas: WorkArea[]
   positions: JobPosition[]
   tasks: WorkTask[]
 }
@@ -109,7 +109,7 @@ export async function saveProject(
   const now = new Date().toISOString()
   const record: SavedProject = {
     id: existingId ?? uid(),
-    companyName: payload.profile.name || 'Sin razon social',
+    companyName: payload.profile.name || 'Sin razón social',
     ruc: /^[0-9]{11}$/.test(payload.profile.ruc) ? payload.profile.ruc : null,
     sector: payload.sector,
     status,
@@ -138,7 +138,7 @@ export async function saveProject(
     return {
       ok: true,
       mode: 'local',
-      message: `Guardado localmente. El estado "${status}" no se sincroniza con Supabase por politica de seguridad.`,
+      message: `Guardado localmente. El estado "${status}" no se sincroniza con Supabase por política de seguridad.`,
       data: record,
     }
   }

@@ -5,7 +5,7 @@ import type { ActionStatus, CompanyProfile, GeneratedAssessment, JobPosition, Se
 export interface ExportContext {
   profile: CompanyProfile
   sector: SectorId
-  areas: WorkArea[]
+  áreas: WorkArea[]
   positions: JobPosition[]
   tasks: WorkTask[]
   rows: GeneratedAssessment[]
@@ -66,7 +66,7 @@ function actionStatusLabel(status: ActionStatus): string {
     case 'not_applicable':
       return 'No aplica'
     case 'in_progress':
-      return 'En ejecucion'
+      return 'En ejecución'
     default:
       return 'Pendiente'
   }
@@ -102,14 +102,14 @@ const MATRIX_HEADERS = [
   'RUC',
   'Centro de trabajo',
   'Sector',
-  'Area',
+  'Área',
   'Proceso',
   'Puesto',
   'Tarea',
   'Tipo de actividad',
   'Trab. expuestos',
   'Trab. vulnerables',
-  'Categoria de peligro',
+  'Categoría de peligro',
   'Peligro',
   'Evento peligroso',
   'Riesgo',
@@ -121,7 +121,7 @@ const MATRIX_HEADERS = [
   'Puntaje inicial',
   'Nivel inicial',
   'Controles propuestos',
-  'Jerarquia de control',
+  'Jerarquía de control',
   'Prob. residual',
   'Sev. residual',
   'Exp. residual',
@@ -131,13 +131,13 @@ const MATRIX_HEADERS = [
   'Plazo',
   'Evidencia requerida',
   'Norma legal',
-  'Articulo',
-  'Obligacion',
-  'Estado validacion',
+  'Artículo',
+  'Obligación',
+  'Estado validación',
   'Estado de control',
   'Observaciones',
-  'Fecha revision',
-  'Version',
+  'Fecha revisión',
+  'Versión',
 ]
 
 // Column indexes used for formulas / colouring.
@@ -167,7 +167,7 @@ function matrixRowCells(row: GeneratedAssessment) {
     row.ruc,
     row.workplace,
     sectorLabel(row.sector),
-    row.area.name,
+    row.área.name,
     row.process,
     row.position.title,
     row.task.name,
@@ -195,14 +195,14 @@ function matrixRowCells(row: GeneratedAssessment) {
     row.responsible,
     row.deadline,
     row.requiredEvidence.join('\n') || 'No declarada',
-    legal?.normTitle ?? 'Requiere validacion legal',
-    legal?.articleLabel ?? 'Requiere validacion legal',
-    legal?.obligation ?? 'Referencia normativa pendiente de validacion',
-    row.legalValidationStatus === 'validated' ? 'Validado' : 'Requiere validacion legal',
+    legal?.normTitle ?? 'Requiere validación legal',
+    legal?.articleLabel ?? 'Requiere validación legal',
+    legal?.obligation ?? 'Referencia normativa pendiente de validación',
+    row.legalValidationStatus === 'validated' ? 'Validado' : 'Requiere validación legal',
     actionStatusLabel(row.actionStatus),
     row.observations || 'Sin observaciones',
     row.reviewDate,
-    row.version,
+    row.versión,
   ]
   return values.map((value) => cell(value))
 }
@@ -292,8 +292,8 @@ function buildSummarySheet(context: ExportContext): XLSX.WorkSheet {
     [],
     [labelCell('Empresa'), valueCell(profile.name)],
     [labelCell('RUC'), valueCell(profile.ruc)],
-    [labelCell('Tipo de propiedad'), valueCell(profile.ownership === 'public' ? 'Publica' : 'Privada')],
-    [labelCell('Actividad economica'), valueCell(profile.businessActivity)],
+    [labelCell('Tipo de propiedad'), valueCell(profile.ownership === 'public' ? 'Pública' : 'Privada')],
+    [labelCell('Actividad económica'), valueCell(profile.businessActivity)],
     [labelCell('CIIU'), valueCell(profile.ciiu)],
     [labelCell('Centro de trabajo'), valueCell(profile.workplace)],
     [labelCell('N. de trabajadores'), valueCell(String(profile.workerCount))],
@@ -302,7 +302,7 @@ function buildSummarySheet(context: ExportContext): XLSX.WorkSheet {
     [labelCell('Elaborado por'), valueCell(profile.preparedBy ?? '')],
     [labelCell('Revisado por'), valueCell(profile.reviewedBy ?? '')],
     [labelCell('Aprobado por'), valueCell(profile.approvedBy ?? '')],
-    [labelCell('Fecha de generacion'), valueCell(new Date().toISOString().slice(0, 10))],
+    [labelCell('Fecha de generación'), valueCell(new Date().toISOString().slice(0, 10))],
     context.appliedFilters ? [labelCell('Filtros aplicados'), valueCell(context.appliedFilters)] : [],
     [],
     [{ v: 'Indicadores', t: 's', s: { font: { bold: true, sz: 12 } } }],
@@ -311,12 +311,12 @@ function buildSummarySheet(context: ExportContext): XLSX.WorkSheet {
     [labelCell('Riesgos moderados'), valueCell(String(counts.Moderado))],
     [labelCell('Riesgos importantes'), valueCell(String(counts.Importante))],
     [labelCell('Riesgos intolerables'), valueCell(String(counts.Intolerable))],
-    [labelCell('Reduccion de riesgo'), valueCell(`${reduction}%`)],
-    [labelCell('Pendientes de validacion legal'), valueCell(String(legalPending))],
+    [labelCell('Reducción de riesgo'), valueCell(`${reduction}%`)],
+    [labelCell('Pendientes de validación legal'), valueCell(String(legalPending))],
     [],
     [
       {
-        v: 'Nota: esta herramienta no inventa obligaciones legales. Las referencias no validadas con fuente oficial se marcan como "Requiere validacion legal".',
+        v: 'Nota: esta herramienta no inventa obligaciones legales. Las referencias no validadas con fuente oficial se marcan como "Requiere validación legal".',
         t: 's',
         s: { font: { italic: true, color: { rgb: 'FF64748B' } }, alignment: { wrapText: true } },
       },
@@ -340,12 +340,12 @@ function valueCell(value: string) {
 }
 
 function buildActionPlanSheet(rows: GeneratedAssessment[]): XLSX.WorkSheet {
-  const headers = ['Area', 'Tarea', 'Riesgo', 'Control propuesto', 'Jerarquia', 'Responsable', 'Plazo', 'Estado', 'Verificacion', 'Evidencia requerida']
+  const headers = ['Área', 'Tarea', 'Riesgo', 'Control propuesto', 'Jerarquía', 'Responsable', 'Plazo', 'Estado', 'Verificación', 'Evidencia requerida']
   const aoa: unknown[][] = [headers.map((label) => ({ v: label, t: 's', s: HEADER_STYLE }))]
   rows.forEach((row) => {
     aoa.push(
       [
-        row.area.name,
+        row.área.name,
         row.task.name,
         row.riskDescription,
         row.proposedControls.map((control) => `${control.level}: ${control.description}`).join('\n') || 'Control por definir',
@@ -365,14 +365,14 @@ function buildActionPlanSheet(rows: GeneratedAssessment[]): XLSX.WorkSheet {
 }
 
 function buildEvidenceSheet(rows: GeneratedAssessment[]): XLSX.WorkSheet {
-  const headers = ['Area', 'Tarea', 'Peligro', 'Evidencia requerida', 'Responsable', 'Plazo', 'Estado']
+  const headers = ['Área', 'Tarea', 'Peligro', 'Evidencia requerida', 'Responsable', 'Plazo', 'Estado']
   const aoa: unknown[][] = [headers.map((label) => ({ v: label, t: 's', s: HEADER_STYLE }))]
   rows
     .filter((row) => row.requiredEvidence.length > 0)
     .forEach((row) => {
       aoa.push(
         [
-          row.area.name,
+          row.área.name,
           row.task.name,
           row.hazard.name,
           row.requiredEvidence.join('\n'),
@@ -389,7 +389,7 @@ function buildEvidenceSheet(rows: GeneratedAssessment[]): XLSX.WorkSheet {
 }
 
 function buildNormativeSheet(sector: SectorId, rows: GeneratedAssessment[]): XLSX.WorkSheet {
-  const headers = ['Norma', 'Nombre corto', 'Modulo', 'Estado de validacion', 'Fuente oficial']
+  const headers = ['Norma', 'Nombre corto', 'Modulo', 'Estado de validación', 'Fuente oficial']
   const module = sectorModules.find((item) => item.id === sector)
   const normIds = module?.normIds ?? []
   const aoa: unknown[][] = [headers.map((label) => ({ v: label, t: 's', s: HEADER_STYLE }))]
@@ -398,11 +398,11 @@ function buildNormativeSheet(sector: SectorId, rows: GeneratedAssessment[]): XLS
     if (!norm) return
     aoa.push(
       [
-        norm.title,
+        norm.officialTitle,
         norm.shortName,
         norm.module,
-        norm.sourceStatus === 'internal_verified' ? 'Validado' : 'Requiere validacion legal',
-        norm.sourceUrl ?? 'Pendiente de carga oficial',
+        norm.sourceStatus === 'official-verified' ? 'Fuente oficial verificada' : 'Requiere verificación en la fuente oficial',
+        norm.officialPageUrl,
       ].map((value) => cell(value as string)),
     )
   })
@@ -411,7 +411,7 @@ function buildNormativeSheet(sector: SectorId, rows: GeneratedAssessment[]): XLS
   aoa.push([])
   aoa.push([
     {
-      v: `Filas con validacion legal pendiente: ${pending}. No se citan articulos sin fuente oficial validada.`,
+      v: `Filas con validación legal pendiente: ${pending}. No se citan artículos sin fuente oficial validada.`,
       t: 's',
       s: { font: { italic: true, color: { rgb: 'FF64748B' } } },
     },
@@ -422,19 +422,19 @@ function buildNormativeSheet(sector: SectorId, rows: GeneratedAssessment[]): XLS
 }
 
 function buildCatalogSheet(context: ExportContext): XLSX.WorkSheet {
-  const { areas, positions, tasks, sector } = context
+  const { áreas, positions, tasks, sector } = context
   const aoa: unknown[][] = [
     [{ v: 'Catalogos del proyecto', t: 's', s: TITLE_STYLE }],
     [],
     [labelCell('Sector'), valueCell(sectorLabel(sector))],
     [],
-    [{ v: 'Areas y procesos', t: 's', s: { font: { bold: true } } }],
-    ...areas.map((area) => [valueCell(area.name), valueCell(area.process)]),
+    [{ v: 'Áreas y procesos', t: 's', s: { font: { bold: true } } }],
+    ...áreas.map((área) => [valueCell(área.name), valueCell(área.process)]),
     [],
     [{ v: 'Puestos de trabajo', t: 's', s: { font: { bold: true } } }],
     ...positions.map((position) => [
       valueCell(position.title),
-      valueCell(areas.find((area) => area.id === position.areaId)?.name ?? ''),
+      valueCell(áreas.find((área) => área.id === position.areaId)?.name ?? ''),
       valueCell(`${position.workerCount} trab.`),
     ]),
     [],
@@ -481,7 +481,7 @@ export function exportExcel(context: ExportContext) {
   const wb = newWorkbook()
   XLSX.utils.book_append_sheet(wb, buildSummarySheet(context), 'Resumen')
   XLSX.utils.book_append_sheet(wb, buildMatrixSheet(context.rows), 'Matriz IPERC')
-  XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(context.rows), 'Plan de Accion')
+  XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(context.rows), 'Plan de Acción')
   XLSX.utils.book_append_sheet(wb, buildEvidenceSheet(context.rows), 'Evidencias')
   XLSX.utils.book_append_sheet(wb, buildNormativeSheet(context.sector, context.rows), 'Normativa')
   XLSX.utils.book_append_sheet(wb, buildCatalogSheet(context), 'Catalogos')
@@ -500,7 +500,7 @@ export function exportReport(kind: ReportKind, context: ExportContext) {
   } else if (kind === 'matrix') {
     XLSX.utils.book_append_sheet(wb, buildMatrixSheet(rows), 'Matriz IPERC')
   } else if (kind === 'action-plan') {
-    XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(rows), 'Plan de Accion')
+    XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(rows), 'Plan de Acción')
   } else if (kind === 'pending-evidence') {
     XLSX.utils.book_append_sheet(wb, buildEvidenceSheet(rows), 'Evidencias')
   } else if (kind === 'legal-pending') {
@@ -509,7 +509,7 @@ export function exportReport(kind: ReportKind, context: ExportContext) {
   } else {
     // critical / overdue
     XLSX.utils.book_append_sheet(wb, buildMatrixSheet(rows), 'Matriz IPERC')
-    XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(rows), 'Plan de Accion')
+    XLSX.utils.book_append_sheet(wb, buildActionPlanSheet(rows), 'Plan de Acción')
   }
 
   const suffix: Record<ReportKind, string> = {
@@ -537,20 +537,20 @@ export function exportCsv(context: ExportContext) {
 export function exportWord(context: ExportContext) {
   const { profile, rows, sector } = context
   const body = `
-    <h1>Informe tecnico IPERC</h1>
+    <h1>Informe técnico IPERC</h1>
     <p><strong>Empresa:</strong> ${escapeHtml(profile.name)} | <strong>RUC:</strong> ${escapeHtml(profile.ruc)} | <strong>Sector:</strong> ${escapeHtml(sectorLabel(sector))}</p>
     <p><strong>Centro de trabajo:</strong> ${escapeHtml(profile.workplace)} | <strong>Trabajadores:</strong> ${profile.workerCount}</p>
     <p><strong>Elaborado por:</strong> ${escapeHtml(profile.preparedBy ?? '')} | <strong>Revisado por:</strong> ${escapeHtml(profile.reviewedBy ?? '')} | <strong>Aprobado por:</strong> ${escapeHtml(profile.approvedBy ?? '')}</p>
-    <p><strong>Regla legal:</strong> no se inventan obligaciones. Todo articulo no validado con fuente oficial queda como "Requiere validacion legal".</p>
+    <p><strong>Regla legal:</strong> no se inventan obligaciones. Todo artículo no validado con fuente oficial queda como "Requiere validación legal".</p>
     ${rows
       .map(
         (row) => `
-        <h2>${escapeHtml(row.area.name)} - ${escapeHtml(row.position.title)}</h2>
+        <h2>${escapeHtml(row.área.name)} - ${escapeHtml(row.position.title)}</h2>
         <p><strong>Tarea:</strong> ${escapeHtml(row.task.name)}</p>
         <p><strong>Peligro:</strong> ${escapeHtml(row.hazard.name)} | <strong>Riesgo inicial:</strong> ${row.initialLevel} (${row.initialScore}) | <strong>Residual:</strong> ${row.residualLevel} (${row.residualScore})</p>
         <p><strong>Controles propuestos:</strong> ${escapeHtml(row.proposedControls.map((control) => `${control.level}: ${control.description}`).join('; '))}</p>
         <p><strong>Evidencia:</strong> ${escapeHtml(row.requiredEvidence.join('; '))}</p>
-        <p><strong>Estado legal:</strong> ${escapeHtml(row.legalValidationStatus === 'validated' ? 'Validado' : 'Requiere validacion legal')}</p>
+        <p><strong>Estado legal:</strong> ${escapeHtml(row.legalValidationStatus === 'validated' ? 'Validado' : 'Requiere validación legal')}</p>
       `,
       )
       .join('')}

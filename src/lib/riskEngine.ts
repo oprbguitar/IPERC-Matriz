@@ -42,10 +42,10 @@ export function evaluateRisk(probability: number, severity: number, exposure: nu
     level === 'Intolerable'
       ? 'Detener o restringir la actividad hasta implementar controles verificables.'
       : level === 'Importante'
-        ? 'Implementar controles de mayor jerarquia y verificar evidencia antes de continuar de forma rutinaria.'
+        ? 'Implementar controles de mayor jerarquía y verificar evidencia antes de continuar de forma rutinaria.'
         : level === 'Moderado'
           ? 'Mejorar controles y programar seguimiento.'
-          : 'Mantener controles y seguimiento periodico.'
+          : 'Mantener controles y seguimiento periódico.'
   const workDecision =
     level === 'Intolerable' ? 'Detener hasta controlar' : level === 'Bajo' ? 'Continuar con control' : 'Mejorar controles'
 
@@ -116,10 +116,10 @@ export function legalMatchesFor(sector: SectorId, _hazard: Hazard): LegalMatch[]
     return normIds.map((normId) => {
       const norm = legalNorms.find((item) => item.id === normId)
       return {
-        normTitle: norm?.title ?? normId,
-        articleLabel: 'Requires legal validation',
-        obligation: 'Normative reference pending validation',
-        sourceUrl: norm?.sourceUrl ?? '',
+        normTitle: norm?.officialTitle ?? normId,
+        articleLabel: 'Artículo pendiente de verificación',
+        obligation: 'Referencia normativa aplicable; el artículo específico requiere verificación en la fuente oficial.',
+        sourceUrl: norm?.officialPageUrl ?? '',
         status: 'pending_validation',
       }
     })
@@ -128,7 +128,7 @@ export function legalMatchesFor(sector: SectorId, _hazard: Hazard): LegalMatch[]
   return verifiedArticles.map((article) => {
     const norm = legalNorms.find((item) => item.id === article.normId)
     return {
-      normTitle: norm?.title ?? article.normId,
+      normTitle: norm?.officialTitle ?? article.normId,
       articleLabel: article.articleLabel,
       obligation: article.obligation,
       sourceUrl: article.sourceUrl ?? norm?.sourceUrl ?? '',
@@ -140,7 +140,7 @@ export function legalMatchesFor(sector: SectorId, _hazard: Hazard): LegalMatch[]
 export function generateAssessments(
   profile: CompanyProfile,
   sector: SectorId,
-  areas: WorkArea[],
+  áreas: WorkArea[],
   positions: JobPosition[],
   tasks: WorkTask[],
 ): GeneratedAssessment[] {
@@ -148,8 +148,8 @@ export function generateAssessments(
 
   return tasks.flatMap((task) => {
     const position = positions.find((item) => item.id === task.positionId) ?? positions[0]
-    const area = areas.find((item) => item.id === position?.areaId) ?? areas[0]
-    if (!position || !area) return []
+    const área = áreas.find((item) => item.id === position?.areaId) ?? áreas[0]
+    if (!position || !área) return []
 
     return matchHazards(task, sector).map((hazard, index) => {
       const probability = scoreProbability(task)
@@ -170,18 +170,18 @@ export function generateAssessments(
       const warnings = [
         legalValidationMissing ? 'Requires legal validation' : '',
         ppeOnlyWarning ? 'Advertencia: controles propuestos dependen solo de EPP.' : '',
-        proposedControlsInsufficient ? 'Los controles propuestos requieren mejora o verificacion adicional.' : '',
+        proposedControlsInsufficient ? 'Los controles propuestos requieren mejora o verificación adicional.' : '',
       ].filter(Boolean)
 
       return {
         id: `${task.id}-${hazard.id}-${index}`,
-        companyName: profile.name || 'Sin razon social',
+        companyName: profile.name || 'Sin razón social',
         ruc: profile.ruc || 'Sin RUC',
         workplace: profile.workplace || 'Sede no declarada',
-        economicActivity: profile.businessActivity || 'Actividad economica pendiente',
+        economicActivity: profile.businessActivity || 'Actividad económica pendiente',
         sector,
-        area,
-        process: area.process,
+        área,
+        process: área.process,
         position,
         jobPosition: position.title,
         task,
@@ -193,7 +193,7 @@ export function generateAssessments(
         hazardSource: hazard.commonSources.join('; '),
         hazardousEvent: hazard.hazardousEvent,
         possibleDamage: hazard.commonConsequences.join('; '),
-        riskDescription: `${hazard.hazardousEvent} durante ${task.name.toLowerCase()} en ${area.name}.`,
+        riskDescription: `${hazard.hazardousEvent} durante ${task.name.toLowerCase()} en ${área.name}.`,
         consequences: hazard.commonConsequences.join('; '),
         existingControls: task.existingControls || 'No declarado',
         probability,
@@ -205,8 +205,8 @@ export function generateAssessments(
         initialEvaluation,
         proposedControls: hazard.suggestedControls,
         controlHierarchyLevel: strongestControl,
-        responsible: task.responsiblePerson || 'Responsable SST / jefe de area',
-        responsiblePerson: task.responsiblePerson || 'Responsable SST / jefe de area',
+        responsible: task.responsiblePerson || 'Responsable SST / jefe de área',
+        responsiblePerson: task.responsiblePerson || 'Responsable SST / jefe de área',
         deadline: suggestedDeadline(initialEvaluation.level),
         requiredEvidence,
         evidenceRequired: requiredEvidence,
@@ -223,7 +223,7 @@ export function generateAssessments(
         legalSourceUrl: legalMatches[0]?.sourceUrl ?? '',
         legalValidationStatus: legalValidationMissing ? 'pending_validation' : 'validated',
         observations: warnings.join(' '),
-        version: 'v1.0-borrador',
+        versión: 'v1.0-borrador',
         preparedBy: profile.preparedBy || 'Pendiente',
         reviewedBy: profile.reviewedBy || 'Pendiente',
         approvedBy: profile.approvedBy || 'Pendiente',
@@ -261,7 +261,7 @@ export function buildDashboard(rows: GeneratedAssessment[]): DashboardIndicators
     averageInitialRisk: rows.length ? Math.round(initialTotal / rows.length) : 0,
     averageResidualRisk: rows.length ? Math.round(residualTotal / rows.length) : 0,
     reductionPercent: initialTotal ? Math.round(((initialTotal - residualTotal) / initialTotal) * 100) : 0,
-    risksByArea: countBy(rows, (row) => row.area.name),
+    risksByArea: countBy(rows, (row) => row.área.name),
     risksByCategory: countBy(rows, (row) => row.hazardCategory),
     controlsPendingEvidence: rows.filter((row) => row.requiredEvidence.length > 0 && row.verificationStatus.includes('Pendiente')).length,
   }
@@ -270,7 +270,7 @@ export function buildDashboard(rows: GeneratedAssessment[]): DashboardIndicators
 export function validateBeforeExport(profile: CompanyProfile, rows: GeneratedAssessment[]): ValidationWarning[] {
   const warnings: ValidationWarning[] = []
   if (!profile.name || !profile.ruc || !profile.workplace) {
-    warnings.push({ code: 'company-data', label: 'Complete razon social, RUC y centro de trabajo antes de exportar.', severity: 'critical' })
+    warnings.push({ code: 'company-data', label: 'Complete razón social, RUC y centro de trabajo antes de exportar.', severity: 'critical' })
   }
   if (rows.some((row) => row.legalValidationMissing)) {
     warnings.push({ code: 'legal-validation', label: 'Hay obligaciones marcadas como Requires legal validation.', severity: 'warning' })
