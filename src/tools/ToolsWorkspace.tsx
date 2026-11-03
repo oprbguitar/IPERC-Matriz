@@ -19,6 +19,11 @@ import {
   FileSpreadsheet,
   FileText,
   FolderOpen,
+  Gauge,
+  GripVertical,
+  LayoutGrid,
+  List,
+  Paperclip,
   Layers3,
   LayoutDashboard,
   LineChart,
@@ -40,6 +45,8 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LegalReference } from '../components/LegalReference'
+import { findGuide } from '../data/guides'
+import { AnalyticsView } from './AnalyticsView'
 import { LEGAL_STATUS_LABELS, legalNorms, sectorModules } from '../data/legalDatabase'
 import type { ExportContext, ReportKind } from '../lib/exporters'
 
@@ -68,7 +75,7 @@ import type {
   WorkTask,
 } from '../types'
 
-type ViewId = 'dashboard' | 'matrix' | 'analysis' | 'actions' | 'evidence' | 'normative' | 'reports' | 'settings'
+type ViewId = 'dashboard' | 'matrix' | 'analysis' | 'analytics' | 'actions' | 'evidence' | 'normative' | 'reports' | 'settings'
 type ModalKind = 'projects' | 'quick' | null
 
 interface RowOverride {
@@ -91,6 +98,7 @@ const navItems: Array<{ id: ViewId; label: string; subtitle: string; icon: typeo
   { id: 'dashboard', label: 'Resumen', subtitle: 'Vista general del proyecto', icon: LayoutDashboard },
   { id: 'matrix', label: 'Matriz IPERC', subtitle: 'Ver y editar', icon: Boxes },
   { id: 'analysis', label: 'Análisis', subtitle: 'Riesgos e indicadores', icon: LineChart },
+  { id: 'analytics', label: 'Analítica', subtitle: 'Multas, organización, IF/IS', icon: Gauge },
   { id: 'actions', label: 'Plan de acción', subtitle: 'Tareas y seguimiento', icon: ClipboardList },
   { id: 'evidence', label: 'Evidencias', subtitle: 'Documentos y fotos', icon: Archive },
   { id: 'normative', label: 'Normativa', subtitle: 'Legal y requisitos', icon: Scale },
@@ -306,7 +314,7 @@ function applyOverride(row: GeneratedAssessment, override?: RowOverride): Genera
  * Se mantiene la logica original de generación, cálculo de riesgo residual,
  * autoguardado, proyectos guardados y exportaciones.
  */
-export function ToolsWorkspace({ onBackToSite }: { onBackToSite: () => void }) {
+export function ToolsWorkspace({ onBackToSite, onOpenGuide }: { onBackToSite: () => void; onOpenGuide?: (guideId: string) => void }) {
   const [view, setView] = useState<ViewId>('dashboard')
   const [expertMode, setExpertMode] = useState(false)
   const [sector, setSector] = useState<SectorId>('construction')
@@ -497,7 +505,8 @@ export function ToolsWorkspace({ onBackToSite }: { onBackToSite: () => void }) {
               />
             )}
             {view === 'analysis' && <AnalysisView rows={assessments} dashboard={dashboard} riskIndex={riskIndex} />}
-            {view === 'actions' && <ActionPlanBoard rows={assessments} />}
+            {view === 'analytics' && <AnalyticsView rows={assessments} workerCount={profile.workerCount} onOpenGuide={onOpenGuide} />}
+            {view === 'actions' && <ActionPlanBoard rows={assessments} onOverride={handleOverride} />}
             {view === 'evidence' && <EvidencePanel rows={assessments} />}
             {view === 'normative' && <NormativeSection sector={sector} rows={assessments} />}
             {view === 'reports' && (
@@ -540,7 +549,7 @@ export function ToolsWorkspace({ onBackToSite }: { onBackToSite: () => void }) {
               />
             )}
           </section>
-          <AssistantPanel items={assistantItems} rows={assessments} onAction={setView} />
+          <AssistantPanel items={assistantItems} rows={assessments} activeView={view} onAction={setView} onOpenGuide={onOpenGuide} />
         </div>
       </section>
       <MobileBottomNav activeView={view} onChange={setView} onQuick={() => setModal('quick')} />
@@ -1058,15 +1067,60 @@ function Detail({ label, value }: { label: string; value: string }) {
   return <p><b>{label}</b><span>{value}</span></p>
 }
 
-function AssistantPanel({ items, rows, onAction }: { items: ReturnType<typeof buildAssistantItems>; rows: GeneratedAssessment[]; onAction: (view: ViewId) => void }) {
+const TOOL_GUIDES: Partial<Record<ViewId, string>> = {
+  matrix: 'guia-iperc',
+  analytics: 'guia-sunafil',
+  actions: 'guia-sgsst',
+  evidence: 'guia-registros',
+  normative: 'guia-auditoria',
+}
+
+/** Indice de herramientas: navegacion, conteos y sugerencias del motor en un solo panel. */
+function AssistantPanel({
+  items,
+  rows,
+  activeView,
+  onAction,
+  onOpenGuide,
+}: {
+  items: ReturnType<typeof buildAssistantItems>
+  rows: GeneratedAssessment[]
+  activeView: ViewId
+  onAction: (view: ViewId) => void
+  onOpenGuide?: (guideId: string) => void
+}) {
+  const counts: Partial<Record<ViewId, string>> = {
+    matrix: `${rows.length} filas`,
+    actions: `${rows.filter((row) => row.actionStatus === 'pending' || row.actionStatus === 'overdue').length} abiertas`,
+    evidence: `${rows.filter((row) => row.requiredEvidence.length > 0).length} por cargar`,
+    normative: `${rows.filter((row) => row.legalValidationMissing).length} por validar`,
+  }
   return (
-    <aside className="assistant-panel">
-      <header><BrainCircuit size={24} /><div><h2>Asistente SST</h2><p>Motor de apoyo técnico</p></div></header>
-      <div className="assistant-score"><RiskIndexCard value={computeRiskIndex(rows)} level="Preventivo" /></div>
+    <aside className="assistant-panel tool-index">
+      <header><BrainCircuit size={22} /><div><h2>Índice SST</h2><p>Herramientas y siguientes pasos</p></div></header>
+      <ol className="index-list">
+        {navItems.map((item, index) => {
+          const Icon = item.icon
+          const guideId = TOOL_GUIDES[item.id]
+          return (
+            <li key={item.id} className={activeView === item.id ? 'active' : ''}>
+              <button type="button" onClick={() => onAction(item.id)}>
+                <span className="index-num">{String(index + 1).padStart(2, '0')}</span>
+                <Icon size={16} />
+                <span><b>{item.label}</b><small>{counts[item.id] ?? item.subtitle}</small></span>
+              </button>
+              {guideId && onOpenGuide && (
+                <button type="button" className="index-guide" title={findGuide(guideId)?.title} onClick={() => onOpenGuide(guideId)}>Guía</button>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+      <h3 className="index-sub">Sugerencias del motor</h3>
       <div className="assistant-cards">
-        {items.map((item) => (
+        {items.slice(0, 3).map((item) => (
           <article key={item.title}>
-            <item.icon size={18} />
+            <item.icon size={16} />
             <div><h3>{item.title}</h3><p>{item.text}</p><button type="button" onClick={() => onAction(item.view)}>{item.action}</button></div>
           </article>
         ))}
@@ -1090,55 +1144,144 @@ function AnalysisView({ rows, dashboard, riskIndex }: { rows: GeneratedAssessmen
   )
 }
 
-function ActionPlanBoard({ rows }: { rows: GeneratedAssessment[] }) {
-  const today = new Date().toISOString().slice(0, 10)
-  const columns = [
-    { title: 'Pendiente', rows: rows.filter((row) => row.actionStatus === 'pending') },
-    { title: 'En ejecución', rows: rows.filter((row) => row.actionStatus === 'in_progress') },
-    { title: 'Verificado', rows: rows.filter((row) => row.actionStatus === 'verified' || row.actionStatus === 'implemented') },
-    { title: 'Vencido', rows: rows.filter((row) => row.actionStatus === 'overdue' || (row.deadline < today && row.actionStatus !== 'verified')) },
-  ]
+const BOARD_COLUMNS: Array<{ status: ActionStatus; title: string; tone: string }> = [
+  { status: 'pending', title: 'Pendiente', tone: 'slate' },
+  { status: 'in_progress', title: 'En ejecución', tone: 'blue' },
+  { status: 'verified', title: 'Verificado', tone: 'green' },
+  { status: 'overdue', title: 'Vencido', tone: 'red' },
+]
+
+function boardColumnOf(row: GeneratedAssessment): ActionStatus {
+  if (row.actionStatus === 'implemented' || row.actionStatus === 'not_applicable') return 'verified'
+  return row.actionStatus
+}
+
+/** Tablero kanban: arrastre una tarjeta entre columnas (o use el selector) para cambiar su estado. */
+function ActionPlanBoard({ rows, onOverride }: { rows: GeneratedAssessment[]; onOverride: (rowId: string, patch: RowOverride) => void }) {
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overColumn, setOverColumn] = useState<ActionStatus | null>(null)
+  const total = Math.max(1, rows.length)
+  const verifiedPercent = Math.round((rows.filter((row) => boardColumnOf(row) === 'verified').length / total) * 100)
+
+  function move(rowId: string, status: ActionStatus) {
+    onOverride(rowId, { actionStatus: status, ...(status === 'verified' ? { verificationStatus: 'Verificado en campo' } : {}) })
+  }
+
   return (
     <section>
-      <ViewHeader title="Plan de acción" text="Tablero operativo de controles, responsables, plazos y evidencias." />
-      <div className="board-grid">
-        {columns.map((column) => (
-          <div className="board-column" key={column.title}>
-            <h3>{column.title}<span>{column.rows.length}</span></h3>
-            {column.rows.length === 0 && <p className="board-empty">Sin elementos</p>}
-            {column.rows.slice(0, 8).map((row) => (
-              <article className="task-board-card" key={row.id}>
-                <b>{shortText(row.proposedControls[0]?.description ?? 'Control por definir', 58)}</b>
-                <p>{shortText(row.riskDescription, 72)}</p>
-                <span>{row.responsiblePerson}</span>
-                <small>{row.deadline} · {row.verificationStatus}</small>
-              </article>
-            ))}
-          </div>
-        ))}
+      <ViewHeader title="Plan de acción" text="Arrastre cada control entre columnas para actualizar su estado. El avance se refleja en reportes y Excel." />
+      <div className="board-progress">
+        <div><i style={{ width: `${verifiedPercent}%` }} /></div>
+        <b>{verifiedPercent}% verificado</b>
+      </div>
+      <div className="board-grid dnd">
+        {BOARD_COLUMNS.map((column) => {
+          const columnRows = rows.filter((row) => boardColumnOf(row) === column.status)
+          return (
+            <div
+              className={`board-column ${column.tone} ${overColumn === column.status ? 'drop-over' : ''}`}
+              key={column.status}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setOverColumn(column.status)
+              }}
+              onDragLeave={() => setOverColumn((current) => (current === column.status ? null : current))}
+              onDrop={(event) => {
+                event.preventDefault()
+                const id = event.dataTransfer.getData('text/plain') || dragId
+                if (id) move(id, column.status)
+                setDragId(null)
+                setOverColumn(null)
+              }}
+            >
+              <h3>{column.title}<span>{columnRows.length}</span></h3>
+              {columnRows.length === 0 && <p className="board-empty">Suelte aquí</p>}
+              {columnRows.map((row) => (
+                <article
+                  className={`task-board-card ${dragId === row.id ? 'dragging' : ''}`}
+                  key={row.id}
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData('text/plain', row.id)
+                    event.dataTransfer.effectAllowed = 'move'
+                    setDragId(row.id)
+                  }}
+                  onDragEnd={() => {
+                    setDragId(null)
+                    setOverColumn(null)
+                  }}
+                >
+                  <GripVertical size={14} className="grip" aria-hidden="true" />
+                  <b>{shortText(row.proposedControls[0]?.description ?? 'Control por definir', 58)}</b>
+                  <p>{shortText(row.riskDescription, 72)}</p>
+                  <div className="card-foot">
+                    <RiskBadge level={row.initialLevel} score={row.initialScore} />
+                    <small>{row.responsiblePerson} · {row.deadline}</small>
+                  </div>
+                  <select aria-label="Mover a columna" value={column.status} onChange={(event) => move(row.id, event.target.value as ActionStatus)}>
+                    {BOARD_COLUMNS.map((option) => <option key={option.status} value={option.status}>{option.title}</option>)}
+                  </select>
+                </article>
+              ))}
+            </div>
+          )
+        })}
       </div>
     </section>
   )
 }
 
+/** Evidencias: arrastre archivos (fotos, PDF, actas) sobre cada requisito. Se listan solo en esta sesión. */
 function EvidencePanel({ rows }: { rows: GeneratedAssessment[] }) {
+  const [files, setFiles] = useState<Record<string, string[]>>({})
+  const [over, setOver] = useState<string | null>(null)
   const withEvidence = rows.filter((row) => row.requiredEvidence.length > 0)
+  const attached = withEvidence.filter((row) => (files[row.id]?.length ?? 0) > 0).length
+
+  function attach(rowId: string, list: FileList | null) {
+    if (!list || list.length === 0) return
+    const names = Array.from(list, (file) => `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)`)
+    setFiles((prev) => ({ ...prev, [rowId]: [...(prev[rowId] ?? []), ...names] }))
+  }
+
   return (
     <section>
-      <ViewHeader title="Evidencias" text="Registro preparado para documentos, fotos y validación de campo." />
+      <ViewHeader title="Evidencias" text="Arrastre fotos, actas o PDF sobre cada requisito para marcar la evidencia como cargada." />
+      <div className="board-progress">
+        <div><i style={{ width: `${Math.round((attached / Math.max(1, withEvidence.length)) * 100)}%` }} /></div>
+        <b>{attached} de {withEvidence.length} con evidencia</b>
+      </div>
       {withEvidence.length === 0 && <EmptyState text="No hay evidencias requeridas. Genere la matriz para listar la documentación necesaria." />}
       <div className="evidence-grid">
-        {withEvidence.slice(0, 12).map((row) => (
-          <article className="evidence-card" key={row.id}>
-            <UploadCloud size={22} />
-            <div>
-              <h3>{row.requiredEvidence[0] ?? 'Evidencia requerida'}</h3>
-              <p>{shortText(row.riskDescription, 74)}</p>
-              <span>{row.responsiblePerson} · {row.deadline}</span>
-            </div>
-            <StatusBadge label="Carga pendiente" tone="yellow" />
-          </article>
-        ))}
+        {withEvidence.map((row) => {
+          const list = files[row.id] ?? []
+          return (
+            <label
+              className={`evidence-card drop ${over === row.id ? 'drop-over' : ''} ${list.length ? 'done' : ''}`}
+              key={row.id}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setOver(row.id)
+              }}
+              onDragLeave={() => setOver(null)}
+              onDrop={(event) => {
+                event.preventDefault()
+                setOver(null)
+                attach(row.id, event.dataTransfer.files)
+              }}
+            >
+              <input type="file" multiple className="sr-only" onChange={(event) => attach(row.id, event.target.files)} />
+              {list.length ? <Paperclip size={20} /> : <UploadCloud size={20} />}
+              <div>
+                <h3>{row.requiredEvidence[0] ?? 'Evidencia requerida'}</h3>
+                <p>{shortText(row.riskDescription, 74)}</p>
+                <span>{row.responsiblePerson} · {row.deadline}</span>
+                {list.length > 0 && <ul className="file-list">{list.map((name, index) => <li key={`${name}-${index}`}>{name}</li>)}</ul>}
+              </div>
+              <StatusBadge label={list.length ? `${list.length} archivo(s)` : 'Arrastre aquí'} tone={list.length ? 'green' : 'yellow'} />
+            </label>
+          )
+        })}
       </div>
     </section>
   )
@@ -1147,6 +1290,7 @@ function EvidencePanel({ rows }: { rows: GeneratedAssessment[] }) {
 function NormativeSection({ sector, rows }: { sector: SectorId; rows: GeneratedAssessment[] }) {
   const module = sectorModules.find((item) => item.id === sector) ?? sectorModules[0]
   const pending = rows.filter((row) => row.legalValidationMissing).length
+  const [layout, setLayout] = useState<'grid' | 'list'>('grid')
   return (
     <section>
       <ViewHeader title="Normativa aplicable" text={`Marco legal considerado para el sector ${module.label.toLowerCase()}.`} />
@@ -1154,7 +1298,11 @@ function NormativeSection({ sector, rows }: { sector: SectorId; rows: GeneratedA
         {module.validationWarning} La herramienta no cita artículos sin fuente oficial verificada
         {pending > 0 ? `; ${pending} fila(s) de la matriz mantienen el sustento normativo como pendiente.` : '.'}
       </p>
-      <div className="norm-grid">
+      <div className="layout-toggle" role="group" aria-label="Vista de normas">
+        <button type="button" className={layout === 'grid' ? 'active' : ''} onClick={() => setLayout('grid')}><LayoutGrid size={15} /> Cuadros</button>
+        <button type="button" className={layout === 'list' ? 'active' : ''} onClick={() => setLayout('list')}><List size={15} /> Lista</button>
+      </div>
+      <div className={layout === 'grid' ? 'norm-grid' : 'norm-grid as-list'}>
         {module.normIds.map((id) => {
           const norm = legalNorms.find((item) => item.id === id)
           if (!norm) return null
@@ -1265,6 +1413,13 @@ function RegistrationPanel({
   saveState: string
 }) {
   const rucInvalid = profile.ruc.length > 0 && !/^[0-9]{11}$/.test(profile.ruc)
+  const [section, setSection] = useState<'empresa' | 'areas' | 'puestos' | 'tareas'>('empresa')
+  const sections: Array<{ id: typeof section; label: string; count?: number }> = [
+    { id: 'empresa', label: 'Empresa' },
+    { id: 'areas', label: 'Áreas', count: áreas.length },
+    { id: 'puestos', label: 'Puestos', count: positions.length },
+    { id: 'tareas', label: 'Tareas', count: tasks.length },
+  ]
 
   function addArea() {
     setAreas([...áreas, { id: newId('area'), name: 'Nueva área', process: '' }])
@@ -1311,8 +1466,18 @@ function RegistrationPanel({
   }
 
   return (
-    <section>
-      <ViewHeader title="Registro del proyecto IPERC" text="Datos de empresa, áreas, puestos y tareas para generar la matriz." />
+    <section className="registration compact">
+      <ViewHeader title="Registro del proyecto IPERC" text="Complete cada pestaña; la matriz se genera sola." />
+      <div className="reg-tabs" role="tablist">
+        {sections.map((item, index) => (
+          <button type="button" role="tab" key={item.id} aria-selected={section === item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}>
+            <span>{index + 1}</span>{item.label}{item.count !== undefined && <em>{item.count}</em>}
+          </button>
+        ))}
+        <button type="button" className="primary-neon small" onClick={onSave} disabled={saveState === 'saving'}>
+          <Save size={14} /> {saveState === 'saving' ? 'Guardando...' : 'Guardar'}
+        </button>
+      </div>
 
       {errors.length > 0 ? (
         <div className="reg-alert warning">
@@ -1324,6 +1489,7 @@ function RegistrationPanel({
       )}
 
       <div className="settings-grid">
+        {section === 'empresa' && (<>
         <div className="glass-card form-card">
           <h3>Empresa</h3>
           <Field label="Razón social" value={profile.name} onChange={(name) => setProfile({ ...profile, name })} />
@@ -1364,11 +1530,10 @@ function RegistrationPanel({
               <option value="archived">Archivado</option>
             </select>
           </label>
-          <button type="button" className="primary-neon" onClick={onSave} disabled={saveState === 'saving'}>
-            <Save size={16} /> {saveState === 'saving' ? 'Guardando...' : 'Guardar proyecto'}
-          </button>
         </div>
+        </>)}
 
+        {section === 'areas' && (
         <div className="glass-card form-card span-2">
           <div className="card-head"><h3>Áreas y procesos</h3><button type="button" className="ghost-button" onClick={addArea}><Plus size={14} /> Agregar área</button></div>
           {áreas.map((área) => (
@@ -1382,7 +1547,9 @@ function RegistrationPanel({
             </div>
           ))}
         </div>
+        )}
 
+        {section === 'puestos' && (
         <div className="glass-card form-card span-2">
           <div className="card-head"><h3>Puestos de trabajo</h3><button type="button" className="ghost-button" onClick={addPosition}><Plus size={14} /> Agregar puesto</button></div>
           {positions.map((position) => (
@@ -1397,7 +1564,9 @@ function RegistrationPanel({
             </div>
           ))}
         </div>
+        )}
 
+        {section === 'tareas' && (
         <div className="glass-card form-card span-2">
           <div className="card-head"><h3>Tareas operativas</h3><button type="button" className="ghost-button" onClick={addTask}><Plus size={14} /> Agregar tarea</button></div>
           {tasks.map((task) => (
@@ -1416,6 +1585,7 @@ function RegistrationPanel({
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

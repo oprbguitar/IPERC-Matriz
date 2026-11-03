@@ -1,0 +1,507 @@
+{
+  "generatedAt": "2026-11-03T19:41:14.005Z",
+  "norms": {
+    "law-29783": {
+      "id": "law-29783",
+      "url": "https://www.gob.pe/institucion/congreso-de-la-republica/normas-legales/462576-29783",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Congreso de la República",
+      "publication": "20 de agosto de 2011",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/571762/Ley_N__29783.pdf?v=1585259556",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-005-2012-tr": {
+      "id": "ds-005-2012-tr",
+      "url": "https://www.gob.pe/institucion/presidencia/normas-legales/462577-005-2012-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Presidencia de la República del Perú",
+      "publication": "1 de noviembre de 2016",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/571763/Decreto_Supremo_N__005-2012-TR.pdf?v=1585259918",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "rm-050-2013-tr": {
+      "id": "rm-050-2013-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/288031-050-2013-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "14 de marzo de 2013",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/350741/050-2013-TR.pdf?v=1597252273",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/350742/Anexos.pdf?v=1597252273"
+      ],
+      "elPeruanoUrl": null
+    },
+    "law-30222": {
+      "id": "law-30222",
+      "url": "https://www.gob.pe/institucion/minedu/normas-legales/118483-30222",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Educación",
+      "publication": "11 de julio de 2014",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/105209/_30222_-_15-07-2014_09_53_07_-Ley_N__30222.PDF?v=1586905412",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-006-2014-tr": {
+      "id": "ds-006-2014-tr",
+      "url": "https://busquedas.elperuano.pe/dispositivo/NL/1121443-3",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Modifican el Reglamento de la Ley N° 29783, Ley de Seguridad y Salud en el Trabajo, aprobado por Decreto Supremo N° 005-2012-TR - D.S. -",
+      "publication": null,
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1121443-3"
+    },
+    "ds-012-2014-tr": {
+      "id": "ds-012-2014-tr",
+      "url": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-registro-unico-de-informacion-ds-n-012-2014-tr-1157929-1/",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Decreto Supremo que aprueba el Registro Único de Información sobre accidentes de trabajo, incidentes peligrosos y enfermedades ocupacionales y modifica el artículo 110 del Reglamento de la Ley de Seguridad y Salud en el ",
+      "publication": "31 de octubre de 2014",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-registro-unico-de-informacion-ds-n-012-2014-tr-1157929-1/"
+    },
+    "ds-016-2016-tr": {
+      "id": "ds-016-2016-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/8094744-016-2016-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "23 de diciembre de 2016",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/9919854/8094744-ds-016-2016-tr.pdf?v=1778047645",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-020-2019-tr": {
+      "id": "ds-020-2019-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/391897-020-2019-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "24 de diciembre de 2019",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/475286/DS-020-2019-TR.pdf?v=1579098424",
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-n-2978-decreto-supremo-n-020-2019-tr-1840085-4/"
+    },
+    "ds-001-2021-tr": {
+      "id": "ds-001-2021-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/1604628-001-2021-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "29 de enero de 2021",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1616762/Decreto-supremo-n-001-2021-TR.pdf?v=1611931093",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "law-31246": {
+      "id": "law-31246",
+      "url": "https://busquedas.elperuano.pe/dispositivo/NL/1966676-1",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ley que modifica la Ley 29783, Ley de Seguridad y Salud en el Trabajo, para garantizar el derecho de los trabajadores a la seguridad y la salud en el trabajo ante riesgo epidemiológico y sanitario - LEY -",
+      "publication": null,
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1966676-1"
+    },
+    "ds-006-2022-tr": {
+      "id": "ds-006-2022-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/3005450-006-2022-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "28 de abril de 2022",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/3124500/Decreto-supre-decreto-supremo-n-006-2022-TR.pdf?v=1653332872",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "rm-375-2008-tr": {
+      "id": "rm-375-2008-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/394457-375-2008-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "28 de noviembre de 2008",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/472126/RM_375-2008-TR.pdf?v=1578090277",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/472127/Anexo_1-Norma_B%C3%A1sica_de_Ergonom%C3%ADa....pdf?v=1578090278"
+      ],
+      "elPeruanoUrl": null
+    },
+    "rm-312-2011-minsa": {
+      "id": "rm-312-2011-minsa",
+      "url": "https://www.gob.pe/institucion/minsa/normas-legales/243792-312-2011-minsa",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Salud",
+      "publication": "25 de abril de 2011",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/272673/243792_RM312-2011-MINSA.pdf",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/272673/preview_243792_RM312-2011-MINSA.pdf"
+      ],
+      "elPeruanoUrl": null
+    },
+    "law-28611": {
+      "id": "law-28611",
+      "url": "https://www.gob.pe/institucion/congreso-de-la-republica/normas-legales/3569-28611",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Congreso de la República",
+      "publication": "21 de abril de 2017",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/12772/Ley-N_-28611.pdf?v=1578521542",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "dl-1278": {
+      "id": "dl-1278",
+      "url": "https://www.gob.pe/institucion/minam/normas-legales/3610-1278",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio del Ambiente",
+      "publication": "24 de abril de 2017",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/12809/Decreto-Legislativo-N_-1278.pdf?v=1530656651",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/155762/Decreto-Legislativo-N_-1278.pdf?v=1532448201"
+      ],
+      "elPeruanoUrl": null
+    },
+    "ds-014-2017-minam": {
+      "id": "ds-014-2017-minam",
+      "url": "https://sinia.minam.gob.pe/normas/reglamento-decreto-legislativo-ndeg-1278-decreto-legislativo-que-aprueba",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Reglamento del Decreto Legislativo N° 1278, Decreto Legislativo que aprueba la Ley de Gestión Integral de Residuos Sólidos",
+      "publication": "2026-09-16",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-024-2016-em": {
+      "id": "ds-024-2016-em",
+      "url": "https://www.gob.pe/institucion/osinergmin/normas-legales/741887-024-2016-em",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Organismo Supervisor de la Inversión en Energía y Minería",
+      "publication": "28 de julio de 2016",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/901782/DS-024-2016-EM.pdf?v=1593568355",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/901783/DS-024-2016-EM-ANEXOS.pdf?v=1593568355",
+        "https://cdn.www.gob.pe/uploads/document/file/901784/DS-024-2016-EM-GUIAS-1.pdf?v=1593568355",
+        "https://cdn.www.gob.pe/uploads/document/file/901785/DS-024-2016-EM-GUIAS-2.pdf?v=1593568355"
+      ],
+      "elPeruanoUrl": null
+    },
+    "rne-g050": {
+      "id": "rne-g050",
+      "url": "https://www.gob.pe/institucion/sencico/informes-publicaciones/887225-normas-del-reglamento-nacional-de-edificaciones-rne",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Servicio Nacional de Capacitación para la Industria de la Construcción",
+      "publication": "29 de julio de 2020",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1067566/DS_N_011-2006-VIVIENDA.pdf?v=1596055004",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "sunafil-elssa-2": {
+      "id": "sunafil-elssa-2",
+      "url": "https://www.gob.pe/institucion/sunafil/campa%C3%B1as/125953-elssa-2-0-herramienta-interactiva-para-la-prevencion-de-riesgos-laborales",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "‘ELSSA 2.0’: Herramienta interactiva para la prevención de riesgos laborales",
+      "publication": "30 de octubre de 2025",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "sunafil-guia-comite": {
+      "id": "sunafil-guia-comite",
+      "url": "https://www.gob.pe/institucion/sunafil/noticias/583696-empresas-con-20-o-mas-trabajadores-deben-contar-con-un-comite-de-seguridad-y-salud-en-el-trabajo",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Empresas con 20 o más trabajadores deben contar con un Comité de Seguridad y Salud en el trabajo",
+      "publication": "15 de febrero de 2022",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "servir-modelos-sst": {
+      "id": "servir-modelos-sst",
+      "url": "https://www.gob.pe/institucion/servir/informes-publicaciones/3572314-modelos-y-formatos-de-seguridad-y-salud-en-el-trabajo-sst",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Autoridad Nacional del Servicio Civil",
+      "publication": "5 de octubre de 2022",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "servir-normatividad-sst": {
+      "id": "servir-normatividad-sst",
+      "url": "https://www.gob.pe/institucion/servir/informes-publicaciones/3572362-normatividad-relacionada-a-la-seguridad-y-salud-en-el-trabajo-sst",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Autoridad Nacional del Servicio Civil",
+      "publication": "12 de setiembre de 2024",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/6931706/3572362-linea-de-tiempo-de-la-legislacion-de-sst-en-el-peru.pdf?v=1726164238",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/3728010/D.S%20N%C2%B0%20001-2021-TR%20%E2%80%93%20Decreto%20Supremo%20que%20modifica%20diversos%20art%C3%ADculos%20del%20Reglamento%20de%20la%20Ley%20N%C2%B0%2029783%2C%20Ley%20de%20Seguridad%20y%20Salud%20en%20el%20Trabajo..pdf?v=1665004300",
+        "https://cdn.www.gob.pe/uploads/document/file/3728045/Ley%20N%C2%BA%2031051%20%E2%80%93%20Ley%20que%20ampl%C3%ADa%20las%20medidas%20de%20protecci%C3%B3n%20laboral%20para%20mujeres%20gestantes%20y%20madres%20lactantes%20en%20casos%20de%20emergencia%20nacional%20sanitaria.%20.pdf?v=1665004701",
+        "https://cdn.www.gob.pe/uploads/document/file/3728046/Ley%20N%C2%B0%2029783%2C%20Ley%20de%20Seguridad%20y%20Salud%20en%20el%20Trabajo.pdf?v=1665004701"
+      ],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/2434965-1"
+    },
+    "law-28806": {
+      "id": "law-28806",
+      "url": "https://cdn.www.gob.pe/uploads/document/file/2845243/Ley%20N%C2%B0%2028806%20-%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": null,
+      "publication": null,
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/2845243/Ley%20N%C2%B0%2028806%20-%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-019-2006-tr": {
+      "id": "ds-019-2006-tr",
+      "url": "https://cdn.www.gob.pe/uploads/document/file/2845244/DS%20019-2006-TR%20-%20Aprueban%20Reglamento%20de%20la%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": null,
+      "publication": null,
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/2845244/DS%20019-2006-TR%20-%20Aprueban%20Reglamento%20de%20la%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-008-2020-tr": {
+      "id": "ds-008-2020-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/436782-008-2020-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "10 de febrero de 2020",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/519862/Decreto-supremo-n-008-2020-tr-1853904-1.pdf?v=1581342284",
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-general-decreto-supremo-n-008-2020-tr-1853904-1/"
+    },
+    "law-29981": {
+      "id": "law-29981",
+      "url": "https://www.sunafil.gob.pe/portal/images/docs/normatividad/LEY-29981-Creacion-SUNAFIL.pdf",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": null,
+      "publication": null,
+      "pdfUrl": "https://www.sunafil.gob.pe/portal/images/docs/normatividad/LEY-29981-Creacion-SUNAFIL.pdf",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-014-2013-tr": {
+      "id": "ds-014-2013-tr",
+      "url": "https://busquedas.elperuano.pe/dispositivo/NL/1031708-2",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Aprueban Reglamento del Registro de Auditores autorizados para la evaluación periódica del Sistema de Gestión de la Seguridad y Salud en el Trabajo - DECRETO SUPREMO -",
+      "publication": "24 de diciembre de 2013",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1031708-2"
+    },
+    "ds-011-2019-tr": {
+      "id": "ds-011-2019-tr",
+      "url": "https://www.gob.pe/institucion/mtpe/normas-legales/284237-011-2019-tr",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Trabajo y Promoción del Empleo",
+      "publication": "11 de julio de 2019",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/341232/decreto-supremo-n-011-2019-tr-1787274-4.pdf?v=1562856062",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/341270/DS_APRUEBA_Reglamento_SST_CONSTRUCCI%C3%93N.pdf?v=1562862240",
+        "https://cdn.www.gob.pe/uploads/document/file/341271/Reglamento_-_CONSTRUCCI%C3%93N.pdf?v=1562862399",
+        "https://cdn.www.gob.pe/uploads/document/file/341275/ANEXOS_REGLAMENTO_SST_CONSTRUCCION.pdf?v=1562862615"
+      ],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-reglamento-de-seguridad-y-sal-decreto-supremo-n-011-2019-tr-1787274-4/"
+    },
+    "rm-111-2013-mem-dm": {
+      "id": "rm-111-2013-mem-dm",
+      "url": "https://www.gob.pe/institucion/osinergmin/normas-legales/738504-111-2013-mem-dm",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Organismo Supervisor de la Inversión en Energía y Minería",
+      "publication": "27 de marzo de 2013",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/898454/RM-111-2013-MEM-DM.pdf?v=1593529146",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "rm-021-2016-minsa": {
+      "id": "rm-021-2016-minsa",
+      "url": "https://busquedas.elperuano.pe/dispositivo/NL/1333375-5",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Aprueban el perfil de competencias del médico ocupacional - RESOLUCION MINISTERIAL -",
+      "publication": "15 de enero de 2016",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1333375-5"
+    },
+    "law-31110": {
+      "id": "law-31110",
+      "url": "https://cdn.www.gob.pe/uploads/document/file/1535274/Ley%2031110.pdf",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": null,
+      "publication": null,
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1535274/Ley%2031110.pdf",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-005-2021-midagri": {
+      "id": "ds-005-2021-midagri",
+      "url": "https://www.gob.pe/institucion/midagri/normas-legales/1793115-005-2021-midagri",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio de Desarrollo Agrario y Riego",
+      "publication": "12 de abril de 2021",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1796170/D.S.%20N%C2%B0%200005-2021-MIDAGRI.pdf",
+      "extraPdfs": [
+        "https://cdn.www.gob.pe/uploads/document/file/1796170/preview_D.S.%20N%C2%B0%200005-2021-MIDAGRI.pdf"
+      ],
+      "elPeruanoUrl": null
+    },
+    "law-29733": {
+      "id": "law-29733",
+      "url": "https://www.gob.pe/institucion/indecopi/normas-legales/3462259-ley-29733",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+      "publication": "11 de setiembre de 2019",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/3621075/Ley%2029733.pdf",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "law-27446": {
+      "id": "law-27446",
+      "url": "https://sinia.minam.gob.pe/normas/ley-sistema-nacional-evaluacion-impacto-ambiental",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ley del Sistema Nacional de Evaluación del Impacto Ambiental",
+      "publication": "2026-07-03",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-019-2009-minam": {
+      "id": "ds-019-2009-minam",
+      "url": "https://www.gob.pe/institucion/minam/normas-legales/317422-019-2009-minam",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio del Ambiente",
+      "publication": "25 de setiembre de 2009",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/385519/Decreto_Supremo_N__019-2009-MINAM20191013-25586-2jh5x0.pdf?v=1570943859",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "law-29325": {
+      "id": "law-29325",
+      "url": "https://sinia.minam.gob.pe/normas/ley-sistema-nacional-evaluacion-fiscalizacion-ambiental",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ley del Sistema Nacional de Evaluación y Fiscalización Ambiental",
+      "publication": null,
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-003-2017-minam": {
+      "id": "ds-003-2017-minam",
+      "url": "https://sinia.minam.gob.pe/normas/aprueban-estandares-calidad-ambiental-eca-aire-establecen-disposiciones",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Aprueban Estándares de Calidad Ambiental (ECA) para Aire y establecen Disposiciones Complementarias",
+      "publication": "2026-09-16",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-004-2017-minam": {
+      "id": "ds-004-2017-minam",
+      "url": "https://www.gob.pe/institucion/minam/normas-legales/3671-004-2017-minam",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Ministerio del Ambiente",
+      "publication": "7 de junio de 2017",
+      "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/12870/DS-004-2017-MINAM.pdf?v=1530656700",
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-011-2017-minam": {
+      "id": "ds-011-2017-minam",
+      "url": "https://sinia.minam.gob.pe/normas/aprueban-estandares-calidad-ambiental-eca-suelo",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Aprueban Estándares de Calidad Ambiental (ECA) para Suelo",
+      "publication": "2026-09-16",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    },
+    "ds-085-2003-pcm": {
+      "id": "ds-085-2003-pcm",
+      "url": "https://sinia.minam.gob.pe/normas/reglamento-estandares-nacionales-calidad-ambiental-ruido",
+      "status": 200,
+      "ok": true,
+      "checkedAt": "2026-11-03",
+      "title": "Reglamento de Estándares Nacionales de Calidad Ambiental para Ruido.",
+      "publication": "30 de octubre de 2003",
+      "pdfUrl": null,
+      "extraPdfs": [],
+      "elPeruanoUrl": null
+    }
+  }
+}

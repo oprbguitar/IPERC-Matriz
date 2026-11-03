@@ -31,6 +31,8 @@ export function RouteView({ answers, onAnswer, onReset, onNavigate }: RouteViewP
   const controlQuestions = DIAGNOSTIC_QUESTIONS.filter((question) => question.type === 'control')
   const profileQuestions = DIAGNOSTIC_QUESTIONS.filter((question) => question.type === 'perfil')
   const answeredControls = controlQuestions.filter((question) => answers[question.id])
+  const answeredTotal = DIAGNOSTIC_QUESTIONS.filter((question) => answers[question.id]).length
+  const percent = Math.round((answeredTotal / DIAGNOSTIC_QUESTIONS.length) * 100)
 
   return (
     <div className="view-page">
@@ -47,11 +49,17 @@ export function RouteView({ answers, onAnswer, onReset, onNavigate }: RouteViewP
         </button>
       </header>
 
+      <div className="diag-progress" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Preguntas respondidas">
+        <span>{answeredTotal} de {DIAGNOSTIC_QUESTIONS.length} respondidas</span>
+        <div><i style={{ width: `${percent}%` }} /></div>
+        <b>{percent}%</b>
+      </div>
+
       <section className="diag-block" aria-labelledby="diag-profile">
         <h2 id="diag-profile">1. Su organización</h2>
-        <div className="diag-grid">
+        <div className="diag-grid profile">
           {profileQuestions.map((question) => (
-            <fieldset className="diag-card" key={question.id}>
+            <fieldset className={`diag-card ${answers[question.id] ? 'answered' : ''}`} key={question.id}>
               <legend>{question.question}</legend>
               <p className="diag-help">{question.help}</p>
               <div className="diag-options">
@@ -75,9 +83,9 @@ export function RouteView({ answers, onAnswer, onReset, onNavigate }: RouteViewP
 
       <section className="diag-block" aria-labelledby="diag-controls">
         <h2 id="diag-controls">2. Qué tiene implementado</h2>
-        <div className="diag-grid">
+        <div className="diag-grid rows">
           {controlQuestions.map((question) => (
-            <fieldset className="diag-card" key={question.id}>
+            <fieldset className={`diag-card ${answers[question.id] ? 'answered' : ''}`} key={question.id}>
               <legend>{question.question}</legend>
               <p className="diag-help">{question.help}</p>
               <div className="diag-options">

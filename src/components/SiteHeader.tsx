@@ -1,34 +1,48 @@
-import { Menu, ShieldCheck, X } from 'lucide-react'
-import { useState } from 'react'
+import { Crown, Menu, ShieldCheck, UserRound, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { NAV_ITEMS, type SiteViewId } from '../data/platformContent'
+import type { ApiUser } from '../lib/api'
 
 interface SiteHeaderProps {
   active: SiteViewId
   onNavigate: (view: SiteViewId) => void
+  user: ApiUser | null
+  premiumPercent: number | null
 }
 
-export function SiteHeader({ active, onNavigate }: SiteHeaderProps) {
+export function SiteHeader({ active, onNavigate, user, premiumPercent }: SiteHeaderProps) {
   const [openMenu, setOpenMenu] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // La barra queda fija; al desplazarse se compacta y gana sombra.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   function go(view: SiteViewId) {
     onNavigate(view)
     setOpenMenu(false)
   }
 
+  const items = NAV_ITEMS.filter((item) => item.id !== 'premium')
+
   return (
-    <header className="site-header">
-      <button type="button" className="site-brand" onClick={() => go('inicio')} aria-label="Ruta SST Perú, ir al inicio">
+    <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+      <button type="button" className="site-brand" onClick={() => go('inicio')} aria-label="Observatorio SST Perú, ir al inicio">
         <span className="site-logo" aria-hidden="true">
           <ShieldCheck size={22} />
         </span>
         <span className="site-brand-text">
-          <strong>Ruta SST Perú</strong>
-          <small>Seguridad, Salud, Medio Ambiente y Gestión Preventiva</small>
+          <strong>Observatorio SST Perú</strong>
+          <small>SST · SSOMA · Salud ocupacional · IPERC</small>
         </span>
       </button>
 
       <nav className="site-nav" aria-label="Navegación principal">
-        {NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -41,6 +55,16 @@ export function SiteHeader({ active, onNavigate }: SiteHeaderProps) {
           </button>
         ))}
       </nav>
+
+      <button
+        type="button"
+        className={`premium-chip ${active === 'premium' ? 'active' : ''} ${user ? 'signed' : ''}`}
+        onClick={() => go('premium')}
+        title={user ? `Sesión: ${user.email}` : 'Acceso premium'}
+      >
+        {user ? <UserRound size={16} aria-hidden="true" /> : <Crown size={16} aria-hidden="true" />}
+        <span>{user ? (premiumPercent !== null ? `${premiumPercent}%` : 'Mi panel') : 'Premium'}</span>
+      </button>
 
       <button
         type="button"

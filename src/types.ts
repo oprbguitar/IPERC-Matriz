@@ -100,6 +100,8 @@ export type LegalCategory =
   | 'ergonomics'
   | 'sectoral'
   | 'environmental'
+  | 'inspection'
+  | 'data-ai'
 
 /** Current standing of the norm itself. */
 export type LegalEffectiveStatus = 'vigente' | 'modificada' | 'derogada' | 'verification-required'

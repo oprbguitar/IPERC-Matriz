@@ -1,8 +1,11 @@
-import { ArrowRight, ChevronRight, Download, FileSpreadsheet, FileText, FileType2, Scale, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
 import { LegalReference } from '../components/LegalReference'
-import { featuredNormIds, findNorm } from '../data/legalDatabase'
+import { COVERAGE_DOMAINS } from '../data/coverage'
+import { GUIDES } from '../data/guides'
+import { featuredNormIds, findNorm, legalNorms } from '../data/legalDatabase'
+import { TIMELINE_ERAS, TIMELINE_EVENTS } from '../data/timeline'
+import { statusForAnswer, type DiagnosticAnswers } from '../lib/diagnostic'
 import {
-  COVERAGE_TAGS,
   findTemplate,
   PLATFORM_DISCLAIMER,
   QUICK_DOWNLOADS,
@@ -35,16 +38,24 @@ interface HomeViewProps {
   onNavigate: (view: SiteViewId) => void
   onOpenRouteCard: (id: RouteCardId) => void
   onOpenNorm: (normId: string) => void
+  onOpenGuide: (guideId: string) => void
   completedStepIds: string[]
   progressPercent: number
+  answers: DiagnosticAnswers
+  premiumPercent: number | null
+  signedIn: boolean
 }
 
 export function HomeView({
   onNavigate,
   onOpenRouteCard,
   onOpenNorm,
+  onOpenGuide,
   completedStepIds,
   progressPercent,
+  answers,
+  premiumPercent,
+  signedIn,
 }: HomeViewProps) {
   return (
     <div className="home">
@@ -78,6 +89,28 @@ export function HomeView({
             decoding="async"
           />
         </picture>
+      </section>
+
+      <section className="story-strip" aria-label="Historia de la normativa SST en el Perú">
+        <div className="story-copy">
+          <span className="eyebrow"><History size={15} aria-hidden="true" /> La historia en 60 segundos</span>
+          <h2>Cómo nació y evolucionó la SST en el Perú</h2>
+          <p>{TIMELINE_EVENTS.length} hitos, de la seguridad industrial de 1964 a la gestión con datos e IA de 2026.</p>
+          <button type="button" className="btn-secondary small" onClick={() => onNavigate('evolucion')}>
+            Ver línea de tiempo <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+        <ol className="story-eras">
+          {TIMELINE_ERAS.map((era, index) => (
+            <li key={era.id} style={{ '--i': index } as React.CSSProperties}>
+              <button type="button" onClick={() => onNavigate('evolucion')}>
+                <span className="story-dot" aria-hidden="true" />
+                <b>{era.range}</b>
+                <small>{era.title}</small>
+              </button>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="route-cards" aria-label="Ruta práctica en seis pasos">
@@ -176,6 +209,14 @@ export function HomeView({
               )
             })}
           </ul>
+          <div className="quick-guides">
+            <b><BookOpen size={15} aria-hidden="true" /> Guías listas</b>
+            {GUIDES.slice(0, 4).map((guide) => (
+              <button type="button" key={guide.id} onClick={() => onOpenGuide(guide.id)}>
+                {guide.title} <ChevronRight size={14} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
         </section>
 
         <section className="panel featured-norms" aria-labelledby="featured-norms-title">
@@ -208,15 +249,49 @@ export function HomeView({
         </section>
       </div>
 
-      <section className="coverage-strip" aria-label="Temas cubiertos por la plataforma">
-        <b>Cobertura</b>
-        <ul>
-          {COVERAGE_TAGS.map((tag) => {
-            const Icon = tag.icon
+      <section className="tracker" aria-labelledby="tracker-title">
+        <header className="tracker-head">
+          <div>
+            <span className="eyebrow"><Radar size={15} aria-hidden="true" /> Sistema de seguimiento</span>
+            <h2 id="tracker-title">Cobertura SST, SSOMA y salud ocupacional</h2>
+            <p>{COVERAGE_DOMAINS.length} dominios · {legalNorms.length} normas oficiales enlazadas. El estado se alimenta de su diagnóstico en Mi Ruta.</p>
+          </div>
+          {signedIn ? (
+            <button type="button" className="premium-progress" onClick={() => onNavigate('premium')}>
+              <span style={{ '--p': premiumPercent ?? 0 } as React.CSSProperties} className="mini-ring" aria-hidden="true" />
+              <span><b>{premiumPercent ?? 0}%</b><small>Plan premium</small></span>
+            </button>
+          ) : (
+            <button type="button" className="premium-progress locked" onClick={() => onNavigate('premium')}>
+              <Crown size={18} aria-hidden="true" />
+              <span><b>Premium</b><small>IA y agentes</small></span>
+            </button>
+          )}
+        </header>
+        <ul className="tracker-grid">
+          {COVERAGE_DOMAINS.map((domain, index) => {
+            const Icon = domain.icon
+            const status = domain.diagnosticId ? statusForAnswer(domain.diagnosticId, answers[domain.diagnosticId]) : undefined
+            const label = status === 'cumple' ? 'Cumple' : status === 'pendiente' ? 'Pendiente' : status === 'no-aplica' ? 'No aplica' : status === 'verificar' ? 'Verificar' : domain.diagnosticId ? 'Sin evaluar' : 'Referencia'
+            const norms = domain.normIds.filter((id) => findNorm(id)).length
             return (
-              <li key={tag.label}>
-                <Icon size={15} aria-hidden="true" />
-                {tag.label}
+              <li key={domain.id} style={{ '--i': index } as React.CSSProperties}>
+                <button
+                  type="button"
+                  className={`tracker-tile ${domain.tone}`}
+                  onClick={() => (domain.guideId ? onOpenGuide(domain.guideId) : onNavigate(domain.view))}
+                  title={domain.description}
+                >
+                  <span className="tracker-icon" aria-hidden="true"><Icon size={18} /></span>
+                  <span className="tracker-text">
+                    <b>{domain.label}</b>
+                    <small>{domain.description}</small>
+                  </span>
+                  <span className="tracker-meta">
+                    <em className={`state ${status ?? 'none'}`}>{label}</em>
+                    <small>{norms} norma{norms === 1 ? '' : 's'}</small>
+                  </span>
+                </button>
               </li>
             )
           })}

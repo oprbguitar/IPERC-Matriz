@@ -1,115 +1,75 @@
-# Ruta SST Perú
+# Observatorio SST Perú
 
-**Seguridad, Salud, Medio Ambiente y Gestión Preventiva.**
+**https://sst.andesnova.solutions** · Seguridad y Salud en el Trabajo, SSOMA, salud ocupacional, IPERC e ISO para cualquier empresa o institución del Perú.
 
-Plataforma informativa y práctica de prevención ocupacional para el Perú. Está pensada para empleadores, trabajadores, comités y supervisores de SST, Recursos Humanos, sector público y privado, consultores y estudiantes de cualquier disciplina: no solo para especialistas.
+Plataforma abierta (sin registro) con una zona **Premium** con acceso por correo y clave. Corre en **Cloudflare Workers + D1** y se mantiene vigente con verificación automática mensual de las fuentes oficiales.
 
-Publicada en <https://oprbguitar.github.io/IPERC-Matriz/>.
+## Qué incluye
 
-> Herramienta informativa y preventiva. Verifique siempre la versión vigente de cada norma en su fuente oficial. Este sitio no es un portal del Estado peruano ni cuenta con respaldo institucional.
+| Sección | Para qué sirve |
+|---|---|
+| **Inicio** | Historia en 60 segundos, ruta en 6 pasos, descargas rápidas y el **sistema de seguimiento** con 17 dominios (SST, IPERC, comité, registros, salud ocupacional, higiene, ergonomía, psicosocial, inspecciones SUNAFIL, auditoría, emergencias, incendios, riesgo eléctrico, residuos, ambiente, capacitación/contratistas, SST digital e IA). |
+| **Evolución** | Línea de tiempo normativa 1964–2026 por eras y ramas, y **árbol de especialización**: tronco legal → ramas → especialidades → roles → prioridades actuales. Descargable en Word/PDF. |
+| **Mi Ruta** | Diagnóstico de 10 preguntas en formato compacto, con resultado, responsables, evidencias y normas. |
+| **Obligaciones** | Qué corresponde según tamaño, sector y rol. |
+| **Biblioteca** | 12 **guías** (SGSST, IPERC, comité, registros, SUNAFIL 2026, auditoría, salud/EMO, ergonomía, emergencias, residuos, contratistas, panorama 2024–2026), **informes enriquecidos** generados en el navegador (diagnóstico, compendio normativo, expediente SUNAFIL) y **plantillas** con su procedencia. Lectura en línea y descarga en Word, PDF o Markdown. |
+| **Normativa** | 40 normas peruanas con **enlaces directos verificados** (fuente oficial, PDF, El Peruano, texto concordado SINIA y SPIJ), vista en lista o cuadros, y pestaña **ISO y sistemas integrados** (ISO 45001, ISO 14001, tronco común SIG y matriz documental). |
+| **Herramientas** | Generador IPERC, matriz editable, **Analítica** (calculadora de multas SUNAFIL con la tabla oficial del D.S. 008-2020-TR, organización exigible, IF/IS/IA, riesgo inicial vs. residual), **plan de acción con drag & drop**, evidencias con arrastre de archivos, normativa en cuadros/lista, reportes Excel/Word/CSV y registro compacto por pestañas. El panel lateral es un **índice SST** con guías por herramienta. |
+| **Premium** | Login con correo y clave, plan de 22 hitos en 6 fases con **% de avance guardado en la nube** (visible en la barra superior), 6 guías de IA (IA aplicada, sistema de agentes, herramientas open source/pago, seguimiento continuo, prompts, gobernanza de datos), solicitudes de acceso y panel de administración de usuarios. |
 
-## Qué cubre
+## Procedencia del contenido
 
-SST, SOMA, IPERC, salud ocupacional, ergonomía, riesgos psicosociales, inspecciones, emergencias, accidentes e incidentes, aspectos e impactos ambientales, residuos y derrames, obligaciones legales, plazos y registros, y plantillas descargables.
+- **Normas**: catálogo propio con enlaces a gob.pe, El Peruano, SUNAFIL, SINIA y Congreso. `npm run scrape:norms` visita cada fuente, verifica el estado HTTP y extrae el PDF oficial y el enlace a El Peruano en `src/data/normSources.json`. El workflow `refresh-norms.yml` lo repite cada mes y abre un PR si algo cambió.
+- **SPIJ**: su buscador exige sesión, por eso cada norma abre el SPIJ de acceso libre y copia el número; cuando se conoce el ID `detallenorma` se registra en `src/data/normLinks.ts` para enlace directo.
+- **Plantillas**: cada tarjeta indica si es un **formato oficial** (MTPE, SUNAFIL, SERVIR, MINSA, MINAM) o una **plantilla propia** del Observatorio (Excel IPERC y guía Word en `public/templates`).
+- **Guías e informes**: generados por la plataforma a partir del catálogo verificado, `alcances.md` y el informe *Mercado peruano de SST 2024–2026*.
+- **ISO**: `npm run import:iso <carpeta>` importa la interpretación cláusula por cláusula de los cursos [cursoma2026](https://github.com/oprbguitar/cursoma2026) y [sistemas-integrados-curso](https://github.com/oprbguitar/sistemas-integrados-curso). No se reproduce texto ISO.
+- **Multas**: tabla del art. 48 del RLGIT transcrita del PDF oficial del D.S. N.° 008-2020-TR; UIT 2024–2026.
 
-## Estructura de la aplicación
+Todo es orientativo: verifique el texto vigente de cada norma en la fuente oficial antes de citarlo.
 
-La navegación principal tiene seis entradas, todas funcionales:
+## Arquitectura
 
-| Entrada | Qué hace |
-| --- | --- |
-| **Inicio** | Portada compacta: héroe, seis tarjetas de ruta, ruta recomendada con progreso, descargas rápidas, normativa destacada y franja de cobertura. |
-| **Mi Ruta** | Diagnóstico guiado de diez preguntas en lenguaje llano. Devuelve estado (*Cumple / Pendiente / No aplica / Requiere verificación*), acción requerida, responsable, evidencia esperada, plantilla y sustento normativo. |
-| **Obligaciones** | Filtra por tamaño, sector y rol. Incluye la pestaña **SOMA y ambiente** con prácticas ambientales y su advertencia de aplicabilidad sectorial. |
-| **Plantillas** | Biblioteca por categoría: los archivos propios se descargan desde la aplicación; el resto enlaza a los formatos oficiales publicados por el Estado. |
-| **Herramientas** | Espacio de trabajo avanzado: generador IPERC, matriz editable, análisis, plan de acción, evidencias, normativa aplicable, reportes y proyectos guardados. |
-| **Normativa** | Catálogo legal con búsqueda, filtros por categoría, sector y estado, orden por relevancia o fecha, resumen en lenguaje llano y enlace a la fuente oficial. |
-
-La portada está dimensionada para entrar sin desplazamiento vertical en 1366×768, 1440×900 y 1920×1080. En tablet y móvil el desplazamiento es normal y está permitido.
-
-## Regla legal
-
-El contenido legal es un catálogo verificado, no una lista de marcadores de posición.
-
-- `src/data/legalDatabase.ts` es la **fuente única de verdad**: ningún componente escribe una URL legal por su cuenta.
-- Cada norma declara `effectiveStatus` (vigente, modificada, derogada o `verification-required`), `sourceStatus`, la autoridad emisora, la fecha de última verificación y un resumen en lenguaje llano.
-- Solo se usan dominios oficiales: `gob.pe`, `leyes.congreso.gob.pe`, `busquedas.elperuano.pe`, `spijweb.minjus.gob.pe` y `sinia.minam.gob.pe`.
-- **No se cita ningún número de artículo que no aparezca de forma expresa en la fuente oficial consultada.** `legalArticles` se mantiene vacío de forma deliberada para que el motor de riesgos nunca cite un artículo sin respaldo documental.
-- Cada afirmación se etiqueta como obligación legal, recomendación, buena práctica, requisito sectorial o pendiente de verificación. Una recomendación nunca se presenta como obligación.
-- Cuando la vigencia, el alcance o el plazo no están confirmados, la interfaz muestra «Requiere verificación en la fuente oficial» en lugar de inventar un dato.
-
-El componente `<LegalReference />` (`src/components/LegalReference.tsx`) rinde cualquier mención normativa como enlace azul con subrayado punteado, icono de enlace externo, `rel="noopener noreferrer"`, `aria-label` descriptivo y apertura en pestaña nueva.
-
-### Obligaciones ambientales
-
-Las obligaciones ambientales varían según sector, actividad, permisos, ubicación y autoridad competente (MINAM, OEFA, DIGESA, ANA, OSINERGMIN o el ministerio del sector). El módulo SOMA separa las buenas prácticas generales de los requisitos sectoriales y no presenta ninguno como universalmente obligatorio.
-
-## Motor IPERC y exportaciones
-
-Se conserva íntegra la lógica previa: taxonomía de peligros, coincidencia por sector, evaluación `probabilidad × severidad × exposición`, bandas Bajo/Moderado/Importante/Intolerable, jerarquía de controles, riesgo residual, plan de acción, evidencias y validación previa a la exportación.
-
-`src/lib/exporters.ts` genera el libro `.xlsx` con `xlsx-js-style` (hojas Resumen, Matriz IPERC, Plan de Acción, Evidencias, Normativa y Catálogos), además de Word, CSV y PDF por impresión. El nombre del archivo sigue el formato `IPERC_[RUC|Empresa]_[Sector]_[YYYY-MM-DD].xlsx`.
-
-> Nota: el escritor de la versión community de SheetJS no escribe paneles congelados; se usa autofiltro + encabezado en negrita como equivalente práctico.
-
-## Recursos estáticos
-
-Todas las rutas internas usan `import.meta.env.BASE_URL` a través de `assetUrl()` (`src/lib/assets.ts`), para que la aplicación funcione bajo la base `/IPERC-Matriz/` de GitHub Pages.
-
-- `public/templates/IPERC_Generador_Normativo_Peru.xlsx`
-- `public/templates/IPERC_Informe_Guia.docx`
-- `public/assets/hero-sst-workers.webp` (imagen principal, con `hero-sst-workers.png` como alternativa)
-
-La ilustración del héroe se sirve con `<picture>`, ancho y alto declarados para evitar saltos de diseño, `object-fit: contain` y texto alternativo descriptivo.
-
-## Supabase
-
-El frontend lee estas variables de entorno:
-
-```bash
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+```
+Navegador (React 19 + Vite)
+   │  /api/*                         resto: archivos estáticos (dist/)
+   ▼
+Cloudflare Worker  worker/index.ts ──► D1 "observatorio-sst"
+   ├─ /api/auth/*      login PBKDF2 + cookie HttpOnly, cambio de clave, límite de intentos
+   ├─ /api/premium/*   guías premium (solo en el servidor)
+   ├─ /api/progress    avance por usuario
+   ├─ /api/access-requests, /api/admin/*   solicitudes y usuarios
+   └─ /api/stats, /api/downloads/:id       contador de descargas
 ```
 
-Para desarrollo local cree un archivo `.env` (ignorado por git) con esas dos variables. Para GitHub Pages, configúrelas en `Settings > Secrets and variables > Actions > Variables`. El frontend solo usa la **anon/publishable key**; nunca el `service_role`.
+Tablas D1 en `migrations/0001_init.sql`: `users`, `sessions`, `progress`, `access_requests`, `download_stats`, `login_attempts`.
 
-Si las variables faltan, la aplicación funciona en **modo local**: los proyectos se guardan en `localStorage` y «Mis proyectos» sigue operativo. El estado técnico de la conexión no se muestra en la interfaz pública; solo aparece en el aviso que confirma dónde se guardó el proyecto.
+GitHub Pages (`/IPERC-Matriz/`) sigue publicando la versión estática; ahí la zona Premium indica que debe usarse el dominio de Cloudflare.
 
-### Migraciones
-
-- `supabase/migrations/001_iperc_schema.sql`: esquema completo + RLS. La tabla `iperc_snapshots` solo permite `insert` anónimo.
-- `supabase/migrations/002_snapshot_access.sql`: agrega políticas `select/update/delete` para `iperc_snapshots`. **Ejecute esta migración** en el editor SQL de Supabase para habilitar el guardado y la carga remotos.
-
-## Ejecutar
+## Desarrollo
 
 ```bash
 npm install
-npm run dev
+npm run dev                 # frontend en http://localhost:5173 (proxy /api -> 8787)
+npm run cf:dev              # build + Worker local con D1 local en http://localhost:8787
+npx wrangler d1 migrations apply observatorio-sst --local
+node scripts/create-user.mjs --email tu@correo.com --name "Tu nombre" --role admin
 ```
 
-## Verificar
+## Despliegue en Cloudflare
 
 ```bash
-npm run build       # tsc -b + vite build
-npm run lint        # oxlint
-npm run check:links # URLs oficiales, plantillas locales, referencias cruzadas y navegación
+npm run cf:migrate          # aplica migraciones en D1 remoto
+npm run deploy              # build + wrangler deploy (dominio sst.andesnova.solutions)
+node scripts/create-user.mjs --email tu@correo.com --role admin --remote
 ```
 
-`check:links` valida además que cada `normId` y `templateId` referenciado exista realmente en el catálogo, y que ninguna entrada de navegación quede sin vista.
+## Verificación
 
-## GitHub Pages
-
-El proyecto usa Vite con `base: /IPERC-Matriz/` y el workflow `.github/workflows/deploy-pages.yml`. Si el sitio devuelve 404, active GitHub Pages con fuente `GitHub Actions` y vuelva a ejecutar el workflow.
-
-## Archivos principales
-
-- `src/App.tsx`: cascarón del sitio público, navegación y panel de detalle.
-- `src/components/LegalReference.tsx`: enlace normativo reutilizable.
-- `src/components/SiteHeader.tsx`, `src/components/SideDrawer.tsx`: cabecera y panel lateral accesibles.
-- `src/views/`: `HomeView`, `RouteView` (diagnóstico), `ObligationsView` (+ SOMA), `TemplatesView`, `NormativeView`.
-- `src/tools/ToolsWorkspace.tsx`: espacio de trabajo IPERC completo.
-- `src/data/legalDatabase.ts`: catálogo legal verificado y módulos sectoriales.
-- `src/data/platformContent.ts`: tarjetas de ruta, diagnóstico, obligaciones, plantillas y contenido SOMA.
-- `src/data/hazards.ts`: taxonomía de peligros y plantillas de control.
-- `src/lib/riskEngine.ts`, `src/lib/exporters.ts`, `src/lib/projectStore.ts`, `src/lib/validation.ts`, `src/lib/assets.ts`.
-- `scripts/check-links.mjs`: verificación de enlaces, plantillas, referencias y navegación.
+```bash
+npm run build               # tsc + vite build
+npm run build:worker        # typecheck del Worker
+npm run lint                # oxlint
+npm run check:links         # URLs externas, plantillas y referencias cruzadas
+npm run scrape:norms        # re-verifica fuentes oficiales
+```

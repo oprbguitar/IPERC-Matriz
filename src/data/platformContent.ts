@@ -27,15 +27,25 @@ import type { ObligationKind } from '../types'
 export type IconType = ComponentType<{ size?: number | string; className?: string }>
 
 /** Vistas públicas de la plataforma. */
-export type SiteViewId = 'inicio' | 'ruta' | 'obligaciones' | 'plantillas' | 'herramientas' | 'normativa'
+export type SiteViewId =
+  | 'inicio'
+  | 'evolucion'
+  | 'ruta'
+  | 'obligaciones'
+  | 'plantillas'
+  | 'herramientas'
+  | 'normativa'
+  | 'premium'
 
 export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: string }> = [
-  { id: 'inicio', label: 'Inicio', description: 'Vista general de la plataforma' },
+  { id: 'inicio', label: 'Inicio', description: 'Vista general del observatorio' },
+  { id: 'evolucion', label: 'Evolución', description: 'Línea de tiempo normativa, ramas y especialidades' },
   { id: 'ruta', label: 'Mi Ruta', description: 'Diagnóstico guiado paso a paso' },
-  { id: 'obligaciones', label: 'Obligaciones', description: 'Que corresponde según tamaño, sector y rol' },
-  { id: 'plantillas', label: 'Plantillas', description: 'Biblioteca de formatos descargables' },
-  { id: 'herramientas', label: 'Herramientas', description: 'IPERC, matriz, planes y reportes' },
+  { id: 'obligaciones', label: 'Obligaciones', description: 'Qué corresponde según tamaño, sector y rol' },
+  { id: 'plantillas', label: 'Biblioteca', description: 'Plantillas, guías e informes descargables' },
   { id: 'normativa', label: 'Normativa', description: 'Marco legal peruano verificado' },
+  { id: 'herramientas', label: 'Herramientas', description: 'IPERC, analítica, plan de acción y reportes' },
+  { id: 'premium', label: 'Premium', description: 'Guías de IA, agentes y seguimiento de avance' },
 ]
 
 /* -------------------------------------------------------------------------- */

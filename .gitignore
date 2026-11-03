@@ -27,3 +27,7 @@ output
 *.njsproj
 *.sln
 *.sw?
+
+# Cloudflare
+.wrangler
+.dev.vars

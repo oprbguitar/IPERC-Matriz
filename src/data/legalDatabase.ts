@@ -7,6 +7,7 @@ import type {
   SectorId,
   SectorModule,
 } from '../types'
+import { extendedLegalNorms } from './legalExtensions'
 
 /**
  * Catálogo legal peruano: fuente única de verdad de la aplicación.
@@ -33,6 +34,8 @@ export const LEGAL_CATEGORY_LABELS: Record<LegalCategory, string> = {
   ergonomics: 'Ergonomía y factores humanos',
   sectoral: 'Aplicación sectorial',
   environmental: 'Ambiente y residuos',
+  inspection: 'Fiscalización y sanciones',
+  'data-ai': 'Datos personales e IA',
 }
 
 export const LEGAL_STATUS_LABELS: Record<LegalEffectiveStatus, string> = {
@@ -695,6 +698,8 @@ export const legalNorms: LegalNorm[] = [
     lastVerifiedAt: '2026-07-25',
   },
 ]
+
+legalNorms.push(...extendedLegalNorms)
 
 export function findNorm(id: string): LegalNorm | undefined {
   return legalNorms.find((norm) => norm.id === id)
