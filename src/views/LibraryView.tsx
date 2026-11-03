@@ -1,13 +1,16 @@
-import { BookOpen, Clock, FileBarChart2, FolderDown, LibraryBig, Search } from 'lucide-react'
+import { BookOpen, Clock, FileBarChart2, FileSpreadsheet, FolderDown, LibraryBig, Search, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DocActions, DocReader } from '../components/DocReader'
 import { findNorm } from '../data/legalDatabase'
 import { GUIDES } from '../data/guides'
 import type { DiagnosticAnswers } from '../lib/diagnostic'
+import { trackDownload } from '../lib/api'
+import { downloadExcel } from '../lib/docgen'
 import { REPORTS } from '../lib/reports'
+import { advancedTemplates } from '../lib/templateBuilder'
 import TemplatesView from './TemplatesView'
 
-export type LibraryTab = 'guias' | 'informes' | 'plantillas'
+export type LibraryTab = 'guias' | 'avanzadas' | 'informes' | 'plantillas'
 
 interface LibraryViewProps {
   tab: LibraryTab
@@ -20,11 +23,13 @@ interface LibraryViewProps {
 const TABS: Array<{ id: LibraryTab; label: string; icon: typeof BookOpen }> = [
   { id: 'guias', label: 'Guías', icon: BookOpen },
   { id: 'informes', label: 'Informes', icon: FileBarChart2 },
+  { id: 'avanzadas', label: 'Plantillas avanzadas', icon: Sparkles },
   { id: 'plantillas', label: 'Plantillas', icon: FolderDown },
 ]
 
 export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpened }: LibraryViewProps) {
   const [query, setQuery] = useState('')
+  const templates = useMemo(advancedTemplates, [])
   const [reader, setReader] = useState<{ id: string; title: string; subtitle: string; markdown: string } | null>(() => {
     const guide = GUIDES.find((item) => item.id === openGuideId)
     return guide ? { id: guide.id, title: guide.title, subtitle: 'Guía del Observatorio', markdown: guide.body } : null
@@ -134,6 +139,47 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
             El informe de diagnóstico usa sus respuestas de Mi Ruta (se guardan solo en este navegador).
           </p>
         </div>
+      )}
+
+      {tab === 'avanzadas' && (
+        <section className="advanced-templates">
+          <p className="adv-intro">
+            Plantillas detalladas listas para usar: control documental, base legal con artículos cotejados, instrucciones de llenado, filas numeradas y firmas.
+            Descárguelas en <b>Word</b> (editable), <b>Excel</b> (tablas) o <b>PDF</b>. Son plantillas propias del Observatorio, no formatos oficiales.
+          </p>
+          <div className="guide-grid">
+            {templates.map((template, index) => (
+              <article className="guide-card adv-card" key={template.id} style={{ '--i': index } as React.CSSProperties}>
+                <header>
+                  <span className="guide-index">{template.topic}</span>
+                  {template.sheet && <span className="guide-time"><FileSpreadsheet size={13} aria-hidden="true" /> Excel</span>}
+                </header>
+                <h3>{template.name}</h3>
+                <p>{template.summary}</p>
+                <small className="guide-audience">{template.basis[0]}</small>
+                <footer>
+                  <button type="button" className="btn-secondary small" onClick={() => setReader({ id: template.id, title: template.name, subtitle: 'Plantilla avanzada', markdown: template.markdown })}>
+                    Vista previa
+                  </button>
+                  <div className="doc-actions compact">
+                    <DocActions id={template.id} title={template.name} markdown={template.markdown} compact />
+                    {template.sheet && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          downloadExcel(template.name, [['Plantilla', 'Observatorio SST Perú (propia, no oficial)'], ['Base legal', template.basis.join(' | ')]], template.sheet!.columns, template.sheet!.rows)
+                          trackDownload(`${template.id}-excel`)
+                        }}
+                      >
+                        <FileSpreadsheet size={15} aria-hidden="true" /> Excel
+                      </button>
+                    )}
+                  </div>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </section>
       )}
 
       {tab === 'plantillas' && <TemplatesView />}

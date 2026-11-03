@@ -12,7 +12,8 @@
  * Se ejecuta a mano (npm run scrape:norms) y cada mes desde GitHub Actions,
  * de modo que el catalogo se mantiene vigente sin intervencion manual.
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -81,9 +82,35 @@ async function scrape({ id, url }) {
 
 const entries = collect()
 console.log(`Scraping ${entries.length} normas...`)
+const previous = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')).norms ?? {} : {}
+
+/**
+ * Huella de lo que importa juridicamente (titulo, fecha, PDF oficial y enlace a El Peruano).
+ * No se usa el HTML completo: un cambio de diseno de la pagina no es una modificacion legal.
+ */
+function fingerprint(result) {
+  const material = [result.title, result.publication, result.pdfUrl, ...(result.extraPdfs ?? []), result.elPeruanoUrl].join('|')
+  return createHash('sha256').update(material).digest('hex').slice(0, 16)
+}
+
 const results = {}
 for (const entry of entries) {
   const result = await scrape(entry)
+  if (result.ok) {
+    result.contentHash = fingerprint(result)
+    const before = previous[entry.id]
+    // Un cambio detectado queda pendiente de validacion juridica hasta que una persona lo revise.
+    if (before?.contentHash && before.contentHash !== result.contentHash) {
+      result.changeDetectedAt = result.checkedAt
+      result.legalReview = 'pendiente'
+      result.previousHash = before.contentHash
+      console.log(`  CAMBIO DETECTADO en ${entry.id}: requiere validacion juridica`)
+    } else if (before?.legalReview === 'pendiente') {
+      result.changeDetectedAt = before.changeDetectedAt
+      result.legalReview = 'pendiente'
+      result.previousHash = before.previousHash
+    }
+  }
   results[entry.id] = result
   console.log(`${result.ok ? 'OK ' : 'ERR'} ${String(result.status).padStart(3)} ${entry.id}${result.pdfUrl ? ' [pdf]' : ''}`)
 }

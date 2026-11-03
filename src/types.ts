@@ -244,7 +244,20 @@ export interface GeneratedAssessment {
   proposedControlsInsufficient: boolean
   actionStatus: ActionStatus
   verificationStatus: string
+  /**
+   * 'proyectado': residual estimado si se ejecutan los controles propuestos (no reduce el riesgo vigente).
+   * 'verificado': controles ejecutados, con responsable de validacion y evidencia registrada.
+   */
+  residualBasis: ResidualBasis
+  /** Riesgo vigente: el residual solo cuando esta verificado; si no, el inicial. */
+  currentScore: number
+  currentLevel: RiskBand
+  verifiedBy?: string
+  verifiedAt?: string
+  verificationEvidence?: string
 }
+
+export type ResidualBasis = 'proyectado' | 'verificado'
 
 export interface SectorModule {
   id: SectorId
@@ -275,7 +288,12 @@ export interface DashboardIndicators {
   overdueControls: number
   averageInitialRisk: number
   averageResidualRisk: number
+  /** Reduccion acreditada: solo filas con residual verificado. */
   reductionPercent: number
+  /** Reduccion esperada si se ejecutan todos los controles propuestos (no acreditada). */
+  projectedReductionPercent: number
+  verifiedControls: number
+  averageCurrentRisk: number
   risksByArea: Record<string, number>
   risksByCategory: Record<string, number>
   controlsPendingEvidence: number

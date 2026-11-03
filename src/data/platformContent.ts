@@ -32,25 +32,46 @@ export type SiteViewId =
   | 'evolucion'
   | 'ruta'
   | 'obligaciones'
+  | 'diagnostico'
   | 'plantillas'
+  | 'formatos'
   | 'herramientas'
+  | 'verificar'
+  | 'fiscalizacion'
+  | 'casos'
   | 'normativa'
   | 'premium'
 
 export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: string }> = [
   { id: 'inicio', label: 'Inicio', description: 'Vista general del observatorio' },
+  { id: 'normativa', label: 'Normativa e ISO', description: 'Normas, artículos verificados e ISO' },
   { id: 'evolucion', label: 'Evolución', description: 'Línea de tiempo normativa, ramas y especialidades' },
+  { id: 'casos', label: 'Casuística', description: 'Precedentes del TFL y resoluciones' },
   { id: 'ruta', label: 'Mi Ruta', description: 'Diagnóstico guiado paso a paso' },
-  { id: 'obligaciones', label: 'Obligaciones', description: 'Qué corresponde según tamaño, sector y rol' },
-  { id: 'plantillas', label: 'Biblioteca', description: 'Plantillas, guías e informes descargables' },
-  { id: 'normativa', label: 'Normativa', description: 'Marco legal peruano verificado' },
-  { id: 'herramientas', label: 'Herramientas', description: 'IPERC, analítica, plan de acción y reportes' },
+  { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
+  { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
+  { id: 'herramientas', label: 'IPERC y herramientas', description: 'IPERC, analítica, plan de acción y reportes' },
+  { id: 'formatos', label: 'Formatos y registros', description: 'Formatos oficiales y editables en línea' },
+  { id: 'verificar', label: 'Cumplimiento y evidencias', description: 'Estado, evidencia y responsable por obligación' },
+  { id: 'fiscalizacion', label: 'Fiscalización', description: 'Contingencias, expediente y defensa documentada' },
+  { id: 'plantillas', label: 'Biblioteca', description: 'Guías, informes y plantillas descargables' },
   { id: 'premium', label: 'Premium', description: 'Guías de IA, agentes y seguimiento de avance' },
 ]
 
-/* -------------------------------------------------------------------------- */
-/* Etiquetas de tipo de exigencia                                             */
-/* -------------------------------------------------------------------------- */
+export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' | 'aprender'
+
+/** Cinco espacios de trabajo: cada vista pertenece a uno. */
+export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
+  { id: 'explorar', label: 'Explorar', hint: 'Normas, evolución y casos', views: ['normativa', 'evolucion', 'casos'] },
+  { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones'] },
+  { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
+  { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
+  { id: 'aprender', label: 'Aprender', hint: 'Guías, informes y premium', views: ['plantillas', 'premium'] },
+]
+
+export function spaceOf(view: SiteViewId): SpaceId | null {
+  return SPACES.find((space) => space.views.includes(view))?.id ?? null
+}
 
 export const OBLIGATION_KIND_LABELS: Record<ObligationKind, string> = {
   'obligacion-legal': 'Obligación legal',

@@ -61,7 +61,7 @@ import {
   type ProjectStatus,
   type SavedProject,
 } from '../lib/projectStore'
-import { buildDashboard, evaluateRisk, generateAssessments, validateBeforeExport } from '../lib/riskEngine'
+import { buildDashboard, evaluateRisk, generateAssessments, resolveResidualBasis, validateBeforeExport } from '../lib/riskEngine'
 import { validateRegistration } from '../lib/validation'
 import type {
   ActionStatus,
@@ -87,6 +87,9 @@ interface RowOverride {
   residualExposureFrequency?: number
   actionStatus?: ActionStatus
   verificationStatus?: string
+  verifiedBy?: string
+  verifiedAt?: string
+  verificationEvidence?: string
 }
 
 interface Notice {
@@ -277,7 +280,7 @@ function newId(prefix: string): string {
 }
 
 function applyOverride(row: GeneratedAssessment, override?: RowOverride): GeneratedAssessment {
-  if (!override) return row
+  if (!override) return resolveResidualBasis(row)
   const probability = override.probability ?? row.probability
   const severity = override.severity ?? row.severity
   const exposure = override.exposureFrequency ?? row.exposureFrequency
@@ -286,7 +289,7 @@ function applyOverride(row: GeneratedAssessment, override?: RowOverride): Genera
   const residualSeverity = override.residualSeverity ?? row.residualSeverity
   const residualExposure = override.residualExposureFrequency ?? row.residualExposureFrequency
   const residual = evaluateRisk(residualProbability, residualSeverity, residualExposure)
-  return {
+  return resolveResidualBasis({
     ...row,
     probability,
     severity,
@@ -304,7 +307,7 @@ function applyOverride(row: GeneratedAssessment, override?: RowOverride): Genera
     residualAcceptability: residual.acceptability,
     actionStatus: override.actionStatus ?? row.actionStatus,
     verificationStatus: override.verificationStatus ?? row.verificationStatus,
-  }
+  }, override)
 }
 
 /**
@@ -730,7 +733,7 @@ function DashboardHome({
         <MetricCard label="Riesgos totales" value={String(dashboard.totalRisks)} delta="Filas generadas" tone="purple" />
         <MetricCard label="Críticos" value={String(rows.filter((row) => row.initialLevel === 'Intolerable').length)} delta="Atención inmediata" tone="red" />
         <RiskIndexCard value={riskIndex} level={riskIndex > 72 ? 'Intolerable' : riskIndex > 55 ? 'Importante' : 'Moderado'} />
-        <MetricCard label="Reducción residual" value={`${dashboard.reductionPercent}%`} delta="Tras controles" tone="green" />
+        <MetricCard label="Reducción verificada" value={`${dashboard.reductionPercent}%`} delta={`Proyectada: ${dashboard.projectedReductionPercent}% (sin acreditar)`} tone="green" />
         <MetricCard label="Evidencias pendientes" value={String(dashboard.controlsPendingEvidence)} delta="Por subir" tone="yellow" />
       </section>
       <section className="dashboard-lower">
@@ -832,13 +835,13 @@ function RecentMatrixCard({ rows, profile, onViewMatrix }: { rows: GeneratedAsse
     <article className="glass-card recent-matrix">
       <header><div><h3>Matriz IPERC reciente</h3><p>{profile.businessActivity} · {profile.workplace}</p></div></header>
       <div className="matrix-mini">
-        <div className="mini-head"><span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span></div>
+        <div className="mini-head"><span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Residual</span><span>Estado</span></div>
         {rows.map((row) => (
           <div className="mini-row" key={row.id}>
             <span>{shortText(row.task.name, 28)}</span>
             <span>{shortText(row.hazard.name, 24)}</span>
             <RiskBadge level={row.initialLevel} score={row.initialScore} />
-            <RiskBadge level={row.residualLevel} score={row.residualScore} />
+            <ResidualBadge row={row} />
             <StatusBadge label={row.legalValidationMissing ? 'Pendiente' : 'En control'} tone={row.legalValidationMissing ? 'yellow' : 'green'} />
           </div>
         ))}
@@ -974,7 +977,7 @@ function MatrixView({
       <p className="result-count">{rows.length} de {allRows.length} filas</p>
       <div className="matrix-table glass-card">
         <div className={`table-head ${expertMode ? 'expert' : ''}`}>
-          <span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Riesgo residual</span><span>Estado</span>{expertMode && <><span>P x S x E</span><span>Legal</span></>}
+          <span>Tarea</span><span>Peligro</span><span>Riesgo inicial</span><span>Residual (proy./verif.)</span><span>Estado</span>{expertMode && <><span>P x S x E</span><span>Legal</span></>}
         </div>
         {rows.map((row) => (
           <div key={row.id} className={`table-row ${expandedRow === row.id ? 'open' : ''}`}>
@@ -982,7 +985,7 @@ function MatrixView({
               <span><b>{shortText(row.task.name, 34)}</b><small>{row.área.name}</small></span>
               <span>{row.hazard.name}</span>
               <RiskBadge level={row.initialLevel} score={row.initialScore} />
-              <RiskBadge level={row.residualLevel} score={row.residualScore} />
+              <ResidualBadge row={row} />
               <StatusBadge label={statusLabel(row)} tone={statusTone(row)} />
               {expertMode && <><span className="formula">{row.probability} x {row.severity} x {row.exposureFrequency}</span><span>{row.legalValidationMissing ? 'Validación legal pendiente' : 'Validado'}</span></>}
             </button>
@@ -1005,7 +1008,7 @@ function MatrixRowCard({ row, open, onToggle, expertMode, onOverride }: { row: G
         <span><b>{row.task.name}</b><small>{row.hazard.name}</small></span>
         <ChevronDown size={18} className={open ? 'rotated' : ''} />
       </button>
-      <div className="mobile-badges"><RiskBadge level={row.initialLevel} score={row.initialScore} /><RiskBadge level={row.residualLevel} score={row.residualScore} /><StatusBadge label={statusLabel(row)} tone={statusTone(row)} /></div>
+      <div className="mobile-badges"><RiskBadge level={row.initialLevel} score={row.initialScore} /><ResidualBadge row={row} /><StatusBadge label={statusLabel(row)} tone={statusTone(row)} /></div>
       {open && <MatrixDetail row={row} expertMode={expertMode} onOverride={onOverride} />}
     </article>
   )
@@ -1034,12 +1037,22 @@ function MatrixDetail({ row, expertMode, onOverride }: { row: GeneratedAssessmen
         <label className="field">
           <span>Estado del control</span>
           <select value={row.actionStatus} onChange={(event) => onOverride(row.id, { actionStatus: event.target.value as ActionStatus })}>
-            {(Object.keys(ACTION_STATUS_LABELS) as ActionStatus[]).map((status) => (
-              <option key={status} value={status}>{ACTION_STATUS_LABELS[status]}</option>
-            ))}
+            {(Object.keys(ACTION_STATUS_LABELS) as ActionStatus[])
+              .filter((status) => status !== 'verified' || row.actionStatus === 'verified')
+              .map((status) => (
+                <option key={status} value={status}>{ACTION_STATUS_LABELS[status]}</option>
+              ))}
           </select>
         </label>
-        <p className="recalc-line">Inicial: <b>{row.initialLevel} ({row.initialScore})</b> · Residual: <b>{row.residualLevel} ({row.residualScore})</b></p>
+        <p className="recalc-line">
+          Inicial: <b>{row.initialLevel} ({row.initialScore})</b> · Residual {row.residualBasis}: <b>{row.residualLevel} ({row.residualScore})</b> · Riesgo vigente:{' '}
+          <b>{row.currentLevel} ({row.currentScore})</b>
+        </p>
+        {row.residualBasis === 'proyectado' ? (
+          <p className="residual-note">El residual es una proyección: el riesgo vigente no baja hasta que el control se ejecute y un responsable lo verifique con evidencia (Plan de acción → Verificado).</p>
+        ) : (
+          <p className="residual-note ok">Verificado por {row.verifiedBy} el {row.verifiedAt}: {row.verificationEvidence}</p>
+        )}
       </div>
       {expertMode && (
         <>
@@ -1136,7 +1149,7 @@ function AnalysisView({ rows, dashboard, riskIndex }: { rows: GeneratedAssessmen
       <div className="analysis-grid">
         <RiskIndexCard value={riskIndex} level={riskIndex > 60 ? 'Importante' : 'Moderado'} />
         <MetricCard label="Promedio inicial" value={String(dashboard.averageInitialRisk)} delta="Puntaje técnico" tone="orange" />
-        <MetricCard label="Promedio residual" value={String(dashboard.averageResidualRisk)} delta="Después de controles" tone="green" />
+        <MetricCard label="Riesgo vigente promedio" value={String(dashboard.averageCurrentRisk)} delta={`Residual proyectado: ${dashboard.averageResidualRisk}`} tone="green" />
         <MetricCard label="Legal pendiente" value={String(dashboard.risksWithoutValidatedLegalSupport)} delta="Requiere revisión" tone="yellow" />
       </div>
       <DistributionCard rows={rows} />
@@ -1147,12 +1160,13 @@ function AnalysisView({ rows, dashboard, riskIndex }: { rows: GeneratedAssessmen
 const BOARD_COLUMNS: Array<{ status: ActionStatus; title: string; tone: string }> = [
   { status: 'pending', title: 'Pendiente', tone: 'slate' },
   { status: 'in_progress', title: 'En ejecución', tone: 'blue' },
-  { status: 'verified', title: 'Verificado', tone: 'green' },
+  { status: 'implemented', title: 'Ejecutado · por verificar', tone: 'amber' },
+  { status: 'verified', title: 'Verificado con evidencia', tone: 'green' },
   { status: 'overdue', title: 'Vencido', tone: 'red' },
 ]
 
 function boardColumnOf(row: GeneratedAssessment): ActionStatus {
-  if (row.actionStatus === 'implemented' || row.actionStatus === 'not_applicable') return 'verified'
+  if (row.actionStatus === 'not_applicable') return 'verified'
   return row.actionStatus
 }
 
@@ -1160,19 +1174,41 @@ function boardColumnOf(row: GeneratedAssessment): ActionStatus {
 function ActionPlanBoard({ rows, onOverride }: { rows: GeneratedAssessment[]; onOverride: (rowId: string, patch: RowOverride) => void }) {
   const [dragId, setDragId] = useState<string | null>(null)
   const [overColumn, setOverColumn] = useState<ActionStatus | null>(null)
+  const [verifying, setVerifying] = useState<string | null>(null)
+  const [verifyForm, setVerifyForm] = useState({ by: '', evidence: '' })
   const total = Math.max(1, rows.length)
-  const verifiedPercent = Math.round((rows.filter((row) => boardColumnOf(row) === 'verified').length / total) * 100)
+  const verifiedPercent = Math.round((rows.filter((row) => row.residualBasis === 'verificado').length / total) * 100)
 
+  // Verificar exige responsable y evidencia: sin ellos el control queda como "ejecutado, por verificar".
   function move(rowId: string, status: ActionStatus) {
-    onOverride(rowId, { actionStatus: status, ...(status === 'verified' ? { verificationStatus: 'Verificado en campo' } : {}) })
+    if (status === 'verified') {
+      setVerifying(rowId)
+      setVerifyForm({ by: '', evidence: '' })
+      onOverride(rowId, { actionStatus: 'implemented', verificationStatus: 'Ejecutado, pendiente de verificación' })
+      return
+    }
+    onOverride(rowId, { actionStatus: status, verificationStatus: status === 'implemented' ? 'Ejecutado, pendiente de verificación' : 'Pendiente de evidencia' })
+  }
+
+  function confirmVerification(rowId: string) {
+    if (!verifyForm.by.trim() || !verifyForm.evidence.trim()) return
+    const verifiedAt = new Date().toISOString().slice(0, 10)
+    onOverride(rowId, {
+      actionStatus: 'verified',
+      verifiedBy: verifyForm.by.trim(),
+      verificationEvidence: verifyForm.evidence.trim(),
+      verifiedAt,
+      verificationStatus: `Verificado por ${verifyForm.by.trim()} (${verifiedAt})`,
+    })
+    setVerifying(null)
   }
 
   return (
     <section>
-      <ViewHeader title="Plan de acción" text="Arrastre cada control entre columnas para actualizar su estado. El avance se refleja en reportes y Excel." />
+      <ViewHeader title="Plan de acción" text="Arrastre cada control entre columnas. Solo un control verificado con responsable y evidencia reduce el riesgo vigente." />
       <div className="board-progress">
         <div><i style={{ width: `${verifiedPercent}%` }} /></div>
-        <b>{verifiedPercent}% verificado</b>
+        <b>{verifiedPercent}% verificado con evidencia</b>
       </div>
       <div className="board-grid dnd">
         {BOARD_COLUMNS.map((column) => {
@@ -1218,9 +1254,28 @@ function ActionPlanBoard({ rows, onOverride }: { rows: GeneratedAssessment[]; on
                     <RiskBadge level={row.initialLevel} score={row.initialScore} />
                     <small>{row.responsiblePerson} · {row.deadline}</small>
                   </div>
-                  <select aria-label="Mover a columna" value={column.status} onChange={(event) => move(row.id, event.target.value as ActionStatus)}>
-                    {BOARD_COLUMNS.map((option) => <option key={option.status} value={option.status}>{option.title}</option>)}
-                  </select>
+                  {row.residualBasis === 'verificado' && <small className="verified-by">✔ {row.verifiedBy} · {row.verifiedAt}</small>}
+                  {verifying === row.id ? (
+                    <form
+                      className="verify-form"
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        confirmVerification(row.id)
+                      }}
+                    >
+                      <b>Verificar control</b>
+                      <input required placeholder="Responsable que verifica" value={verifyForm.by} onChange={(event) => setVerifyForm({ ...verifyForm, by: event.target.value })} />
+                      <input required placeholder="Evidencia (acta, foto, registro, medición)" value={verifyForm.evidence} onChange={(event) => setVerifyForm({ ...verifyForm, evidence: event.target.value })} />
+                      <div>
+                        <button type="submit" className="primary-neon small">Confirmar</button>
+                        <button type="button" className="ghost-button" onClick={() => setVerifying(null)}>Cancelar</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <select aria-label="Mover a columna" value={column.status} onChange={(event) => move(row.id, event.target.value as ActionStatus)}>
+                      {BOARD_COLUMNS.map((option) => <option key={option.status} value={option.status}>{option.title}</option>)}
+                    </select>
+                  )}
                 </article>
               ))}
             </div>
@@ -1342,7 +1397,8 @@ function ReportsPanel({
     ['Datos completos', warnings.some((warning) => warning.code === 'company-data') ? 'pendiente' : 'listo'],
     ['Riesgos evaluados', rows.length > 0 ? 'listo' : 'pendiente'],
     ['Controles definidos', rows.every((row) => row.proposedControls.length > 0) ? 'listo' : 'pendiente'],
-    ['Riesgo residual calculado', rows.every((row) => row.residualScore > 0) ? 'listo' : 'pendiente'],
+    ['Riesgo residual proyectado calculado', rows.every((row) => row.residualScore > 0) ? 'listo' : 'pendiente'],
+    ['Controles verificados con evidencia', rows.length > 0 && rows.every((row) => row.residualBasis === 'verificado') ? 'listo' : 'pendiente'],
     ['Sustento normativo revisado', warnings.some((warning) => warning.code === 'legal-validation') ? 'pendiente' : 'listo'],
   ]
   const reports: Array<{ label: string; icon: typeof FileText; kind: ReportKind }> = [
@@ -1734,6 +1790,15 @@ function EmptyState({ text }: { text: string }) {
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="field"><span>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} /></label>
+}
+
+function ResidualBadge({ row }: { row: GeneratedAssessment }) {
+  return (
+    <span className={`residual-badge ${row.residualBasis}`} title={row.residualBasis === 'verificado' ? 'Residual verificado con evidencia' : 'Residual proyectado: aún no reduce el riesgo vigente'}>
+      <RiskBadge level={row.residualLevel} score={row.residualScore} />
+      <em>{row.residualBasis === 'verificado' ? 'verificado' : 'proyectado'}</em>
+    </span>
+  )
 }
 
 function RiskBadge({ level, score }: { level: RiskBand; score: number }) {

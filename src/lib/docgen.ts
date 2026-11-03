@@ -70,3 +70,16 @@ export function printPdf(title: string, markdown: string): void {
   popup.focus()
   window.setTimeout(() => popup.print(), 350)
 }
+
+function escapeCell(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/** Hoja Excel (.xls en HTML) que Excel, LibreOffice y Google Sheets abren y editan. */
+export function downloadExcel(title: string, header: Array<[string, string]>, columns: string[], rows: string[][]): void {
+  const meta = header.map(([label, value]) => `<tr><th align="left">${escapeCell(label)}</th><td colspan="${Math.max(1, columns.length - 1)}">${escapeCell(value)}</td></tr>`).join('')
+  const head = `<tr>${columns.map((column) => `<th style="background:#e8f0fe">${escapeCell(column)}</th>`).join('')}</tr>`
+  const body = rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeCell(cell)}</td>`).join('')}</tr>`).join('')
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><table border="1"><tr><th colspan="${columns.length}" align="left">${escapeCell(title)}</th></tr>${meta}<tr></tr>${head}${body}</table></body></html>`
+  save(`﻿${html}`, 'application/vnd.ms-excel', `${slugify(title)}.xls`)
+}

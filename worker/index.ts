@@ -8,6 +8,7 @@
  * - solicitudes de acceso y administracion basica de usuarios
  * - contador publico de descargas
  */
+import { handleCatalog } from './catalogApi'
 import { PREMIUM_GUIDES } from './premiumGuides'
 
 interface Env {
@@ -53,6 +54,9 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   const { pathname } = url
   const method = request.method
 
+  // Catalogo publico versionado: solo lectura, sin cookies, CORS abierto.
+  if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleCatalog(request, url)
+
   if (method !== 'GET' && method !== 'HEAD' && !sameOrigin(request, url)) {
     return json({ error: 'Origen no permitido.' }, 403)
   }
@@ -90,6 +94,28 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
 
   if (pathname === '/api/progress' && method === 'GET') return getProgress(env, user)
   if (pathname === '/api/progress' && method === 'PUT') return putProgress(request, env, user)
+
+  if (pathname === '/api/compliance' && method === 'GET') {
+    const row = await env.DB.prepare('SELECT profile_json, entries_json, updated_at FROM org_compliance WHERE user_id = ?')
+      .bind(user.id)
+      .first<{ profile_json: string; entries_json: string; updated_at: string }>()
+    return json({
+      state: row ? { profile: JSON.parse(row.profile_json), entries: JSON.parse(row.entries_json), updatedAt: row.updated_at } : null,
+    })
+  }
+  if (pathname === '/api/compliance' && method === 'PUT') {
+    const body = await readJson<{ profile?: unknown; entries?: unknown; updatedAt?: string }>(request)
+    const profile = JSON.stringify(body?.profile ?? {})
+    const entries = JSON.stringify(body?.entries ?? {})
+    if (profile.length > 4_000 || entries.length > 200_000) return json({ error: 'Datos demasiado grandes.' }, 413)
+    await env.DB.prepare(
+      `INSERT INTO org_compliance (user_id, profile_json, entries_json, updated_at) VALUES (?1, ?2, ?3, ?4)
+       ON CONFLICT(user_id) DO UPDATE SET profile_json = ?2, entries_json = ?3, updated_at = ?4`,
+    )
+      .bind(user.id, profile, entries, body?.updatedAt ?? new Date().toISOString())
+      .run()
+    return json({ ok: true })
+  }
 
   // --- Administracion ---
   if (pathname.startsWith('/api/admin/')) {
