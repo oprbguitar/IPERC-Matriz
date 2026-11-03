@@ -52,9 +52,14 @@ export function NormLinks({ norm }: { norm: LegalNorm }) {
           <Landmark size={14} aria-hidden="true" /> {copied ? 'Número copiado' : 'SPIJ'}
         </button>
       )}
+      {source?.legalReview === 'pendiente' && (
+        <small className="nl-check bad" title="La fuente oficial cambió: un especialista debe revisar si cambió la obligación.">
+          ● cambio detectado {source.changeDetectedAt}: validación jurídica pendiente
+        </small>
+      )}
       {source && (
         <small className={`nl-check ${source.ok ? 'ok' : 'bad'}`} title={source.title ?? undefined}>
-          {source.ok ? '● enlace verificado' : '● revisar enlace'} {source.checkedAt}
+          {source.ok ? '● enlace activo (no acredita vigencia)' : '● revisar enlace'} {source.checkedAt}
         </small>
       )}
     </div>

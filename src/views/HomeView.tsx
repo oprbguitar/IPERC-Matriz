@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, Search, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
 import { LegalReference } from '../components/LegalReference'
 import { COVERAGE_DOMAINS } from '../data/coverage'
 import { GUIDES } from '../data/guides'
@@ -39,6 +39,7 @@ interface HomeViewProps {
   onOpenRouteCard: (id: RouteCardId) => void
   onOpenNorm: (normId: string) => void
   onOpenGuide: (guideId: string) => void
+  onSearch: () => void
   completedStepIds: string[]
   progressPercent: number
   answers: DiagnosticAnswers
@@ -51,6 +52,7 @@ export function HomeView({
   onOpenRouteCard,
   onOpenNorm,
   onOpenGuide,
+  onSearch,
   completedStepIds,
   progressPercent,
   answers,
@@ -74,6 +76,9 @@ export function HomeView({
               <Download size={17} aria-hidden="true" /> Descargar plantillas
             </button>
           </div>
+          <button type="button" className="home-search" onClick={onSearch}>
+            <Search size={18} aria-hidden="true" /> ¿Qué debe cumplir? Ej.: «ergonomía en oficinas públicas», «accidente de montacargas»…
+          </button>
           <p className="hero-audience">
             <Users size={16} aria-hidden="true" /> Para empresas, supervisores, comités, trabajadores y consultores.
           </p>

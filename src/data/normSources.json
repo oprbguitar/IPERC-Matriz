@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T19:41:14.005Z",
+  "generatedAt": "2026-11-03T21:50:33.847Z",
   "norms": {
     "law-29783": {
       "id": "law-29783",
@@ -11,7 +11,8 @@
       "publication": "20 de agosto de 2011",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/571762/Ley_N__29783.pdf?v=1585259556",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "0e525e9173e9cbcf"
     },
     "ds-005-2012-tr": {
       "id": "ds-005-2012-tr",
@@ -23,7 +24,8 @@
       "publication": "1 de noviembre de 2016",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/571763/Decreto_Supremo_N__005-2012-TR.pdf?v=1585259918",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "c5b937b86e667457"
     },
     "rm-050-2013-tr": {
       "id": "rm-050-2013-tr",
@@ -37,7 +39,8 @@
       "extraPdfs": [
         "https://cdn.www.gob.pe/uploads/document/file/350742/Anexos.pdf?v=1597252273"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "a996773f41b49483"
     },
     "law-30222": {
       "id": "law-30222",
@@ -49,7 +52,8 @@
       "publication": "11 de julio de 2014",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/105209/_30222_-_15-07-2014_09_53_07_-Ley_N__30222.PDF?v=1586905412",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "5c43c354a6e126ad"
     },
     "ds-006-2014-tr": {
       "id": "ds-006-2014-tr",
@@ -61,7 +65,8 @@
       "publication": null,
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1121443-3"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1121443-3",
+      "contentHash": "ce2db74e5a524a25"
     },
     "ds-012-2014-tr": {
       "id": "ds-012-2014-tr",
@@ -73,7 +78,8 @@
       "publication": "31 de octubre de 2014",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-registro-unico-de-informacion-ds-n-012-2014-tr-1157929-1/"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-registro-unico-de-informacion-ds-n-012-2014-tr-1157929-1/",
+      "contentHash": "7c80f18a27dd0997"
     },
     "ds-016-2016-tr": {
       "id": "ds-016-2016-tr",
@@ -85,7 +91,8 @@
       "publication": "23 de diciembre de 2016",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/9919854/8094744-ds-016-2016-tr.pdf?v=1778047645",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "ccce846eb69ae99a"
     },
     "ds-020-2019-tr": {
       "id": "ds-020-2019-tr",
@@ -97,7 +104,8 @@
       "publication": "24 de diciembre de 2019",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/475286/DS-020-2019-TR.pdf?v=1579098424",
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-n-2978-decreto-supremo-n-020-2019-tr-1840085-4/"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-n-2978-decreto-supremo-n-020-2019-tr-1840085-4/",
+      "contentHash": "c18e3c40bc110917"
     },
     "ds-001-2021-tr": {
       "id": "ds-001-2021-tr",
@@ -109,7 +117,8 @@
       "publication": "29 de enero de 2021",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1616762/Decreto-supremo-n-001-2021-TR.pdf?v=1611931093",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "d2ece23a80ad7535"
     },
     "law-31246": {
       "id": "law-31246",
@@ -121,7 +130,8 @@
       "publication": null,
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1966676-1"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1966676-1",
+      "contentHash": "c6e17eb1b953192a"
     },
     "ds-006-2022-tr": {
       "id": "ds-006-2022-tr",
@@ -133,7 +143,8 @@
       "publication": "28 de abril de 2022",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/3124500/Decreto-supre-decreto-supremo-n-006-2022-TR.pdf?v=1653332872",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "4fcd28adf51e4ce4"
     },
     "rm-375-2008-tr": {
       "id": "rm-375-2008-tr",
@@ -147,7 +158,8 @@
       "extraPdfs": [
         "https://cdn.www.gob.pe/uploads/document/file/472127/Anexo_1-Norma_B%C3%A1sica_de_Ergonom%C3%ADa....pdf?v=1578090278"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "d85f35be849bb950"
     },
     "rm-312-2011-minsa": {
       "id": "rm-312-2011-minsa",
@@ -161,7 +173,8 @@
       "extraPdfs": [
         "https://cdn.www.gob.pe/uploads/document/file/272673/preview_243792_RM312-2011-MINSA.pdf"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "9063d6e878d5e879"
     },
     "law-28611": {
       "id": "law-28611",
@@ -173,7 +186,8 @@
       "publication": "21 de abril de 2017",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/12772/Ley-N_-28611.pdf?v=1578521542",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "a22a11475d7d1ad1"
     },
     "dl-1278": {
       "id": "dl-1278",
@@ -187,7 +201,8 @@
       "extraPdfs": [
         "https://cdn.www.gob.pe/uploads/document/file/155762/Decreto-Legislativo-N_-1278.pdf?v=1532448201"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "9414ef1042a990d8"
     },
     "ds-014-2017-minam": {
       "id": "ds-014-2017-minam",
@@ -199,7 +214,8 @@
       "publication": "2026-09-16",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "77897d5d78376dee"
     },
     "ds-024-2016-em": {
       "id": "ds-024-2016-em",
@@ -215,7 +231,8 @@
         "https://cdn.www.gob.pe/uploads/document/file/901784/DS-024-2016-EM-GUIAS-1.pdf?v=1593568355",
         "https://cdn.www.gob.pe/uploads/document/file/901785/DS-024-2016-EM-GUIAS-2.pdf?v=1593568355"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "987fa3bfe7c850a9"
     },
     "rne-g050": {
       "id": "rne-g050",
@@ -227,7 +244,8 @@
       "publication": "29 de julio de 2020",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1067566/DS_N_011-2006-VIVIENDA.pdf?v=1596055004",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "455a87fa588ee019"
     },
     "sunafil-elssa-2": {
       "id": "sunafil-elssa-2",
@@ -239,7 +257,8 @@
       "publication": "30 de octubre de 2025",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "6fcfcd577dba606a"
     },
     "sunafil-guia-comite": {
       "id": "sunafil-guia-comite",
@@ -251,7 +270,8 @@
       "publication": "15 de febrero de 2022",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "5ad66cb9abba9baa"
     },
     "servir-modelos-sst": {
       "id": "servir-modelos-sst",
@@ -263,7 +283,8 @@
       "publication": "5 de octubre de 2022",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "b3e6bd68ab6134fc"
     },
     "servir-normatividad-sst": {
       "id": "servir-normatividad-sst",
@@ -279,7 +300,8 @@
         "https://cdn.www.gob.pe/uploads/document/file/3728045/Ley%20N%C2%BA%2031051%20%E2%80%93%20Ley%20que%20ampl%C3%ADa%20las%20medidas%20de%20protecci%C3%B3n%20laboral%20para%20mujeres%20gestantes%20y%20madres%20lactantes%20en%20casos%20de%20emergencia%20nacional%20sanitaria.%20.pdf?v=1665004701",
         "https://cdn.www.gob.pe/uploads/document/file/3728046/Ley%20N%C2%B0%2029783%2C%20Ley%20de%20Seguridad%20y%20Salud%20en%20el%20Trabajo.pdf?v=1665004701"
       ],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/2434965-1"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/2434965-1",
+      "contentHash": "17e8cd6aaa80eb63"
     },
     "law-28806": {
       "id": "law-28806",
@@ -291,7 +313,8 @@
       "publication": null,
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/2845243/Ley%20N%C2%B0%2028806%20-%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "4a081d1ac85b92ad"
     },
     "ds-019-2006-tr": {
       "id": "ds-019-2006-tr",
@@ -303,7 +326,8 @@
       "publication": null,
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/2845244/DS%20019-2006-TR%20-%20Aprueban%20Reglamento%20de%20la%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "039b1babf98d461a"
     },
     "ds-008-2020-tr": {
       "id": "ds-008-2020-tr",
@@ -315,7 +339,8 @@
       "publication": "10 de febrero de 2020",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/519862/Decreto-supremo-n-008-2020-tr-1853904-1.pdf?v=1581342284",
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-general-decreto-supremo-n-008-2020-tr-1853904-1/"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-modifica-el-reglamento-de-la-ley-general-decreto-supremo-n-008-2020-tr-1853904-1/",
+      "contentHash": "fe1f97210c5fefa9"
     },
     "law-29981": {
       "id": "law-29981",
@@ -327,7 +352,8 @@
       "publication": null,
       "pdfUrl": "https://www.sunafil.gob.pe/portal/images/docs/normatividad/LEY-29981-Creacion-SUNAFIL.pdf",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "0b521319a28075de"
     },
     "ds-014-2013-tr": {
       "id": "ds-014-2013-tr",
@@ -339,7 +365,8 @@
       "publication": "24 de diciembre de 2013",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1031708-2"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1031708-2",
+      "contentHash": "0f4c1efe7033b750"
     },
     "ds-011-2019-tr": {
       "id": "ds-011-2019-tr",
@@ -355,7 +382,8 @@
         "https://cdn.www.gob.pe/uploads/document/file/341271/Reglamento_-_CONSTRUCCI%C3%93N.pdf?v=1562862399",
         "https://cdn.www.gob.pe/uploads/document/file/341275/ANEXOS_REGLAMENTO_SST_CONSTRUCCION.pdf?v=1562862615"
       ],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-reglamento-de-seguridad-y-sal-decreto-supremo-n-011-2019-tr-1787274-4/"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/normaslegales/decreto-supremo-que-aprueba-el-reglamento-de-seguridad-y-sal-decreto-supremo-n-011-2019-tr-1787274-4/",
+      "contentHash": "fb9fe91360eeeafe"
     },
     "rm-111-2013-mem-dm": {
       "id": "rm-111-2013-mem-dm",
@@ -367,7 +395,8 @@
       "publication": "27 de marzo de 2013",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/898454/RM-111-2013-MEM-DM.pdf?v=1593529146",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "2555114083637576"
     },
     "rm-021-2016-minsa": {
       "id": "rm-021-2016-minsa",
@@ -379,7 +408,8 @@
       "publication": "15 de enero de 2016",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1333375-5"
+      "elPeruanoUrl": "https://busquedas.elperuano.pe/dispositivo/NL/1333375-5",
+      "contentHash": "08ae9171c629d95e"
     },
     "law-31110": {
       "id": "law-31110",
@@ -391,7 +421,8 @@
       "publication": null,
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/1535274/Ley%2031110.pdf",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "8e2710afb2a24605"
     },
     "ds-005-2021-midagri": {
       "id": "ds-005-2021-midagri",
@@ -405,7 +436,8 @@
       "extraPdfs": [
         "https://cdn.www.gob.pe/uploads/document/file/1796170/preview_D.S.%20N%C2%B0%200005-2021-MIDAGRI.pdf"
       ],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "ef283fb15283ab98"
     },
     "law-29733": {
       "id": "law-29733",
@@ -417,7 +449,8 @@
       "publication": "11 de setiembre de 2019",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/3621075/Ley%2029733.pdf",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "502c877797c9f67c"
     },
     "law-27446": {
       "id": "law-27446",
@@ -429,7 +462,8 @@
       "publication": "2026-07-03",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "b640884144ca6b15"
     },
     "ds-019-2009-minam": {
       "id": "ds-019-2009-minam",
@@ -441,7 +475,8 @@
       "publication": "25 de setiembre de 2009",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/385519/Decreto_Supremo_N__019-2009-MINAM20191013-25586-2jh5x0.pdf?v=1570943859",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "53d454339d7e12ad"
     },
     "law-29325": {
       "id": "law-29325",
@@ -453,7 +488,8 @@
       "publication": null,
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "2b07df49ffab306e"
     },
     "ds-003-2017-minam": {
       "id": "ds-003-2017-minam",
@@ -465,7 +501,8 @@
       "publication": "2026-09-16",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "04a0f82d23d283b7"
     },
     "ds-004-2017-minam": {
       "id": "ds-004-2017-minam",
@@ -477,7 +514,8 @@
       "publication": "7 de junio de 2017",
       "pdfUrl": "https://cdn.www.gob.pe/uploads/document/file/12870/DS-004-2017-MINAM.pdf?v=1530656700",
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "3a5c2beb26f1d1fc"
     },
     "ds-011-2017-minam": {
       "id": "ds-011-2017-minam",
@@ -489,7 +527,8 @@
       "publication": "2026-09-16",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "6196cfb65bd551ac"
     },
     "ds-085-2003-pcm": {
       "id": "ds-085-2003-pcm",
@@ -501,7 +540,8 @@
       "publication": "30 de octubre de 2003",
       "pdfUrl": null,
       "extraPdfs": [],
-      "elPeruanoUrl": null
+      "elPeruanoUrl": null,
+      "contentHash": "c51120197792771a"
     }
   }
 }

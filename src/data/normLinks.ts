@@ -18,6 +18,10 @@ export interface NormSource {
   pdfUrl?: string | null
   extraPdfs?: string[]
   elPeruanoUrl?: string | null
+  contentHash?: string
+  changeDetectedAt?: string
+  /** Cambio en la fuente oficial pendiente de revision por una persona. */
+  legalReview?: 'pendiente'
 }
 
 export const SPIJ_HOME = 'https://spij.minjus.gob.pe/spij-ext-web/'

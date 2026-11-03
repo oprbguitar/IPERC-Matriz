@@ -7,6 +7,7 @@ import type {
   SectorId,
   SectorModule,
 } from '../types'
+import { ARTICLES } from '../catalog/articles'
 import { extendedLegalNorms } from './legalExtensions'
 
 /**
@@ -722,7 +723,19 @@ export const featuredNormIds = ['law-29783', 'ds-005-2012-tr', 'rm-050-2013-tr']
  * Se mantiene vacio de forma deliberada: el motor de riesgos nunca debe citar
  * un artículo sin respaldo documental abierto y contrastado.
  */
-export const legalArticles: LegalArticle[] = []
+/**
+ * Articulos cotejados con el texto oficial que sustentan la evaluacion de riesgos de
+ * cualquier fila IPERC (D.S. 005-2012-TR arts. 77 y 82). El catalogo completo vive en src/catalog.
+ */
+export const legalArticles: LegalArticle[] = ARTICLES.filter((article) => article.appliesToIperc).map((article) => ({
+  id: article.id,
+  normId: article.normId,
+  articleLabel: article.label,
+  obligation: article.plainLanguage,
+  sourceExcerpt: article.excerpt,
+  sourceUrl: article.sourceUrl,
+  sourceStatus: 'uploaded_official',
+}))
 
 export const evidenceRequirements: EvidenceRequirement[] = [
   {
@@ -814,7 +827,7 @@ const sectorSeeds: SectorSeed[] = [
     id: 'construction',
     label: 'Construcción',
     description: 'Obras civiles, edificaciones, excavaciones, izaje, altura, demolición y contratistas.',
-    sectoralNormIds: ['rne-g050'],
+    sectoralNormIds: ['rne-g050', 'ds-011-2019-tr'],
     hazardBoostKeywords: ['altura', 'excavacion', 'izaje', 'andamio', 'demolicion', 'obra'],
     hazardGroups: ['work at height', 'mechanical', 'manual handling of loads', 'traffic / vehicle movement', 'explosion'],
     suggestedEvidence: ['Permisos de trabajo', 'Checklists de andamios', 'Plan de izaje', 'ATS/JSA', 'Inducción de obra'],
@@ -900,7 +913,7 @@ const sectorSeeds: SectorSeed[] = [
     id: 'maintenance_services',
     label: 'Servicios generales y mantenimiento',
     description: 'Mantenimiento locativo, eléctrico, limpieza, jardineria y soporte operativo.',
-    sectoralNormIds: [],
+    sectoralNormIds: ['rm-111-2013-mem-dm'],
     hazardBoostKeywords: ['mantenimiento', 'limpieza', 'tablero', 'altura', 'herramienta', 'energia'],
     hazardGroups: ['electrical', 'work at height', 'chemical', 'machinery and tools', 'locative / workplace conditions'],
     suggestedEvidence: ['Permisos de trabajo', 'LOTO', 'SDS', 'Checklists de herramientas', 'Ordenes de trabajo'],

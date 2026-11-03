@@ -1,16 +1,6 @@
-import { Activity, Building2, CalendarClock, Gavel, Users } from 'lucide-react'
+import { Activity, Building2, CalendarClock, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import {
-  BRACKETS,
-  computeFine,
-  FINE_TABLE,
-  formatSoles,
-  SEVERITY_LABELS,
-  SIZE_LABELS,
-  UIT_BY_YEAR,
-  type CompanySize,
-  type Severity,
-} from '../lib/sunafil'
+import { ContingencyCalculator } from '../components/ContingencyCalculator'
 import type { GeneratedAssessment } from '../types'
 
 interface AnalyticsViewProps {
@@ -31,80 +21,12 @@ export function AnalyticsView({ rows, workerCount, onOpenGuide }: AnalyticsViewP
         <p>Calculadoras con la normativa peruana: contingencia de multas, organización exigible e indicadores.</p>
       </header>
       <div className="analytics-grid">
-        <FineCalculator workerCount={workerCount} onOpenGuide={onOpenGuide} />
+        <ContingencyCalculator defaultWorkers={workerCount} onOpenGuide={onOpenGuide} />
         <OrganizationCalculator defaultWorkers={workerCount} />
         <IndicatorCalculator />
         <ExposureMatrix rows={rows} />
       </div>
     </section>
-  )
-}
-
-function FineCalculator({ workerCount, onOpenGuide }: { workerCount: number; onOpenGuide?: (id: string) => void }) {
-  const [size, setSize] = useState<CompanySize>('no-mype')
-  const [severity, setSeverity] = useState<Severity>('grave')
-  const [affected, setAffected] = useState(Math.min(workerCount, 10) || 1)
-  const [year, setYear] = useState(2026)
-  const [mortal, setMortal] = useState(false)
-
-  const effectiveAffected = mortal ? Math.max(workerCount, affected) : affected
-  const result = computeFine(size, mortal ? 'muy-grave' : severity, effectiveAffected, year)
-  // Sin REMYPE vigente la autoridad aplica la tabla No MYPE.
-  const withoutRemype = size !== 'no-mype' ? computeFine('no-mype', mortal ? 'muy-grave' : severity, effectiveAffected, year) : null
-  const values = FINE_TABLE[size][mortal ? 'muy-grave' : severity]
-  const max = Math.max(...values)
-
-  return (
-    <article className="an-card wide">
-      <h3><Gavel size={18} aria-hidden="true" /> Calculadora de multas SUNAFIL</h3>
-      <div className="an-form">
-        <label><span>Tamaño</span>
-          <select value={size} onChange={(event) => setSize(event.target.value as CompanySize)}>
-            {(Object.keys(SIZE_LABELS) as CompanySize[]).map((key) => <option key={key} value={key}>{SIZE_LABELS[key]}</option>)}
-          </select>
-        </label>
-        <label><span>Gravedad</span>
-          <select value={severity} disabled={mortal} onChange={(event) => setSeverity(event.target.value as Severity)}>
-            {(Object.keys(SEVERITY_LABELS) as Severity[]).map((key) => <option key={key} value={key}>{SEVERITY_LABELS[key]}</option>)}
-          </select>
-        </label>
-        <label><span>Afectados</span>
-          <input type="number" min={1} value={affected} onChange={(event) => setAffected(Math.max(1, Number(event.target.value) || 1))} />
-        </label>
-        <label><span>Año UIT</span>
-          <select value={year} onChange={(event) => setYear(Number(event.target.value))}>
-            {Object.keys(UIT_BY_YEAR).map((key) => <option key={key} value={key}>{key} · S/ {UIT_BY_YEAR[Number(key)].toLocaleString('es-PE')}</option>)}
-          </select>
-        </label>
-        <label className="check"><input type="checkbox" checked={mortal} onChange={(event) => setMortal(event.target.checked)} /> Accidente mortal (afecta a toda la plantilla)</label>
-      </div>
-      <div className="fine-result">
-        <div>
-          <small>Multa estimada por infracción</small>
-          <strong>{formatSoles(result.soles)}</strong>
-          <span>{result.uit} UIT · tramo {result.bracket}{mortal ? ` · ${effectiveAffected} trabajadores` : ''}</span>
-        </div>
-        {withoutRemype && (
-          <div className="warn">
-            <small>Sin REMYPE vigente</small>
-            <strong>{formatSoles(withoutRemype.soles)}</strong>
-            <span>+{Math.round(((withoutRemype.soles - result.soles) / result.soles) * 100)} % de sobrecosto</span>
-          </div>
-        )}
-      </div>
-      <div className="fine-bars" aria-label="Escala de multas por tramo">
-        {values.map((value, index) => (
-          <div key={BRACKETS[size][index].label} className={BRACKETS[size][index].label === result.bracket ? 'current' : ''} title={`${BRACKETS[size][index].label}: ${value} UIT`}>
-            <i style={{ height: `${Math.max(6, (value / max) * 100)}%` }} />
-            <span>{BRACKETS[size][index].label.replace(' y más', '+')}</span>
-          </div>
-        ))}
-      </div>
-      <p className="an-note">
-        Tabla referencial del art. 48 del D.S. N.° 019-2006-TR (modif. D.S. N.° 008-2020-TR). Verifique la tabla vigente.{' '}
-        {onOpenGuide && <button type="button" className="link-button" onClick={() => onOpenGuide('guia-sunafil')}>Ver guía SUNAFIL</button>}
-      </p>
-    </article>
   )
 }
 
@@ -182,7 +104,7 @@ function ExposureMatrix({ rows }: { rows: GeneratedAssessment[] }) {
 
   return (
     <article className="an-card wide">
-      <h3><Building2 size={18} aria-hidden="true" /> Riesgo inicial vs. residual de su matriz</h3>
+      <h3><Building2 size={18} aria-hidden="true" /> Riesgo inicial vs. residual proyectado</h3>
       <div className="exposure-chart">
         {data.map((item) => (
           <div key={item.level} className={`exp-col ${item.level.toLowerCase()}`}>
@@ -195,7 +117,7 @@ function ExposureMatrix({ rows }: { rows: GeneratedAssessment[] }) {
           </div>
         ))}
       </div>
-      <p className="an-note"><CalendarClock size={13} aria-hidden="true" /> Barra oscura: riesgo inicial. Barra clara: riesgo residual tras controles propuestos.</p>
+      <p className="an-note"><CalendarClock size={13} aria-hidden="true" /> Barra oscura: riesgo inicial. Barra clara: residual proyectado (no acreditado hasta verificar cada control con evidencia).</p>
     </article>
   )
 }

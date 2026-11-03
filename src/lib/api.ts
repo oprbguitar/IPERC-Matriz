@@ -90,6 +90,12 @@ export const api = {
     request<{ downloads: Array<{ item_id: string; count: number }>; totalDownloads: number; members: number; pendingRequests: number }>(
       '/stats',
     ),
+  compliance: () =>
+    request<{ state: { profile: import('../catalog').OrgProfile; entries: Record<string, import('../catalog').ComplianceEntry>; updatedAt: string } | null }>(
+      '/compliance',
+    ),
+  saveCompliance: (state: { profile: unknown; entries: unknown; updatedAt: string }) =>
+    request<{ ok: true }>('/compliance', { method: 'PUT', body: JSON.stringify(state) }),
   adminUsers: () => request<{ users: ApiUser[] }>('/admin/users'),
   adminCreateUser: (payload: { email: string; name?: string; organization?: string; role?: 'admin' | 'member' }) =>
     request<{ ok: true; email: string; password: string }>('/admin/users', { method: 'POST', body: JSON.stringify(payload) }),

@@ -125,8 +125,8 @@ const MATRIX_HEADERS = [
   'Prob. residual',
   'Sev. residual',
   'Exp. residual',
-  'Puntaje residual',
-  'Nivel residual',
+  'Puntaje residual (proyectado salvo verificación)',
+  'Nivel residual (proyectado salvo verificación)',
   'Responsable',
   'Plazo',
   'Evidencia requerida',
@@ -283,7 +283,8 @@ function buildSummarySheet(context: ExportContext): XLSX.WorkSheet {
     counts[row.initialLevel] = (counts[row.initialLevel] ?? 0) + 1
   })
   const initialTotal = rows.reduce((sum, row) => sum + row.initialScore, 0)
-  const residualTotal = rows.reduce((sum, row) => sum + row.residualScore, 0)
+  // Reduccion acreditada: el residual cuenta solo si esta verificado con evidencia.
+  const residualTotal = rows.reduce((sum, row) => sum + row.currentScore, 0)
   const reduction = initialTotal ? Math.round(((initialTotal - residualTotal) / initialTotal) * 100) : 0
   const legalPending = rows.filter((row) => row.legalValidationMissing).length
 
@@ -547,7 +548,7 @@ export function exportWord(context: ExportContext) {
         (row) => `
         <h2>${escapeHtml(row.área.name)} - ${escapeHtml(row.position.title)}</h2>
         <p><strong>Tarea:</strong> ${escapeHtml(row.task.name)}</p>
-        <p><strong>Peligro:</strong> ${escapeHtml(row.hazard.name)} | <strong>Riesgo inicial:</strong> ${row.initialLevel} (${row.initialScore}) | <strong>Residual:</strong> ${row.residualLevel} (${row.residualScore})</p>
+        <p><strong>Peligro:</strong> ${escapeHtml(row.hazard.name)} | <strong>Riesgo inicial:</strong> ${row.initialLevel} (${row.initialScore}) | <strong>Residual ${row.residualBasis}:</strong> ${row.residualLevel} (${row.residualScore}) | <strong>Riesgo vigente:</strong> ${row.currentLevel} (${row.currentScore})</p>
         <p><strong>Controles propuestos:</strong> ${escapeHtml(row.proposedControls.map((control) => `${control.level}: ${control.description}`).join('; '))}</p>
         <p><strong>Evidencia:</strong> ${escapeHtml(row.requiredEvidence.join('; '))}</p>
         <p><strong>Estado legal:</strong> ${escapeHtml(row.legalValidationStatus === 'validated' ? 'Validado' : 'Requiere validación legal')}</p>

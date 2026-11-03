@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import './styles/observatorio.css'
+import './styles/compliance.css'
 import { LegalReference } from './components/LegalReference'
 import { SideDrawer } from './components/SideDrawer'
+import { GlobalSearch, type SearchTarget } from './components/GlobalSearch'
 import { SiteHeader } from './components/SiteHeader'
 import {
   findTemplate,
@@ -23,6 +25,9 @@ import LibraryView, { type LibraryTab } from './views/LibraryView'
 import PremiumView, { computePercent } from './views/PremiumView'
 import HomeView from './views/HomeView'
 import NormativeView from './views/NormativeView'
+import ComplianceView, { type ComplianceTab } from './views/ComplianceView'
+import FormatsView from './views/FormatsView'
+import InspectionView, { type InspectionTab } from './views/InspectionView'
 import ObligationsView, { type ObligationsTab } from './views/ObligationsView'
 import RouteView from './views/RouteView'
 
@@ -54,7 +59,10 @@ function App() {
   const [openCard, setOpenCard] = useState<RouteCardId | null>(null)
   const [obligationsTab, setObligationsTab] = useState<ObligationsTab>('sst')
   const [focusNormId, setFocusNormId] = useState<string | undefined>(undefined)
-  const [libraryTab, setLibraryTab] = useState<LibraryTab>('guias')
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>('avanzadas')
+  const [inspectionTab, setInspectionTab] = useState<InspectionTab>('contingencia')
+  const [openFormatId, setOpenFormatId] = useState<string | undefined>(undefined)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [openGuideId, setOpenGuideId] = useState<string | undefined>(undefined)
   const [user, setUser] = useState<ApiUser | null>(null)
   const [authReady, setAuthReady] = useState(false)
@@ -134,15 +142,45 @@ function App() {
     setView('normativa')
   }, [])
 
+  const openFormat = useCallback((formatId: string) => {
+    setOpenFormatId(formatId)
+    setView('formatos')
+  }, [])
+
+  const openSearch = useCallback(() => setSearchOpen(true), [])
+
+  const handleSearch = useCallback(
+    (target: SearchTarget) => {
+      if (target.kind === 'norma') openNorm(target.id)
+      else if (target.kind === 'guia') openGuide(target.id)
+      else if (target.kind === 'formato') openFormat(target.id)
+      else if (target.kind === 'obligacion') setView('diagnostico')
+      else if (target.kind === 'caso') {
+        setInspectionTab('casos')
+        setView('casos')
+      } else {
+        setInspectionTab('contingencia')
+        setView('fiscalizacion')
+      }
+    },
+    [openNorm, openGuide, openFormat],
+  )
+
   const card = ROUTE_CARDS.find((item) => item.id === openCard)
 
   if (view === 'herramientas') {
-    return <ToolsWorkspace onBackToSite={() => navigate('inicio')} onOpenGuide={openGuide} />
+    return (
+      <>
+        <ToolsWorkspace onBackToSite={() => navigate('inicio')} onOpenGuide={openGuide} />
+        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSearch} />
+      </>
+    )
   }
 
   return (
     <div className="site-shell">
-      <SiteHeader active={view} onNavigate={navigate} user={user} premiumPercent={premiumPercent} />
+      <SiteHeader active={view} onNavigate={navigate} onSearch={openSearch} user={user} premiumPercent={premiumPercent} />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSearch} />
 
       <main className="site-main" id="contenido">
         {view === 'inicio' && (
@@ -151,6 +189,7 @@ function App() {
             onOpenRouteCard={openRouteCard}
             onOpenNorm={openNorm}
             onOpenGuide={openGuide}
+            onSearch={openSearch}
             completedStepIds={completedStepIds}
             progressPercent={progressPercent}
             answers={answers}
@@ -184,6 +223,27 @@ function App() {
           />
         )}
         {view === 'normativa' && <NormativeView focusNormId={focusNormId} onNavigate={navigate} />}
+        {(view === 'diagnostico' || view === 'verificar') && (
+          <ComplianceView
+            tab={view === 'diagnostico' ? 'aplicables' : 'seguimiento'}
+            onTabChange={(next: ComplianceTab) => navigate(next === 'aplicables' ? 'diagnostico' : 'verificar')}
+            signedIn={Boolean(user)}
+            onOpenFormat={openFormat}
+          />
+        )}
+        {view === 'formatos' && (
+          <FormatsView key={openFormatId ?? 'formatos'} openFormatId={openFormatId} onFormatOpened={() => setOpenFormatId(undefined)} />
+        )}
+        {(view === 'fiscalizacion' || view === 'casos') && (
+          <InspectionView
+            tab={view === 'casos' ? 'casos' : inspectionTab}
+            onTabChange={(next) => {
+              setInspectionTab(next)
+              navigate(next === 'casos' ? 'casos' : 'fiscalizacion')
+            }}
+            onOpenGuide={openGuide}
+          />
+        )}
       </main>
 
       <SideDrawer

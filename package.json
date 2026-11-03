@@ -15,7 +15,8 @@
     "create:user": "node scripts/create-user.mjs",
     "cf:dev": "npm run build && wrangler dev",
     "cf:migrate": "wrangler d1 migrations apply observatorio-sst --remote",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -33,6 +34,7 @@
     "oxlint": "^1.69.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
+    "vitest": "^3.2.7",
     "wrangler": "^4.157.0"
   }
 }

@@ -233,16 +233,45 @@ export function generateAssessments(
         legalValidationMissing,
         ppeOnlyWarning,
         proposedControlsInsufficient,
-        actionStatus: initialEvaluation.level === 'Bajo' ? 'pending' : 'in_progress',
+        // Un control sugerido no esta iniciado: el estado real lo registra el responsable.
+        actionStatus: 'pending',
         verificationStatus: 'Pendiente de evidencia',
+        residualBasis: 'proyectado',
+        currentScore: initialEvaluation.score,
+        currentLevel: initialEvaluation.level,
       }
     })
   })
 }
 
+/**
+ * El residual solo reduce el riesgo vigente cuando el control fue ejecutado y verificado
+ * por un responsable con evidencia. En cualquier otro caso es una proyeccion condicionada.
+ */
+export function resolveResidualBasis(
+  row: GeneratedAssessment,
+  verification: { verifiedBy?: string; verificationEvidence?: string; verifiedAt?: string } = {},
+): GeneratedAssessment {
+  const verifiedBy = verification.verifiedBy?.trim() || row.verifiedBy
+  const verificationEvidence = verification.verificationEvidence?.trim() || row.verificationEvidence
+  const verified = row.actionStatus === 'verified' && Boolean(verifiedBy) && Boolean(verificationEvidence)
+  return {
+    ...row,
+    verifiedBy,
+    verificationEvidence,
+    verifiedAt: verification.verifiedAt ?? row.verifiedAt,
+    residualBasis: verified ? 'verificado' : 'proyectado',
+    currentScore: verified ? row.residualScore : row.initialScore,
+    currentLevel: verified ? row.residualLevel : row.initialLevel,
+    // Sin evidencia no hay verificacion: se degrada a "ejecutado, por verificar".
+    actionStatus: row.actionStatus === 'verified' && !verified ? 'implemented' : row.actionStatus,
+  }
+}
+
 export function buildDashboard(rows: GeneratedAssessment[]): DashboardIndicators {
   const initialTotal = rows.reduce((total, row) => total + row.initialScore, 0)
   const residualTotal = rows.reduce((total, row) => total + row.residualScore, 0)
+  const currentTotal = rows.reduce((total, row) => total + row.currentScore, 0)
   const controlsByHierarchy = rows.reduce(
     (acc, row) => {
       acc[row.controlHierarchyLevel] += 1
@@ -260,7 +289,10 @@ export function buildDashboard(rows: GeneratedAssessment[]): DashboardIndicators
     overdueControls: rows.filter((row) => row.actionStatus === 'overdue').length,
     averageInitialRisk: rows.length ? Math.round(initialTotal / rows.length) : 0,
     averageResidualRisk: rows.length ? Math.round(residualTotal / rows.length) : 0,
-    reductionPercent: initialTotal ? Math.round(((initialTotal - residualTotal) / initialTotal) * 100) : 0,
+    reductionPercent: initialTotal ? Math.round(((initialTotal - currentTotal) / initialTotal) * 100) : 0,
+    projectedReductionPercent: initialTotal ? Math.round(((initialTotal - residualTotal) / initialTotal) * 100) : 0,
+    verifiedControls: rows.filter((row) => row.residualBasis === 'verificado').length,
+    averageCurrentRisk: rows.length ? Math.round(currentTotal / rows.length) : 0,
     risksByArea: countBy(rows, (row) => row.área.name),
     risksByCategory: countBy(rows, (row) => row.hazardCategory),
     controlsPendingEvidence: rows.filter((row) => row.requiredEvidence.length > 0 && row.verificationStatus.includes('Pendiente')).length,
