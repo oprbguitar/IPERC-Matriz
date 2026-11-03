@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
+import './styles/observatorio.css'
 import { LegalReference } from './components/LegalReference'
 import { SideDrawer } from './components/SideDrawer'
 import { SiteHeader } from './components/SiteHeader'
@@ -15,12 +16,15 @@ import {
 } from './data/platformContent'
 import { assetUrl } from './lib/assets'
 import { statusForAnswer, type DiagnosticAnswers } from './lib/diagnostic'
+import { api, type ApiUser } from './lib/api'
 import { ToolsWorkspace } from './tools/ToolsWorkspace'
+import EvolutionView from './views/EvolutionView'
+import LibraryView, { type LibraryTab } from './views/LibraryView'
+import PremiumView, { computePercent } from './views/PremiumView'
 import HomeView from './views/HomeView'
 import NormativeView from './views/NormativeView'
 import ObligationsView, { type ObligationsTab } from './views/ObligationsView'
 import RouteView from './views/RouteView'
-import TemplatesView from './views/TemplatesView'
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -50,6 +54,32 @@ function App() {
   const [openCard, setOpenCard] = useState<RouteCardId | null>(null)
   const [obligationsTab, setObligationsTab] = useState<ObligationsTab>('sst')
   const [focusNormId, setFocusNormId] = useState<string | undefined>(undefined)
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>('guias')
+  const [openGuideId, setOpenGuideId] = useState<string | undefined>(undefined)
+  const [user, setUser] = useState<ApiUser | null>(null)
+  const [authReady, setAuthReady] = useState(false)
+  const [offline, setOffline] = useState(false)
+  const [premiumPercent, setPremiumPercent] = useState<number | null>(null)
+
+  // Sesion del Observatorio (Cloudflare). En GitHub Pages no hay API: modo sin servidor.
+  useEffect(() => {
+    api
+      .me()
+      .then(({ user: current }) => setUser(current))
+      .catch(() => setOffline(true))
+      .finally(() => setAuthReady(true))
+  }, [])
+
+  useEffect(() => {
+    if (!user) {
+      setPremiumPercent(null)
+      return
+    }
+    api
+      .progress()
+      .then(({ items }) => setPremiumPercent(computePercent(Object.fromEntries(items.map((item) => [item.item_id, item.status])))))
+      .catch(() => setPremiumPercent(null))
+  }, [user, view])
 
   useEffect(() => {
     try {
@@ -93,6 +123,12 @@ function App() {
 
   const openRouteCard = useCallback((id: RouteCardId) => setOpenCard(id), [])
 
+  const openGuide = useCallback((guideId: string) => {
+    setOpenGuideId(guideId)
+    setLibraryTab('guias')
+    setView('plantillas')
+  }, [])
+
   const openNorm = useCallback((normId: string) => {
     setFocusNormId(normId)
     setView('normativa')
@@ -101,12 +137,12 @@ function App() {
   const card = ROUTE_CARDS.find((item) => item.id === openCard)
 
   if (view === 'herramientas') {
-    return <ToolsWorkspace onBackToSite={() => navigate('inicio')} />
+    return <ToolsWorkspace onBackToSite={() => navigate('inicio')} onOpenGuide={openGuide} />
   }
 
   return (
     <div className="site-shell">
-      <SiteHeader active={view} onNavigate={navigate} />
+      <SiteHeader active={view} onNavigate={navigate} user={user} premiumPercent={premiumPercent} />
 
       <main className="site-main" id="contenido">
         {view === 'inicio' && (
@@ -114,9 +150,17 @@ function App() {
             onNavigate={navigate}
             onOpenRouteCard={openRouteCard}
             onOpenNorm={openNorm}
+            onOpenGuide={openGuide}
             completedStepIds={completedStepIds}
             progressPercent={progressPercent}
+            answers={answers}
+            premiumPercent={premiumPercent}
+            signedIn={Boolean(user)}
           />
+        )}
+        {view === 'evolucion' && <EvolutionView onOpenNorm={openNorm} />}
+        {view === 'premium' && (
+          <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} onPercentChange={setPremiumPercent} />
         )}
         {view === 'ruta' && (
           <RouteView answers={answers} onAnswer={handleAnswer} onReset={resetAnswers} onNavigate={navigate} />
@@ -129,7 +173,16 @@ function App() {
             defaultSector={defaultSector}
           />
         )}
-        {view === 'plantillas' && <TemplatesView />}
+        {view === 'plantillas' && (
+          <LibraryView
+            key={openGuideId ?? 'library'}
+            tab={libraryTab}
+            onTabChange={setLibraryTab}
+            answers={answers}
+            openGuideId={openGuideId}
+            onGuideOpened={() => setOpenGuideId(undefined)}
+          />
+        )}
         {view === 'normativa' && <NormativeView focusNormId={focusNormId} onNavigate={navigate} />}
       </main>
 

@@ -1,0 +1,30 @@
+name: Actualizar enlaces normativos
+
+# Mantiene el catalogo vigente: cada mes vuelve a verificar las fuentes oficiales
+# (gob.pe, El Peruano, SUNAFIL, SINIA) y abre un PR si algo cambio.
+on:
+  schedule:
+    - cron: '0 12 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scrapear normas
+        run: node scripts/scrape-norms.mjs
+      - name: Abrir PR con cambios
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/refresh-norm-links
+          title: 'chore: actualizar enlaces normativos verificados'
+          commit-message: 'chore: actualizar enlaces normativos verificados'
+          body: Verificación mensual automática de las fuentes oficiales del catálogo normativo.

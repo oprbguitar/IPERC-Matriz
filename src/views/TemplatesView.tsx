@@ -24,6 +24,23 @@ const FORMAT_LABEL: Record<TemplateFormat, string> = {
   enlace: 'Fuente oficial',
 }
 
+/** Procedencia legible de cada plantilla: propia del Observatorio o entidad oficial que la publica. */
+const ORIGINS: Array<[RegExp, string]> = [
+  [/sunafil/i, 'SUNAFIL'],
+  [/servir/i, 'SERVIR'],
+  [/institucion\/mtpe|trabajo\.gob/i, 'Ministerio de Trabajo (MTPE)'],
+  [/minsa/i, 'Ministerio de Salud (MINSA)'],
+  [/minam|sinia/i, 'Ministerio del Ambiente (MINAM / SINIA)'],
+  [/elperuano/i, 'Diario Oficial El Peruano'],
+  [/gob\.pe/i, 'Plataforma del Estado Peruano (gob.pe)'],
+]
+
+export function templateOrigin(item: { file?: string; externalUrl?: string }): { label: string; own: boolean } {
+  if (item.file) return { label: 'Elaborada por el Observatorio SST Perú (código abierto en GitHub)', own: true }
+  const match = ORIGINS.find(([pattern]) => pattern.test(item.externalUrl ?? ''))
+  return { label: match ? `Formato oficial publicado por ${match[1]}` : 'Fuente externa', own: false }
+}
+
 export function TemplatesView() {
   const [category, setCategory] = useState<TemplateCategoryId | 'todas'>('todas')
   const [query, setQuery] = useState('')
@@ -41,10 +58,10 @@ export function TemplatesView() {
   const downloadable = TEMPLATES.filter((item) => item.file).length
 
   return (
-    <div className="view-page">
+    <div className="templates-embedded">
       <header className="page-head">
         <div>
-          <h1>Plantillas</h1>
+          <h2>Plantillas</h2>
           <p>
             {downloadable} archivo(s) se descargan desde esta plataforma. El resto enlaza directamente a los formatos y
             modelos publicados por entidades oficiales, para que siempre use la versión vigente.
@@ -96,6 +113,9 @@ export function TemplatesView() {
               <h2>{item.name}</h2>
               <p>{item.description}</p>
               <p className="template-audience">Útil para: {item.audience.join(', ')}.</p>
+              <p className={`template-origin ${templateOrigin(item).own ? 'own' : 'official'}`}>
+                Origen: {templateOrigin(item).label}
+              </p>
               <div className="result-links">
                 <b>Normativa:</b>
                 {item.normIds.map((normId) => (

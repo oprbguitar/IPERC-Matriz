@@ -1,5 +1,7 @@
-import { CalendarCheck, ChevronDown, ExternalLink, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { CalendarCheck, ChevronDown, LayoutGrid, List, Search } from 'lucide-react'
+import { NormLinks } from '../components/NormLinks'
+import { SOURCES_GENERATED_AT } from '../data/normLinks'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   LEGAL_CATALOGUE_VERIFIED_AT,
   LEGAL_CATEGORY_LABELS,
@@ -21,6 +23,8 @@ import type { LegalCategory, LegalEffectiveStatus } from '../types'
 
 type SortMode = 'relevancia' | 'fecha'
 
+const IsoView = lazy(() => import('./IsoView'))
+
 interface NormativeViewProps {
   focusNormId?: string
   onNavigate: (view: SiteViewId) => void
@@ -33,6 +37,8 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
   const [status, setStatus] = useState<LegalEffectiveStatus | 'todos'>('todos')
   const [sort, setSort] = useState<SortMode>('relevancia')
   const [expanded, setExpanded] = useState<string | null>(focusNormId ?? null)
+  const [layout, setLayout] = useState<'list' | 'grid'>('list')
+  const [section, setSection] = useState<'peru' | 'iso'>('peru')
 
   useEffect(() => {
     if (focusNormId) setExpanded(focusNormId)
@@ -65,11 +71,26 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
           <h1>Normativa peruana</h1>
           <p>
             Catálogo de normas de seguridad y salud en el trabajo y de ambiente, con enlace directo a la fuente oficial.
-            Última revisión del catálogo: {LEGAL_CATALOGUE_VERIFIED_AT}.
+            Última revisión del catálogo: {LEGAL_CATALOGUE_VERIFIED_AT}. Enlaces verificados automáticamente el{' '}
+            {SOURCES_GENERATED_AT.slice(0, 10)}.
           </p>
+        </div>
+        <div className="tab-switch" role="tablist" aria-label="Tipo de normativa">
+          <button type="button" role="tab" aria-selected={section === 'peru'} className={section === 'peru' ? 'active' : ''} onClick={() => setSection('peru')}>
+            Normas peruanas
+          </button>
+          <button type="button" role="tab" aria-selected={section === 'iso'} className={section === 'iso' ? 'active' : ''} onClick={() => setSection('iso')}>
+            ISO y sistemas integrados
+          </button>
         </div>
       </header>
 
+      {section === 'iso' ? (
+        <Suspense fallback={<p className="empty-note">Cargando normas ISO…</p>}>
+          <IsoView />
+        </Suspense>
+      ) : (
+      <>
       <div className="filter-row">
         <label className="search-field">
           <Search size={16} aria-hidden="true" />
@@ -120,10 +141,14 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
             <option value="fecha">Fecha de publicación</option>
           </select>
         </label>
+        <div className="layout-toggle" role="group" aria-label="Vista">
+          <button type="button" className={layout === 'list' ? 'active' : ''} onClick={() => setLayout('list')}><List size={15} aria-hidden="true" /> Lista</button>
+          <button type="button" className={layout === 'grid' ? 'active' : ''} onClick={() => setLayout('grid')}><LayoutGrid size={15} aria-hidden="true" /> Cuadros</button>
+        </div>
         <p className="filter-count">{visible.length} norma(s)</p>
       </div>
 
-      <div className="norm-list">
+      <div className={`norm-list ${layout === 'grid' ? 'as-grid' : ''}`}>
         {visible.map((norm) => {
           const isOpen = expanded === norm.id
           const routeCard = ROUTE_CARDS.find((card) => card.id === norm.relatedRouteId)
@@ -163,14 +188,7 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
               </ul>
 
               <div className="legal-actions">
-                <a className="btn-primary small" href={norm.officialPageUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink size={15} aria-hidden="true" /> Ver fuente oficial
-                </a>
-                {norm.officialDocumentUrl && (
-                  <a className="btn-secondary small" href={norm.officialDocumentUrl} target="_blank" rel="noopener noreferrer">
-                    Documento completo
-                  </a>
-                )}
+                <NormLinks norm={norm} />
                 <button
                   type="button"
                   className="btn-ghost small"
@@ -227,6 +245,8 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
         })}
         {visible.length === 0 && <p className="empty-note">No hay normas que coincidan con los filtros.</p>}
       </div>
+      </>
+      )}
 
       <p className="site-disclaimer">{PLATFORM_DISCLAIMER}</p>
     </div>

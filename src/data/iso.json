@@ -1,0 +1,2036 @@
+{
+ "importedAt": "2026-11-03",
+ "sources": [
+  {
+   "label": "Curso SSOMA 2026",
+   "url": "https://github.com/oprbguitar/cursoma2026"
+  },
+  {
+   "label": "Curso de Sistemas Integrados de Gestión",
+   "url": "https://github.com/oprbguitar/sistemas-integrados-curso"
+  }
+ ],
+ "standards": [
+  {
+   "norma": "ISO 45001:2018",
+   "titulo": "Sistemas de gestión de la seguridad y salud en el trabajo — Requisitos con orientación para su uso",
+   "publicacion": "12 de marzo de 2018",
+   "sustituye": "OHSAS 18001:2007 (periodo de migración cerrado el 30 de septiembre de 2021)",
+   "estructura": "Anexo SL — Estructura de Alto Nivel, idéntica en índice a ISO 9001:2015 e ISO 14001:2015",
+   "clausulasRequisito": "4 a 10 (las cláusulas 1, 2 y 3 no contienen requisitos auditables)",
+   "exclusiones": "NO se admiten exclusiones de requisitos. A diferencia de ISO 9001:2015 §4.3, ISO 45001 no contempla la no aplicabilidad.",
+   "compraOficial": "https://www.iso.org/standard/63787.html",
+   "compraPeru": "https://www.inacal.gob.pe/",
+   "cambiosClaveVsOhsas": [
+    "Contexto de la organización y partes interesadas (nuevo, cláusula 4)",
+    "Liderazgo indelegable de la alta dirección; desaparece el \"representante de la dirección\" como figura obligatoria",
+    "Consulta y participación de los trabajadores como requisito explícito y detallado (§5.4)",
+    "Riesgos y oportunidades del sistema, además de los riesgos para la SST (§6.1)",
+    "Gestión del cambio como requisito propio (§8.1.3)",
+    "Compras, contratistas y contratación externa desagregados (§8.1.4)",
+    "\"Información documentada\" sustituye a \"documentos y registros\""
+   ],
+   "key": "45001",
+   "clauses": [
+    {
+     "id": "45001:4",
+     "num": "4",
+     "title": "Contexto de la organización",
+     "kind": "marco",
+     "parent": null,
+     "summary": "Obliga a mirar hacia afuera antes de diseñar el sistema: qué cuestiones internas y externas afectan la SST, quién tiene interés legítimo, hasta dónde llega el sistema y cómo se articula.",
+     "intent": "Evitar sistemas de gestión \"de plantilla\". Si el contexto no está entendido, el SGSST protege riesgos que no existen e ignora los que sí.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:4.1",
+     "num": "4.1",
+     "title": "Comprensión de la organización y de su contexto",
+     "kind": "requisito",
+     "parent": "45001:4",
+     "summary": "Determinar las cuestiones externas e internas pertinentes al propósito de la organización que afectan su capacidad de lograr los resultados previstos del SGSST.",
+     "intent": "Anclar el sistema a la realidad del negocio: sector, tecnología, cultura, clima laboral, cadena de suministro, marco regulatorio, comunidad.",
+     "evidence": [
+      "Análisis de contexto documentado (FODA, PESTEL, mapa de riesgos estratégico) con fecha y responsable",
+      "Evidencia de revisión periódica del contexto (mínimo anual o ante cambios significativos)",
+      "Trazabilidad: cuestión identificada → riesgo/oportunidad → acción en §6.1.4"
+     ],
+     "questions": [
+      "¿Qué cuestiones externas afectan hoy su capacidad de gestionar la SST y cómo lo determinaron?",
+      "Muéstreme cómo una cuestión del contexto se convirtió en una acción concreta del sistema.",
+      "¿Cuándo revisaron el contexto por última vez y qué cambió respecto a la versión anterior?",
+      "La empresa abrió una operación nueva el año pasado, ¿cómo se reflejó eso en el análisis de contexto?"
+     ],
+     "findings": [
+      {
+       "text": "Análisis de contexto genérico, idéntico a plantilla de consultora, sin referencia a los procesos ni a los peligros reales.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Contexto documentado pero sin ninguna conexión con los riesgos y oportunidades de §6.1.2.2.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "No existe determinación del contexto.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "La norma no exige que el análisis de contexto sea información documentada. Pero si no está documentado, el auditor solo podrá evaluarlo por entrevista, y en la práctica la organización no podrá demostrar la revisión. Documentarlo es una decisión de defensa, no un requisito literal."
+    },
+    {
+     "id": "45001:4.2",
+     "num": "4.2",
+     "title": "Comprensión de las necesidades y expectativas de los trabajadores y de otras partes interesadas",
+     "kind": "requisito",
+     "parent": "45001:4",
+     "summary": "Identificar a los trabajadores y demás partes interesadas pertinentes, sus necesidades y expectativas, y cuáles de ellas se convierten en requisitos legales u otros requisitos.",
+     "intent": "Los trabajadores están nombrados primero y por separado: en ISO 45001 no son \"una parte interesada más\", son el sujeto protegido del sistema.",
+     "evidence": [
+      "Matriz de partes interesadas: quién, qué necesita/espera, si es requisito legal, si se adopta como requisito propio, cómo se monitorea",
+      "Vínculo explícito con la matriz de requisitos legales de §6.1.3",
+      "Inclusión de contratistas, proveedores, visitantes, comunidad, SUNAFIL, EsSalud, sindicato y CSST"
+     ],
+     "questions": [
+      "¿Quiénes son sus partes interesadas pertinentes y por qué esas y no otras?",
+      "¿Qué expectativa de una parte interesada adoptaron voluntariamente como requisito y dónde se ve?",
+      "¿Cómo identificaron las necesidades de los trabajadores no directivos, incluidos los contratistas?"
+     ],
+     "findings": [
+      {
+       "text": "La matriz de partes interesadas omite a los contratistas permanentes en planta, pese a que representan el 40 % de la dotación.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Se listan partes interesadas sin identificar sus necesidades ni determinar cuáles se convierten en requisitos.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "Confundir \"partes interesadas pertinentes\" con \"todas las partes interesadas imaginables\". Una matriz de 60 filas sin criterio de pertinencia es tan débil como una de 3."
+    },
+    {
+     "id": "45001:4.3",
+     "num": "4.3",
+     "title": "Determinación del alcance del sistema de gestión de la SST",
+     "kind": "requisito",
+     "parent": "45001:4",
+     "summary": "Definir los límites y la aplicabilidad del SGSST considerando el contexto (4.1), las partes interesadas (4.2) y las actividades relacionadas con el trabajo, planificadas o realizadas. Debe estar disponible como información documentada.",
+     "intent": "Impedir que la organización recorte el sistema para esconder las áreas de mayor riesgo.",
+     "evidence": [
+      "Declaración de alcance documentada, con sedes, procesos, actividades y personas cubiertas",
+      "Coherencia entre el alcance declarado y el certificado, la nómina y los planos de las instalaciones",
+      "Justificación de cualquier sede o actividad no incluida"
+     ],
+     "questions": [
+      "Muéstreme el alcance documentado. ¿Incluye la planta de Arequipa? Si no, ¿por qué?",
+      "¿El alcance cubre a los trabajadores de la contratista de mantenimiento que operan dentro del área?",
+      "¿Está el alcance disponible para las partes interesadas?"
+     ],
+     "findings": [
+      {
+       "text": "El alcance excluye un almacén donde se manipulan sustancias peligrosas bajo control de la organización.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "El alcance no está disponible como información documentada.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "ISO 45001 no permite excluir REQUISITOS, pero sí delimitar el alcance por sedes/actividades. La línea es fina: se puede dejar fuera una sede; no se puede dejar fuera la cláusula 8.1.2."
+    },
+    {
+     "id": "45001:4.4",
+     "num": "4.4",
+     "title": "Sistema de gestión de la SST",
+     "kind": "requisito",
+     "parent": "45001:4",
+     "summary": "Establecer, implementar, mantener y mejorar continuamente el SGSST, incluidos los procesos necesarios y sus interacciones.",
+     "intent": "Exigir enfoque a procesos: no una carpeta de documentos, sino un conjunto de procesos con entradas, salidas, dueños e interacciones.",
+     "evidence": [
+      "Mapa de procesos del SGSST con interacciones",
+      "Caracterización de procesos con indicadores",
+      "Matriz de correlación cláusula ↔ proceso ↔ documento ↔ dueño"
+     ],
+     "questions": [
+      "¿Cuáles son los procesos de su SGSST y cómo interactúan?",
+      "¿Quién es el dueño del proceso de investigación de incidentes y qué indicador lo mide?"
+     ],
+     "findings": [
+      {
+       "text": "El sistema existe como conjunto de documentos, sin procesos definidos ni interacciones establecidas.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "La cláusula 4.4 es la que sostiene la NC mayor de \"sistema no implementado\" cuando fallan varios procesos a la vez."
+    },
+    {
+     "id": "45001:5",
+     "num": "5",
+     "title": "Liderazgo y participación de los trabajadores",
+     "kind": "marco",
+     "parent": null,
+     "summary": "La cláusula que diferencia a ISO 45001 de OHSAS 18001. El liderazgo es indelegable y la participación de los trabajadores es un requisito con contenido específico y verificable.",
+     "intent": "Cerrar la puerta al SGSST delegado íntegramente al jefe de seguridad y desconocido por la gerencia.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:5.1",
+     "num": "5.1",
+     "title": "Liderazgo y compromiso",
+     "kind": "requisito",
+     "parent": "45001:5",
+     "summary": "La alta dirección debe demostrar liderazgo y compromiso: asumir la responsabilidad de la prevención de lesiones y deterioro de la salud, proveer lugares de trabajo seguros, asegurar recursos, integrar el SGSST en los procesos de negocio, desarrollar una cultura que apoye el sistema, proteger a los trabajadores de represalias al reportar, y apoyar al comité de SST.",
+     "intent": "Convertir el compromiso en conductas observables y auditables, no en una declaración.",
+     "evidence": [
+      "Actas de comité de gerencia donde SST es punto de agenda con decisiones y presupuesto",
+      "Presupuesto SSOMA aprobado y su ejecución",
+      "Participación documentada de la alta dirección en recorridos, comités e investigaciones de eventos graves",
+      "Política y procedimiento antirrepresalias con evidencia de casos gestionados",
+      "Objetivos SST en la evaluación de desempeño de gerentes de línea"
+     ],
+     "questions": [
+      "Sr. Gerente General, ¿cuáles son los tres riesgos críticos de esta operación y qué decisión tomó usted sobre ellos este año?",
+      "¿Cómo se asegura de que el SGSST esté integrado en los procesos de negocio y no sea un sistema paralelo?",
+      "¿Qué mecanismo protege a un trabajador que reporta un peligro contra represalias, y ha sido usado?",
+      "Muéstreme el presupuesto de SST del año y su ejecución real."
+     ],
+     "findings": [
+      {
+       "text": "La alta dirección no puede describir los riesgos críticos de SST ni los objetivos del sistema; el SGSST está íntegramente delegado en el jefe SSOMA.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "No existe mecanismo de protección contra represalias por reportar peligros.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "El presupuesto de SST fue aprobado pero ejecutado al 22 %, con controles de riesgo alto postergados.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "ISO 45001 eliminó la figura obligatoria del \"representante de la dirección\". Si la organización mantiene un representante, está bien; pero si la alta dirección lo usa como escudo para no responder, el hallazgo es contra §5.1."
+    },
+    {
+     "id": "45001:5.2",
+     "num": "5.2",
+     "title": "Política de la SST",
+     "kind": "requisito",
+     "parent": "45001:5",
+     "summary": "La alta dirección debe establecer una política que incluya al menos cinco compromisos: (a) proporcionar condiciones de trabajo seguras y saludables para la prevención de lesiones y deterioro de la salud, apropiada al propósito, tamaño, contexto y naturaleza específica de los riesgos y oportunidades; (b) proporcionar un marco de referencia para los objetivos; (c) cumplir los requisitos legales y otros requisitos; (d) eliminar los peligros y reducir los riesgos para la SST; (e) mejorar continuamente el SGSST; y (f) la consulta y participación de los trabajadores y sus representantes.",
+     "intent": "La política es el contrato público del sistema. Cada compromiso es auditable por separado.",
+     "evidence": [
+      "Política documentada, disponible, comunicada dentro de la organización y accesible a las partes interesadas",
+      "Los 6 compromisos identificables uno a uno en el texto",
+      "Evidencia de difusión y de comprensión (no solo publicación)",
+      "Firma de la máxima autoridad y fecha (exigencia adicional del art. 22 de la Ley 29783)"
+     ],
+     "questions": [
+      "Señale en el texto de la política dónde está el compromiso de eliminar peligros y reducir riesgos.",
+      "¿Dónde está el compromiso de consulta y participación de los trabajadores?",
+      "Operador, ¿qué dice la política de SST de su empresa y qué significa para su trabajo?",
+      "¿Cómo se hace accesible la política a las partes interesadas externas?"
+     ],
+     "findings": [
+      {
+       "text": "La política omite el compromiso de consulta y participación de los trabajadores (§5.2.f).",
+       "severity": "NC menor"
+      },
+      {
+       "text": "La política está publicada pero 4 de 6 trabajadores entrevistados desconocen su contenido y cómo aplica a su puesto.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "La política no está firmada por la máxima autoridad ni fechada (incumple además el art. 22 de la Ley 29783).",
+       "severity": "NC menor + hallazgo legal"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "La política que dice \"cumplir la legislación aplicable\" y nada más es insuficiente: faltan los compromisos de eliminar peligros/reducir riesgos y de consulta y participación, que son específicos de ISO 45001 y no existían en OHSAS 18001."
+    },
+    {
+     "id": "45001:5.3",
+     "num": "5.3",
+     "title": "Roles, responsabilidades y autoridades en la organización",
+     "kind": "requisito",
+     "parent": "45001:5",
+     "summary": "La alta dirección debe asegurar que las responsabilidades y autoridades para los roles pertinentes se asignen y comuniquen, y se mantengan como información documentada. Los trabajadores de cada nivel asumen responsabilidad por los aspectos del SGSST sobre los que tienen control.",
+     "intent": "La SST es responsabilidad de línea, no del área de seguridad. La cláusula obliga a repartirla.",
+     "evidence": [
+      "Descripciones de puesto con responsabilidades de SST",
+      "Organigrama del SGSST",
+      "Matriz RACI de procesos críticos",
+      "Evidencia de comunicación de los roles"
+     ],
+     "questions": [
+      "Supervisor de producción, ¿cuál es su responsabilidad formal en el SGSST?",
+      "¿Dónde está documentada la responsabilidad del jefe de compras en la selección de contratistas?",
+      "¿Quién tiene autoridad para detener un trabajo por riesgo inminente y está formalmente asignada?"
+     ],
+     "findings": [
+      {
+       "text": "Las responsabilidades de SST solo están documentadas para el área SSOMA; las jefaturas de línea no tienen responsabilidad asignada.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "La autoridad de parada de trabajo (stop work authority) se declara en charlas pero no está formalmente asignada ni comunicada.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "Una matriz de responsabilidades firmada pero desconocida por sus titulares es evidencia de comunicación fallida, no de cumplimiento. Siempre triangular documento + entrevista."
+    },
+    {
+     "id": "45001:5.4",
+     "num": "5.4",
+     "title": "Consulta y participación de los trabajadores",
+     "kind": "requisito",
+     "parent": "45001:5",
+     "summary": "Establecer procesos para la consulta y la participación de los trabajadores en todos los niveles y funciones, incluidos los no directivos. Eliminar obstáculos o barreras (idioma, alfabetización, represalias, costo, tiempo). La norma lista expresamente en qué temas hay que CONSULTAR y en cuáles hay que hacer PARTICIPAR.",
+     "intent": "Distinguir consulta (buscar opiniones antes de decidir) de participación (involucrar en la toma de decisiones). Son verbos distintos con listas distintas.",
+     "evidence": [
+      "Actas del CSST con temas de consulta y decisiones",
+      "IPERC firmado por trabajadores del puesto evaluado",
+      "Registros de investigación de incidentes con participación de trabajadores",
+      "Encuestas, buzones, comités de mejora, reuniones de preturno con registro",
+      "Evidencia de eliminación de barreras: material en idioma local, horarios dentro de jornada, sin costo"
+     ],
+     "questions": [
+      "Muéstreme un caso concreto donde la opinión de un trabajador no directivo cambió una decisión del sistema.",
+      "Operador, ¿participó usted en la evaluación de riesgos de su puesto? ¿Cuándo y cómo?",
+      "¿Qué barreras identificaron para la participación y qué hicieron con ellas?",
+      "¿Fueron consultados los trabajadores sobre el programa de auditoría interna?"
+     ],
+     "findings": [
+      {
+       "text": "El IPERC de las áreas de producción fue elaborado exclusivamente por el área SSOMA y una consultora; no hay evidencia de participación de los trabajadores de los puestos evaluados.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "Existe CSST pero no hay evidencia de consulta a los trabajadores sobre el establecimiento de los objetivos de SST.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "El material de consulta está solo en español en una operación con 30 % de trabajadores quechuahablantes con baja alfabetización en castellano; no se identificó esa barrera.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr",
+      "ley-31246"
+     ],
+     "trap": "Tener CSST no equivale a cumplir §5.4. El CSST es un mecanismo entre varios, y su existencia no prueba la consulta y participación en TODOS los temas listados por la norma. Este es probablemente el hallazgo más frecuente en certificaciones ISO 45001 en el Perú."
+    },
+    {
+     "id": "45001:6",
+     "num": "6",
+     "title": "Planificación",
+     "kind": "marco",
+     "parent": null,
+     "summary": "El \"Planificar\" del PHVA. Riesgos y oportunidades, requisitos legales, objetivos y planificación de cambios.",
+     "intent": "Que las acciones del sistema deriven de un análisis, no de la costumbre.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:6.1.1",
+     "num": "6.1.1",
+     "title": "Generalidades — Acciones para abordar riesgos y oportunidades",
+     "kind": "requisito",
+     "parent": "45001:6",
+     "summary": "Al planificar el SGSST, considerar el contexto (4.1), las partes interesadas (4.2) y el alcance (4.3), y determinar los riesgos y oportunidades que es necesario abordar para asegurar los resultados previstos, prevenir efectos no deseados y lograr la mejora continua.",
+     "intent": "Introducir el pensamiento basado en riesgos a nivel de SISTEMA, además del riesgo para la SST a nivel de tarea.",
+     "evidence": [
+      "Matriz de riesgos y oportunidades del sistema (distinta del IPERC)",
+      "Registro de peligros, riesgos SST, riesgos del sistema y oportunidades"
+     ],
+     "questions": [
+      "¿Cómo distinguen un riesgo para la SST de un riesgo para el sistema de gestión?",
+      "Deme un ejemplo de oportunidad de SST identificada y qué hicieron con ella."
+     ],
+     "findings": [
+      {
+       "text": "Solo existe IPERC; no se determinaron riesgos ni oportunidades del sistema de gestión.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr"
+     ],
+     "trap": "Confundir \"riesgo para la SST\" (probabilidad × severidad de un daño a personas) con \"riesgo del sistema\" (por ejemplo, rotación del personal competente, obsolescencia normativa, dependencia de un solo proveedor de EPP)."
+    },
+    {
+     "id": "45001:6.1.2",
+     "num": "6.1.2",
+     "title": "Identificación de peligros y evaluación de los riesgos y oportunidades",
+     "kind": "requisito",
+     "parent": "45001:6",
+     "summary": "Proceso continuo y proactivo de identificación de peligros que considere: cómo se organiza el trabajo, factores sociales (carga de trabajo, horarios, victimización, acoso, intimidación), liderazgo y cultura; actividades y situaciones rutinarias y no rutinarias; incidentes pasados internos y externos; situaciones de emergencia; personas (incluidos trabajadores, contratistas, visitantes y personas cuyo lugar de trabajo no está bajo control de la organización); cambios reales o propuestos; cambios en el conocimiento sobre los peligros; y diseño de áreas, procesos, instalaciones, maquinaria, procedimientos y organización del trabajo.",
+     "intent": "Ampliar la identificación de peligros más allá de lo físico: la norma incorpora expresamente los factores psicosociales y organizacionales.",
+     "evidence": [
+      "IPERC vigente por puesto/proceso, con metodología declarada y aplicada consistentemente",
+      "Evidencia de identificación de peligros psicosociales (carga de trabajo, jornadas, acoso)",
+      "Consideración de situaciones no rutinarias y de emergencia",
+      "Registro de competencia del equipo evaluador",
+      "Evidencia de actualización tras incidentes, cambios y nuevos conocimientos"
+     ],
+     "questions": [
+      "Muéstreme dónde se identificaron peligros psicosociales y qué controles derivaron.",
+      "¿Cómo se identificaron los peligros de las actividades no rutinarias, por ejemplo la parada de planta?",
+      "Este incidente de marzo, ¿generó actualización del IPERC? Muéstreme la versión anterior y la actual.",
+      "¿Se consideraron los peligros para los visitantes y para el personal de la contratista de limpieza?"
+     ],
+     "findings": [
+      {
+       "text": "El IPERC no considera factores psicosociales ni de organización del trabajo, pese a que el monitoreo de riesgo psicosocial arrojó nivel alto en dos áreas.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "El IPERC no fue actualizado tras el cambio de proceso de la línea 3, ejecutado hace 7 meses.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "La metodología declarada es la del Anexo 3 de la R.M. 050-2013-TR, pero la matriz aplica una escala 5×5 distinta sin justificación ni criterios documentados.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr",
+      "rm-050-2013-tr",
+      "ds-024-2016-em",
+      "rm-375-2008-tr"
+     ],
+     "trap": "La palabra clave es \"continuo y proactivo\". Un IPERC actualizado una vez al año, en la misma semana de la auditoría, contradice literalmente el requisito."
+    },
+    {
+     "id": "45001:6.1.3",
+     "num": "6.1.3",
+     "title": "Determinación de los requisitos legales y otros requisitos",
+     "kind": "requisito",
+     "parent": "45001:6",
+     "summary": "Establecer, implementar y mantener procesos para determinar y tener acceso a los requisitos legales y otros requisitos aplicables, determinar cómo aplican y qué se necesita comunicar, y tenerlos en cuenta al establecer, implementar, mantener y mejorar el SGSST. Mantener y conservar información documentada sobre ellos y asegurar su actualización.",
+     "intent": "Que el cumplimiento legal sea un proceso vivo, no una carpeta.",
+     "evidence": [
+      "Matriz de requisitos legales y otros requisitos: norma, artículo, obligación concreta, cómo aplica, área responsable, evidencia de cumplimiento, estado",
+      "Mecanismo de vigilancia normativa (suscripción, asesor legal, alerta) con evidencia de operación",
+      "Evidencia de comunicación de los requisitos a quienes deben cumplirlos",
+      "Evaluación periódica del cumplimiento legal (§9.1.2) derivada de esta matriz"
+     ],
+     "questions": [
+      "Muéstreme su matriz legal. ¿Cuándo fue su última actualización y qué norma nueva incorporaron?",
+      "¿Cómo se enteran de que una norma cambió?",
+      "Esta fila dice \"D.S. 009-2005-TR\". ¿Está vigente esa norma?",
+      "¿Cómo comunicaron a los supervisores el requisito de las 4 capacitaciones anuales?"
+     ],
+     "findings": [
+      {
+       "text": "La matriz de requisitos legales cita el D.S. 009-2005-TR y la Ley 27314, ambas derogadas; no incorpora la Ley 31246 (2021).",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "La matriz lista normas pero no identifica la obligación concreta, el responsable ni la evidencia de cumplimiento.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "No existe evidencia del proceso de actualización: la matriz tiene la misma fecha desde hace 3 años.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr",
+      "ds-019-2006-tr",
+      "ley-28806"
+     ],
+     "trap": "\"Otros requisitos\" incluye compromisos voluntarios: convenios colectivos, requisitos de clientes corporativos, estándares del grupo, códigos sectoriales. Un auditor experimentado pide el convenio colectivo y busca cláusulas de SST no reflejadas en la matriz."
+    },
+    {
+     "id": "45001:6.1.4",
+     "num": "6.1.4",
+     "title": "Planificación de acciones",
+     "kind": "requisito",
+     "parent": "45001:6",
+     "summary": "Planificar acciones para abordar los riesgos y oportunidades, los requisitos legales y otros requisitos, y la preparación y respuesta ante emergencias; integrarlas en los procesos del SGSST o en otros procesos de negocio; y evaluar su eficacia. Al planificar, considerar la jerarquía de controles y las salidas del SGSST.",
+     "intent": "Cerrar el bucle: identificar sin planificar no sirve.",
+     "evidence": [
+      "Plan de acción con responsable, plazo, recurso e indicador de eficacia",
+      "Evidencia de evaluación de la eficacia de las acciones cerradas"
+     ],
+     "questions": [
+      "¿Cómo evaluaron que esta acción fue eficaz y no solo que fue ejecutada?"
+     ],
+     "findings": [
+      {
+       "text": "Las acciones se marcan como \"cerradas\" al ejecutarse, sin evaluación de eficacia.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr"
+     ],
+     "trap": "Ejecutado ≠ eficaz. La eficacia se prueba con datos posteriores (reducción del riesgo residual, ausencia de recurrencia, verificación en campo), no con la firma del responsable."
+    },
+    {
+     "id": "45001:6.2",
+     "num": "6.2",
+     "title": "Objetivos de la SST y planificación para lograrlos",
+     "kind": "requisito",
+     "parent": "45001:6",
+     "summary": "Establecer objetivos en las funciones y niveles pertinentes: coherentes con la política, medibles o evaluables en desempeño, considerando requisitos aplicables, resultados de la evaluación de riesgos y oportunidades, resultados de la consulta a trabajadores. Deben ser objeto de seguimiento, comunicados y actualizados. Para cada objetivo hay que planificar: qué se hará, qué recursos, quién es responsable, cuándo finaliza, cómo se evalúan los resultados y cómo se integran a los procesos de negocio.",
+     "intent": "Objetivos con plan, no aspiraciones.",
+     "evidence": [
+      "Objetivos documentados con línea base, meta, plazo, responsable e indicador",
+      "Programa/plan por objetivo con los 6 elementos de planificación",
+      "Evidencia de comunicación y de seguimiento periódico",
+      "Balance entre indicadores reactivos (IF, IS) y proactivos (% IPERC actualizado, cumplimiento de inspecciones, reportes de casi-accidentes)"
+     ],
+     "questions": [
+      "¿Cuál es su objetivo de SST más importante y cuál es su avance real hoy?",
+      "¿Qué recursos se asignaron a este objetivo y quién responde por él?",
+      "¿Los trabajadores fueron consultados en la definición de estos objetivos?",
+      "Este objetivo dice \"reducir accidentes en 10 %\". ¿Respecto a qué línea base y con qué acciones?"
+     ],
+     "findings": [
+      {
+       "text": "Los objetivos son declaraciones sin línea base ni meta cuantificada (\"mejorar la cultura de seguridad\").",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Todos los objetivos son indicadores reactivos de accidentabilidad; no existe ningún indicador proactivo.",
+       "severity": "Oportunidad de mejora"
+      },
+      {
+       "text": "No hay evidencia de consulta a los trabajadores en el establecimiento de los objetivos (§6.2.1 en relación con §5.4).",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "\"Cero accidentes\" como único objetivo es un hallazgo esperando ocurrir: no es medible en avance (solo binario a fin de año), no es evaluable durante el ciclo y desincentiva el reporte."
+    },
+    {
+     "id": "45001:7",
+     "num": "7",
+     "title": "Apoyo",
+     "kind": "marco",
+     "parent": null,
+     "summary": "Recursos, competencia, toma de conciencia, comunicación e información documentada.",
+     "intent": "Sin apoyo, la planificación es literatura.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:7.1",
+     "num": "7.1",
+     "title": "Recursos",
+     "kind": "requisito",
+     "parent": "45001:7",
+     "summary": "Determinar y proporcionar los recursos necesarios para establecer, implementar, mantener y mejorar continuamente el SGSST.",
+     "intent": "Volver auditable la suficiencia de recursos: personas, infraestructura, tecnología y presupuesto.",
+     "evidence": [
+      "Presupuesto SST aprobado y ejecutado",
+      "Dotación del área SSOMA vs. carga de trabajo",
+      "Infraestructura y equipos de emergencia"
+     ],
+     "questions": [
+      "¿Los recursos asignados son suficientes? ¿Cómo lo determinaron?",
+      "¿Qué acción quedó sin ejecutar por falta de recursos este año?"
+     ],
+     "findings": [
+      {
+       "text": "Controles de riesgos clasificados como importantes fueron postergados por restricción presupuestal, sin análisis de riesgo ni aprobación de la alta dirección.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "La ausencia de recursos casi nunca se declara: se detecta cruzando el programa anual con su ejecución real."
+    },
+    {
+     "id": "45001:7.2",
+     "num": "7.2",
+     "title": "Competencia",
+     "kind": "requisito",
+     "parent": "45001:7",
+     "summary": "Determinar la competencia necesaria de los trabajadores que afecte o pueda afectar el desempeño de la SST; asegurarla sobre la base de educación, formación o experiencia; cuando sea aplicable tomar acciones para adquirirla y evaluar su eficacia; y conservar información documentada como evidencia.",
+     "intent": "Competencia ≠ capacitación. La formación es un medio; la competencia es el resultado demostrado.",
+     "evidence": [
+      "Matriz de competencias por puesto (educación + formación + experiencia + habilitaciones)",
+      "Legajos con certificados, licencias y habilitaciones vigentes (operadores de equipos, riggers, electricistas, brigadistas)",
+      "Evaluaciones de eficacia de la formación (no solo asistencia)",
+      "Las 4 capacitaciones anuales del D.S. 005-2012-TR como piso legal, no como techo"
+     ],
+     "questions": [
+      "¿Cómo determinaron la competencia necesaria para el puesto de operador de puente grúa?",
+      "Muéstreme la evaluación de eficacia de esta capacitación, no la lista de asistencia.",
+      "¿Está vigente la habilitación del médico ocupacional? ¿Y la del capacitador de trabajos en altura?"
+     ],
+     "findings": [
+      {
+       "text": "Se conservan listas de asistencia pero no existe evaluación de la eficacia de la formación.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Dos operadores de montacargas no cuentan con evidencia de competencia ni autorización interna vigente.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "La matriz de competencias no incluye a los trabajadores de contratistas que ejecutan trabajos de alto riesgo.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr",
+      "ds-024-2016-em",
+      "rm-312-2011-minsa"
+     ],
+     "trap": "Un certificado de asistencia no prueba competencia. Prueba presencia. La evidencia de competencia es una evaluación con criterio de aprobación, una observación de tarea o una acreditación externa."
+    },
+    {
+     "id": "45001:7.3",
+     "num": "7.3",
+     "title": "Toma de conciencia",
+     "kind": "requisito",
+     "parent": "45001:7",
+     "summary": "Los trabajadores deben ser sensibilizados sobre la política y objetivos de SST, su contribución a la eficacia del sistema, las implicaciones de no cumplir, los incidentes y sus resultados, los peligros y riesgos que les conciernen, y —requisito distintivo— la capacidad de alejarse de situaciones de trabajo que consideren que presentan un peligro inminente y serio, y las disposiciones que los protegen de consecuencias indebidas por hacerlo.",
+     "intent": "El derecho a retirarse sin represalia es un requisito ISO, no solo una buena práctica.",
+     "evidence": [
+      "Campañas y registros de sensibilización",
+      "Procedimiento de derecho a rehusarse / parada de trabajo con evidencia de uso",
+      "Entrevistas a trabajadores"
+     ],
+     "questions": [
+      "Operador, si usted considera que una tarea es peligrosa, ¿qué puede hacer? ¿Qué le pasaría si la detiene?",
+      "¿Ha ocurrido que un trabajador detenga un trabajo? ¿Qué pasó después?"
+     ],
+     "findings": [
+      {
+       "text": "Los trabajadores entrevistados desconocen su derecho a alejarse de situaciones de peligro inminente y temen consecuencias por detener un trabajo.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "Esta es la pregunta que más rápido revela la cultura real. Si el trabajador titubea o dice \"avisaría al supervisor y él decide\", el requisito no está implementado, aunque exista el procedimiento firmado."
+    },
+    {
+     "id": "45001:7.4",
+     "num": "7.4",
+     "title": "Comunicación",
+     "kind": "requisito",
+     "parent": "45001:7",
+     "summary": "Determinar las comunicaciones internas y externas pertinentes: qué comunicar, cuándo, a quién (niveles y funciones internas, contratistas y visitantes, otras partes interesadas), cómo comunicar y quién comunica. Considerar aspectos de diversidad (género, idioma, cultura, alfabetización, discapacidad). Asegurar que se consideren los puntos de vista de partes interesadas externas.",
+     "intent": "Comunicar no es publicar. La cláusula exige diseño del proceso y consideración de la diversidad.",
+     "evidence": [
+      "Matriz/plan de comunicaciones con las 5 preguntas (qué, cuándo, a quién, cómo, quién)",
+      "Evidencia de comunicación en formatos accesibles",
+      "Registro de comunicaciones externas recibidas y su tratamiento"
+     ],
+     "questions": [
+      "Muéstreme su matriz de comunicación.",
+      "¿Cómo comunican a un trabajador con baja alfabetización?",
+      "¿Qué hicieron con el último reclamo de la comunidad vecina?"
+     ],
+     "findings": [
+      {
+       "text": "No se conservó evidencia del tratamiento de comunicaciones externas relacionadas con SST.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "La matriz de comunicaciones no considera a los contratistas ni a los visitantes.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ley-31246"
+     ],
+     "trap": "Los aspectos de diversidad (idioma, alfabetización, discapacidad) son requisito explícito de ISO 45001 y una realidad operativa en el Perú: operaciones con población quechua o aimarahablante deben demostrarlo."
+    },
+    {
+     "id": "45001:7.5",
+     "num": "7.5",
+     "title": "Información documentada",
+     "kind": "requisito",
+     "parent": "45001:7",
+     "summary": "El SGSST debe incluir la información documentada requerida por la norma y la que la organización determine necesaria. Debe crearse y actualizarse con identificación, formato y revisión/aprobación adecuados, y controlarse: disponible y adecuada donde se necesita, y protegida (confidencialidad, uso indebido, pérdida de integridad).",
+     "intent": "Sustituye la vieja dupla \"documentos y registros\" por un concepto único con reglas de control.",
+     "evidence": [
+      "Listado maestro de información documentada",
+      "Control de versiones y de obsoletos",
+      "Control de acceso a información sensible de salud",
+      "Copias de respaldo y recuperación"
+     ],
+     "questions": [
+      "¿Cómo evitan que se use un procedimiento obsoleto en campo?",
+      "Este documento en el área tiene versión 2; el sistema muestra versión 4. Explíquemelo.",
+      "¿Quién tiene acceso a los resultados médicos y con qué base?"
+     ],
+     "findings": [
+      {
+       "text": "En el área de mantenimiento se encontró en uso el PETS versión 2, cuando la versión vigente es la 4 aprobada hace 5 meses.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "Los resultados de exámenes médicos ocupacionales están en una carpeta compartida accesible a todo el personal de RR. HH. (incumple además la Ley 26842 y la Ley 29733).",
+       "severity": "NC mayor + hallazgo legal"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr",
+      "ley-26842",
+      "ley-29733"
+     ],
+     "trap": "ISO 45001 no exige un \"manual del sistema\". Exigirlo o pedir procedimientos documentados que la norma no requiere es un error del auditor, no de la organización. Los únicos documentos explícitamente requeridos son los que la norma menciona con \"mantener/conservar información documentada\"."
+    },
+    {
+     "id": "45001:8",
+     "num": "8",
+     "title": "Operación",
+     "kind": "marco",
+     "parent": null,
+     "summary": "El \"Hacer\" del PHVA. Control operacional, jerarquía de controles, gestión del cambio, compras y contratistas, y preparación y respuesta ante emergencias.",
+     "intent": "Donde el sistema toca el trabajo real.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:8.1.1",
+     "num": "8.1.1",
+     "title": "Planificación y control operacional — Generalidades",
+     "kind": "requisito",
+     "parent": "45001:8",
+     "summary": "Planificar, implementar, controlar y mantener los procesos necesarios: estableciendo criterios, implementando el control conforme a los criterios, manteniendo información documentada, y adaptando el trabajo a los trabajadores. En lugares de trabajo con múltiples empleadores, coordinar las partes pertinentes del SGSST.",
+     "intent": "\"Adaptar el trabajo a los trabajadores\" es ergonomía elevada a requisito de sistema.",
+     "evidence": [
+      "Procedimientos/PETS/estándares con criterios operacionales",
+      "Evidencia de coordinación con otros empleadores en el mismo lugar de trabajo",
+      "Estudios ergonómicos con acciones implementadas"
+     ],
+     "questions": [
+      "¿Cómo coordinan la SST con las tres contratistas que trabajan simultáneamente en la planta?",
+      "¿Qué cambios hicieron para adaptar el puesto al trabajador y no al revés?"
+     ],
+     "findings": [
+      {
+       "text": "No existe mecanismo formal de coordinación de SST entre los cuatro empleadores que operan simultáneamente en el mismo lugar de trabajo.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr",
+      "rm-375-2008-tr",
+      "ds-011-2019-tr"
+     ],
+     "trap": "El art. 68 de la Ley 29783 impone al empleador principal verificar la SST de contratistas: aquí ISO y ley peruana coinciden exactamente."
+    },
+    {
+     "id": "45001:8.1.2",
+     "num": "8.1.2",
+     "title": "Eliminar peligros y reducir riesgos para la SST — Jerarquía de controles",
+     "kind": "requisito",
+     "parent": "45001:8",
+     "summary": "Establecer procesos para eliminar peligros y reducir riesgos usando la jerarquía en este orden: (a) eliminar el peligro; (b) sustituir por procesos, operaciones, materiales o equipos menos peligrosos; (c) utilizar controles de ingeniería y reorganización del trabajo; (d) utilizar controles administrativos, incluida la formación; (e) utilizar equipo de protección personal adecuado.",
+     "intent": "Ordenar la toma de decisiones sobre controles. El orden es normativo, no sugerido.",
+     "evidence": [
+      "IPERC que evidencia el análisis de los cinco niveles antes de llegar a EPP",
+      "Registros de decisiones de ingeniería (proyectos, órdenes de compra, planos)",
+      "Justificación documentada cuando no es viable un control superior"
+     ],
+     "questions": [
+      "Para este riesgo alto el control es \"uso de EPP y capacitación\". ¿Qué análisis hicieron de eliminación, sustitución e ingeniería?",
+      "Muéstreme un caso donde eliminaron un peligro en lugar de controlarlo.",
+      "¿Quién aprueba que se descarte un control de ingeniería por costo?"
+     ],
+     "findings": [
+      {
+       "text": "Para 12 de 15 riesgos clasificados como importantes, el único control determinado es EPP más capacitación, sin evidencia de haber evaluado los niveles superiores de la jerarquía.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "Se implementó una guarda de ingeniería pero se retira habitualmente en producción sin control ni autorización.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr",
+      "ley-31246",
+      "ds-024-2016-em"
+     ],
+     "trap": "La jerarquía se audita en la MATRIZ y en el CAMPO. Una matriz impecable con guardas retiradas en la línea es peor que una matriz débil: demuestra que el sistema documental y la operación viven separados."
+    },
+    {
+     "id": "45001:8.1.3",
+     "num": "8.1.3",
+     "title": "Gestión del cambio",
+     "kind": "requisito",
+     "parent": "45001:8",
+     "summary": "Establecer procesos para la implementación y el control de los cambios planificados temporales y permanentes que impacten en el desempeño de la SST: nuevos productos, servicios, procesos o su modificación; cambios en requisitos legales; cambios en el conocimiento sobre peligros; y desarrollos en conocimiento y tecnología. Revisar las consecuencias de los cambios no previstos y tomar acciones para mitigar efectos adversos.",
+     "intent": "La mayoría de los accidentes graves ocurre durante o después de un cambio no gestionado.",
+     "evidence": [
+      "Procedimiento de gestión del cambio (MOC) con disparadores definidos",
+      "Registros de MOC con evaluación de riesgos previa, controles, comunicación y cierre",
+      "Evidencia de revisión de cambios no previstos"
+     ],
+     "questions": [
+      "¿Qué cambios hubo en los últimos 12 meses y dónde está el MOC de cada uno?",
+      "Cambió el proveedor del insumo químico principal. ¿Se gestionó como cambio? ¿Se actualizó la hoja de datos de seguridad y el IPERC?",
+      "La Ley 31246 modificó requisitos de EPP. ¿Se gestionó como cambio en requisitos legales?"
+     ],
+     "findings": [
+      {
+       "text": "Se instaló una nueva línea de envasado hace 6 meses sin registro de gestión del cambio ni evaluación de riesgos previa a la puesta en marcha.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "El procedimiento de MOC solo contempla cambios de infraestructura; no incluye cambios organizacionales ni de requisitos legales.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr",
+      "ds-024-2016-em"
+     ],
+     "trap": "Cambio organizacional (reducción de dotación, cambio de turnos, nuevo esquema de remuneración por productividad) es cambio con impacto en SST. Casi nadie lo procesa como MOC, y es donde nacen los riesgos psicosociales y la fatiga."
+    },
+    {
+     "id": "45001:8.1.4",
+     "num": "8.1.4",
+     "title": "Compras, contratistas y contratación externa",
+     "kind": "requisito",
+     "parent": "45001:8",
+     "summary": "Controlar la compra de productos y servicios para asegurar su conformidad con el SGSST. Coordinar con los contratistas para identificar peligros y controlar riesgos derivados de sus actividades, de las de la organización sobre ellos y de las de ellos sobre otras partes interesadas. Aplicar criterios de SST en la selección de contratistas. Asegurar que las funciones y procesos contratados externamente estén controlados y que el control esté definido dentro del SGSST.",
+     "intent": "La cadena de suministro es una fuente de riesgo tan real como la operación propia — y en el Perú, con responsabilidad solidaria legal.",
+     "evidence": [
+      "Requisitos de SST en las bases de licitación y en los contratos",
+      "Homologación de contratistas con criterio SST y su evaluación periódica",
+      "Verificación documental: SCTR, EMO, capacitación, IPERC del contratista",
+      "Requisitos SST en órdenes de compra (por ejemplo, fichas técnicas y certificación de EPP, hojas de datos de seguridad de químicos)",
+      "Definición del control sobre procesos contratados externamente"
+     ],
+     "questions": [
+      "¿Qué criterios de SST usan para seleccionar contratistas y cómo se evidencian en la última licitación?",
+      "Muéstreme el SCTR vigente de los trabajadores de esta contratista que están hoy en planta.",
+      "¿Quién verifica que el EPP comprado cumple la norma técnica y dónde consta?",
+      "El servicio de mantenimiento de calderos está contratado externamente. ¿Cómo se controla ese proceso dentro de su SGSST?"
+     ],
+     "findings": [
+      {
+       "text": "Tres trabajadores de la contratista de mantenimiento ejecutan trabajos en caliente sin SCTR vigente ni evidencia de competencia verificada por la organización.",
+       "severity": "NC mayor + infracción muy grave"
+      },
+      {
+       "text": "Las bases de licitación no incluyen criterios de SST; la selección es exclusivamente por precio.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ley-26790",
+      "ds-005-2012-tr"
+     ],
+     "trap": "La distinción de la norma: contratistas trabajan en tu lugar de trabajo; la contratación externa (outsourcing) es una función o proceso entero que otra organización realiza. Ambos se controlan, pero con mecanismos distintos."
+    },
+    {
+     "id": "45001:8.2",
+     "num": "8.2",
+     "title": "Preparación y respuesta ante emergencias",
+     "kind": "requisito",
+     "parent": "45001:8",
+     "summary": "Establecer, implementar y mantener procesos para prepararse y responder ante situaciones de emergencia potenciales identificadas en 6.1.2: respuesta planificada incluidos primeros auxilios; provisión de formación; prueba periódica y ejercicio de la capacidad de respuesta planificada; evaluación del desempeño y revisión de los procesos, incluso después de las pruebas y de la ocurrencia de emergencias; comunicación y provisión de información a todos los trabajadores, contratistas, visitantes, servicios de respuesta ante emergencias, autoridades y comunidad local; y consideración de las necesidades y capacidades de todas las partes interesadas pertinentes.",
+     "intent": "Que el plan de emergencia sea una capacidad probada, no un documento archivado.",
+     "evidence": [
+      "Identificación de escenarios de emergencia derivada del IPERC",
+      "Plan de respuesta con roles y brigadas",
+      "Cronograma y actas de simulacros con evaluación crítica y lecciones aprendidas",
+      "Registro de brigadistas con formación vigente",
+      "Coordinación documentada con bomberos, PNP, hospital y comunidad",
+      "Inventario y estado de equipos de emergencia"
+     ],
+     "questions": [
+      "¿Qué escenarios de emergencia identificaron y cómo derivan del IPERC?",
+      "Muéstreme el informe del último simulacro. ¿Qué falló y qué corrigieron?",
+      "¿Cómo informan a un visitante qué hacer en una emergencia?",
+      "¿Los brigadistas del turno noche están formados y son suficientes?"
+     ],
+     "findings": [
+      {
+       "text": "Los simulacros se ejecutan y registran, pero no se evalúa el desempeño ni se revisan los procesos a partir de sus resultados.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "El turno noche no cuenta con brigadistas formados, pese a operar con el mismo nivel de riesgo que el turno día.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "El plan de emergencia no fue comunicado a la comunidad local pese a existir riesgo de fuga de amoniaco con alcance externo.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "Simulacro registrado ≠ capacidad probada. El auditor pide el informe de evaluación: tiempos de evacuación, brechas detectadas, acciones y verificación. Un acta con firmas y fotos no cumple §8.2."
+    },
+    {
+     "id": "45001:9",
+     "num": "9",
+     "title": "Evaluación del desempeño",
+     "kind": "marco",
+     "parent": null,
+     "summary": "El \"Verificar\" del PHVA: seguimiento y medición, evaluación del cumplimiento legal, auditoría interna y revisión por la dirección.",
+     "intent": "Sin medición, la mejora es opinión.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:9.1.1",
+     "num": "9.1.1",
+     "title": "Seguimiento, medición, análisis y evaluación del desempeño — Generalidades",
+     "kind": "requisito",
+     "parent": "45001:9",
+     "summary": "Determinar qué necesita seguimiento y medición, los métodos para asegurar resultados válidos, los criterios de evaluación del desempeño, cuándo se realiza y cuándo se analizan y comunican los resultados. Asegurar que el equipo de seguimiento y medición se calibre o verifique y se utilice y mantenga según corresponda.",
+     "intent": "Medir lo correcto, con métodos válidos y equipos confiables.",
+     "evidence": [
+      "Plan de seguimiento y medición con parámetros, método, frecuencia y responsable",
+      "Certificados de calibración vigentes de sonómetros, dosímetros, bombas de muestreo, luxómetros, detectores de gases",
+      "Informes de monitoreo ocupacional por laboratorio acreditado INACAL",
+      "Análisis de tendencias, no solo reporte de datos"
+     ],
+     "questions": [
+      "Muéstreme el certificado de calibración del detector de gases usado para el ingreso a espacio confinado.",
+      "¿Qué le dicen sus indicadores sobre la tendencia del desempeño? ¿Qué decisión tomaron a partir de eso?",
+      "¿El laboratorio que hizo el monitoreo de agentes químicos tiene ese ensayo en su alcance acreditado?"
+     ],
+     "findings": [
+      {
+       "text": "El detector de gases de 4 gases utilizado para autorización de ingreso a espacios confinados tiene la calibración vencida hace 8 meses.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "Los resultados de monitoreo se archivan sin análisis de tendencia ni acciones derivadas.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ds-005-2012-tr",
+      "rm-375-2008-tr",
+      "rm-312-2011-minsa"
+     ],
+     "trap": "Verificar el ALCANCE acreditado del laboratorio, no solo su acreditación. Un laboratorio acreditado para ruido no está acreditado para material particulado si ese ensayo no está en su alcance."
+    },
+    {
+     "id": "45001:9.1.2",
+     "num": "9.1.2",
+     "title": "Evaluación del cumplimiento",
+     "kind": "requisito",
+     "parent": "45001:9",
+     "summary": "Establecer procesos para evaluar el cumplimiento de los requisitos legales y otros requisitos: determinar frecuencia y métodos, evaluar y tomar acciones si es necesario, mantener conocimiento y comprensión del estado de cumplimiento, y conservar información documentada de los resultados.",
+     "intent": "Es un requisito autónomo: distinto de la auditoría interna y distinto de la matriz legal.",
+     "evidence": [
+      "Informe de evaluación de cumplimiento legal con conclusión por requisito (cumple / no cumple / cumple parcialmente)",
+      "Frecuencia definida y ejecutada",
+      "Plan de acción para los incumplimientos identificados",
+      "Entrada de esta evaluación a la revisión por la dirección"
+     ],
+     "questions": [
+      "Muéstreme su última evaluación de cumplimiento legal. ¿Cuál fue la conclusión y qué incumplimientos halló?",
+      "¿Con qué frecuencia la realizan y por qué esa frecuencia?",
+      "¿Quién la ejecuta y con qué competencia legal?"
+     ],
+     "findings": [
+      {
+       "text": "Existe matriz de requisitos legales pero no se ha realizado la evaluación del cumplimiento: no hay conclusión sobre el estado real de cumplimiento.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "La evaluación de cumplimiento concluye \"cumple\" para todos los requisitos sin evidencia que respalde la conclusión en 6 de ellos.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-019-2006-tr"
+     ],
+     "trap": "Confusión frecuentísima: la auditoría interna (§9.2) evalúa el sistema contra ISO 45001; la evaluación de cumplimiento (§9.1.2) evalúa la organización contra la LEY. Son dos ejercicios distintos con evidencias distintas. Fusionarlos es hallazgo."
+    },
+    {
+     "id": "45001:9.2",
+     "num": "9.2",
+     "title": "Auditoría interna",
+     "kind": "requisito",
+     "parent": "45001:9",
+     "summary": "Realizar auditorías internas a intervalos planificados para determinar si el SGSST es conforme con los requisitos propios de la organización y con los de la norma, y si está implementado y mantenido eficazmente. Planificar, establecer, implementar y mantener un programa de auditoría (frecuencia, métodos, responsabilidades, consulta, requisitos de planificación e informe) considerando la importancia de los procesos y los resultados de auditorías previas. Definir criterios y alcance de cada auditoría; seleccionar auditores y realizar auditorías que aseguren objetividad e imparcialidad; asegurar el reporte a los directivos pertinentes y a los trabajadores; tomar acciones ante no conformidades y mejorar; y conservar información documentada.",
+     "intent": "La auditoría interna es el mecanismo de autocorrección del sistema. Si es complaciente, el sistema no aprende.",
+     "evidence": [
+      "Programa de auditoría basado en riesgos e importancia, con evidencia de consulta a trabajadores (§5.4)",
+      "Plan de auditoría por evento, lista de verificación, informe con hallazgos y evidencias",
+      "Declaración/registro de independencia e imparcialidad del auditor respecto al área auditada",
+      "Competencia del auditor interno documentada",
+      "Comunicación de resultados a la dirección y a los trabajadores/CSST"
+     ],
+     "questions": [
+      "¿Cómo determinaron la frecuencia y el alcance del programa de auditoría?",
+      "El auditor que auditó el área de mantenimiento, ¿pertenece a esa área?",
+      "¿Se comunicaron los resultados de la auditoría a los trabajadores y al CSST?",
+      "La auditoría no reportó ninguna no conformidad. ¿Cómo se explica frente a los 3 incidentes del período?"
+     ],
+     "findings": [
+      {
+       "text": "El auditor interno que auditó el proceso de gestión de contratistas es el responsable de ese proceso; no se aseguró la objetividad e imparcialidad.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "El programa de auditoría no considera los resultados de auditorías previas ni la importancia relativa de los procesos: todas las áreas se auditan con igual profundidad y frecuencia.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "No hay evidencia de comunicación de los resultados de la auditoría a los trabajadores.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "La Ley 29783 (art. 43) exige auditorías periódicas del SGSST realizadas por auditores independientes, y el registro de auditorías es uno de los 9 obligatorios. Cumplir §9.2 y no cumplir el requisito legal de auditoría (o viceversa) es posible: son marcos distintos y hay que verificar ambos."
+    },
+    {
+     "id": "45001:9.3",
+     "num": "9.3",
+     "title": "Revisión por la dirección",
+     "kind": "requisito",
+     "parent": "45001:9",
+     "summary": "La alta dirección debe revisar el SGSST a intervalos planificados. Entradas: estado de acciones previas; cambios en cuestiones externas e internas, requisitos legales, riesgos y oportunidades; grado de cumplimiento de la política y objetivos; información sobre el desempeño (incidentes, no conformidades y acciones correctivas, seguimiento y medición, evaluación del cumplimiento, resultados de auditoría, consulta y participación, riesgos y oportunidades); adecuación de recursos; comunicaciones pertinentes de partes interesadas; y oportunidades de mejora continua. Salidas: conclusiones sobre conveniencia, adecuación y eficacia; decisiones sobre oportunidades de mejora continua, necesidades de cambio, recursos, acciones necesarias, oportunidades de integración con otros procesos, e implicaciones para la dirección estratégica.",
+     "intent": "Es el momento en que el sistema se conecta con la estrategia del negocio.",
+     "evidence": [
+      "Acta de revisión por la dirección con TODAS las entradas requeridas tratadas",
+      "Salidas con decisiones, responsables, plazos y recursos asignados",
+      "Participación efectiva de la alta dirección (no delegada)",
+      "Comunicación de los resultados a los trabajadores y al CSST"
+     ],
+     "questions": [
+      "Muéstreme el acta de la última revisión por la dirección. Recorramos las entradas una por una.",
+      "¿Qué decisión estratégica se tomó a partir de la revisión?",
+      "¿Asistió el gerente general o delegó?",
+      "¿Se comunicaron los resultados a los trabajadores?"
+     ],
+     "findings": [
+      {
+       "text": "El acta de revisión por la dirección no incluye la evaluación del cumplimiento legal ni los resultados de consulta y participación de los trabajadores como entradas.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "La revisión por la dirección fue conducida por el jefe SSOMA sin participación de la alta dirección; las salidas no incluyen decisiones sobre recursos.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "No se realizó revisión por la dirección en el último ciclo (18 meses transcurridos).",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr"
+     ],
+     "trap": "La revisión por la dirección no es una presentación de resultados: es una REVISIÓN con decisiones. Un acta que solo describe indicadores sin decisiones ni asignación de recursos no cumple las salidas requeridas."
+    },
+    {
+     "id": "45001:10",
+     "num": "10",
+     "title": "Mejora",
+     "kind": "marco",
+     "parent": null,
+     "summary": "El \"Actuar\" del PHVA: incidentes, no conformidades, acciones correctivas y mejora continua.",
+     "intent": "Convertir el fallo en aprendizaje del sistema.",
+     "evidence": [],
+     "questions": [],
+     "findings": [],
+     "legal": [],
+     "trap": ""
+    },
+    {
+     "id": "45001:10.1",
+     "num": "10.1",
+     "title": "Generalidades",
+     "kind": "requisito",
+     "parent": "45001:10",
+     "summary": "Determinar las oportunidades de mejora e implementar las acciones necesarias para lograr los resultados previstos del SGSST.",
+     "intent": "Mejorar no es solo corregir: es también capturar oportunidades.",
+     "evidence": [
+      "Registro de oportunidades de mejora con estado"
+     ],
+     "questions": [
+      "¿Dónde registran las oportunidades de mejora que no provienen de una no conformidad?"
+     ],
+     "findings": [
+      {
+       "text": "Las únicas acciones de mejora registradas derivan de no conformidades; no existe canal para oportunidades proactivas.",
+       "severity": "Oportunidad de mejora"
+      }
+     ],
+     "legal": [],
+     "trap": "Sistema puramente reactivo: solo mejora cuando algo falla."
+    },
+    {
+     "id": "45001:10.2",
+     "num": "10.2",
+     "title": "Incidentes, no conformidades y acciones correctivas",
+     "kind": "requisito",
+     "parent": "45001:10",
+     "summary": "Establecer procesos que incluyan el reporte, la investigación y la toma de acciones. Al ocurrir un incidente o una NC: reaccionar oportunamente (controlar, corregir, afrontar consecuencias); evaluar con la participación de los trabajadores y otras partes pertinentes la necesidad de acciones correctivas para eliminar la causa raíz, revisando y analizando el incidente/NC, determinando sus causas y determinando si existen o podrían ocurrir NC similares; revisar las evaluaciones de riesgos existentes; determinar e implementar acciones incluidas las correctivas conforme a la jerarquía de controles y a la gestión del cambio; evaluar los riesgos relacionados con peligros nuevos o modificados antes de tomar acciones; revisar la eficacia de las acciones correctivas; y si es necesario, hacer cambios al SGSST. Conservar información documentada de la naturaleza de los incidentes/NC, las acciones y sus resultados, y comunicarla a trabajadores, sus representantes y partes interesadas pertinentes.",
+     "intent": "Es la cláusula operativamente más densa de la norma: contiene ocho obligaciones encadenadas.",
+     "evidence": [
+      "Procedimiento de investigación con metodología de causa raíz (5 porqués, árbol de causas, TASC, Bird, TapRooT)",
+      "Registros de investigación con participación de trabajadores",
+      "Evidencia de revisión y actualización del IPERC tras el evento",
+      "Acciones correctivas conforme a la jerarquía de controles",
+      "Verificación de eficacia con criterio y fecha",
+      "Comunicación de lecciones aprendidas"
+     ],
+     "questions": [
+      "Tomemos este accidente. Lléveme por la investigación: ¿cuál fue la causa raíz y cómo la determinaron?",
+      "¿Participaron los trabajadores en la investigación? Muéstreme la evidencia.",
+      "¿Se actualizó el IPERC tras este evento?",
+      "La acción correctiva fue \"reforzar la capacitación\". ¿Qué nivel de la jerarquía de controles es y por qué no se optó por uno superior?",
+      "¿Cómo verificaron que la acción fue eficaz?"
+     ],
+     "findings": [
+      {
+       "text": "En 8 de 10 investigaciones revisadas, la causa raíz identificada es \"acto subestándar del trabajador\" y la acción correctiva es capacitación, sin análisis de causas básicas ni de fallas de control.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "Las acciones correctivas se cierran al ejecutarse; no existe verificación de eficacia.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Tras el accidente incapacitante de mayo no se revisó ni actualizó la evaluación de riesgos de la tarea.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29783",
+      "ds-005-2012-tr",
+      "rm-050-2013-tr"
+     ],
+     "trap": "Corrección ≠ acción correctiva. Corrección es limpiar el derrame; acción correctiva es eliminar la causa por la que el sello falló. Confundirlas es la no conformidad más universal de todos los sistemas de gestión del mundo."
+    },
+    {
+     "id": "45001:10.3",
+     "num": "10.3",
+     "title": "Mejora continua",
+     "kind": "requisito",
+     "parent": "45001:10",
+     "summary": "Mejorar continuamente la conveniencia, adecuación y eficacia del SGSST: mejorando el desempeño de la SST, promoviendo una cultura que apoye el sistema, promoviendo la participación de los trabajadores en la implementación de acciones, comunicando los resultados de la mejora continua y manteniendo información documentada como evidencia.",
+     "intent": "Cierra el PHVA y lo reinicia.",
+     "evidence": [
+      "Evidencia de tendencia positiva sostenida en indicadores",
+      "Programa de cultura de seguridad",
+      "Comunicación de resultados de mejora"
+     ],
+     "questions": [
+      "¿En qué mejoró el sistema en los últimos 12 meses y con qué dato lo demuestra?"
+     ],
+     "findings": [
+      {
+       "text": "No se conserva información documentada que evidencie la mejora continua del SGSST.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-29783"
+     ],
+     "trap": "Mejora continua se demuestra con TENDENCIA, no con actividad. Más capacitaciones no es mejora si el desempeño no cambia."
+    }
+   ]
+  },
+  {
+   "norma": "ISO 14001:2015",
+   "titulo": "Sistemas de gestión ambiental — Requisitos con orientación para su uso",
+   "publicacion": "15 de septiembre de 2015",
+   "sustituye": "ISO 14001:2004 (migración cerrada el 15 de septiembre de 2018)",
+   "estructura": "Anexo SL — misma arquitectura 4–10 que ISO 45001 e ISO 9001",
+   "compraOficial": "https://www.iso.org/standard/60857.html",
+   "compraPeru": "https://www.inacal.gob.pe/",
+   "resultadosPrevistos": [
+    "Mejora del desempeño ambiental",
+    "Cumplimiento de los requisitos legales y otros requisitos",
+    "Logro de los objetivos ambientales"
+   ],
+   "cambiosClaveVs2004": [
+    "Contexto y partes interesadas (cláusula 4)",
+    "Liderazgo con compromiso indelegable; desaparece el representante de la dirección obligatorio",
+    "Perspectiva de ciclo de vida en la determinación de aspectos ambientales (§6.1.2)",
+    "Riesgos y oportunidades, incluidas las condiciones ambientales que afectan a la organización (no solo el impacto de la organización sobre el ambiente)",
+    "Comunicación externa reforzada (§7.4.3)",
+    "Protección del medio ambiente ampliada más allá de la prevención de la contaminación (recursos sostenibles, mitigación y adaptación al cambio climático, biodiversidad)"
+   ],
+   "key": "14001",
+   "clauses": [
+    {
+     "id": "14001:4.1",
+     "num": "4.1",
+     "title": "Comprensión de la organización y de su contexto",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Determinar las cuestiones externas e internas pertinentes al propósito que afectan la capacidad de lograr los resultados previstos del SGA, incluidas las CONDICIONES AMBIENTALES capaces de afectar o de verse afectadas por la organización.",
+     "intent": "",
+     "evidence": [
+      "Análisis de contexto que incluya condiciones ambientales del entorno (clima, disponibilidad hídrica, calidad de aire de la cuenca atmosférica, ANP cercanas)"
+     ],
+     "questions": [
+      "¿Qué condiciones ambientales del entorno pueden afectar su operación y cómo se reflejan en el sistema?",
+      "¿Consideraron el riesgo hídrico y el fenómeno de El Niño?"
+     ],
+     "findings": [
+      {
+       "text": "El análisis de contexto solo considera el impacto de la organización sobre el ambiente, omitiendo las condiciones ambientales que pueden afectarla.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-28611"
+     ],
+     "trap": "La mayoría de organizaciones copia el contexto de su SGC y olvida la mitad ambiental de la doble materialidad."
+    },
+    {
+     "id": "14001:5.2",
+     "num": "5.2",
+     "title": "Política ambiental",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "La alta dirección debe establecer una política apropiada al propósito y contexto, incluida la naturaleza, magnitud e impactos ambientales de sus actividades, productos y servicios, con tres compromisos mínimos: protección del medio ambiente (incluida la prevención de la contaminación y otros compromisos específicos pertinentes al contexto), cumplimiento de los requisitos legales y otros requisitos, y mejora continua del SGA para mejorar el desempeño ambiental.",
+     "intent": "",
+     "evidence": [
+      "Política con los 3 compromisos identificables",
+      "Compromisos específicos coherentes con el contexto (si opera en cuenca con estrés hídrico, debe aparecer el agua)"
+     ],
+     "questions": [
+      "¿Dónde está el compromiso de protección del medio ambiente más allá de la prevención de la contaminación?",
+      "¿Por qué eligieron estos compromisos específicos y no otros?"
+     ],
+     "findings": [
+      {
+       "text": "La política ambiental no incluye compromisos específicos pertinentes al contexto pese a operar en una zona de estrés hídrico severo.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "ley-28611"
+     ],
+     "trap": "Política ambiental idéntica a la de una empresa de otro sector: señal inmediata de que no derivó del contexto ni de los aspectos significativos."
+    },
+    {
+     "id": "14001:6.1.2",
+     "num": "6.1.2",
+     "title": "Aspectos ambientales",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Determinar los aspectos ambientales de sus actividades, productos y servicios que puede controlar y aquellos sobre los que puede influir, y sus impactos ambientales asociados, desde una PERSPECTIVA DE CICLO DE VIDA. Considerar cambios (desarrollos nuevos o planificados, actividades nuevas o modificadas), condiciones anormales y situaciones de emergencia razonablemente previsibles. Determinar los aspectos significativos mediante criterios establecidos, y comunicarlos entre los diferentes niveles y funciones.",
+     "intent": "",
+     "evidence": [
+      "Matriz de aspectos e impactos por proceso, con condición (normal/anormal/emergencia)",
+      "Criterios de significancia documentados, objetivos y reproducibles",
+      "Evidencia de consideración del ciclo de vida (al menos entradas aguas arriba y destino aguas abajo)",
+      "Vínculo entre aspecto significativo y control operacional, objetivo o requisito legal"
+     ],
+     "questions": [
+      "¿Cuáles son sus aspectos ambientales significativos y con qué criterio los determinaron?",
+      "Muéstreme cómo consideraron la perspectiva de ciclo de vida.",
+      "¿Qué aspectos identificaron para condiciones de emergencia?",
+      "Este aspecto es significativo: ¿dónde está su control operacional?"
+     ],
+     "findings": [
+      {
+       "text": "La matriz de aspectos considera únicamente condiciones normales de operación; no incluye condiciones anormales ni situaciones de emergencia.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "No hay evidencia de consideración de la perspectiva de ciclo de vida.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Tres aspectos determinados como significativos no tienen control operacional, objetivo ni seguimiento asociado.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-28611",
+      "dl-1278",
+      "ley-29338"
+     ],
+     "trap": "Perspectiva de ciclo de vida NO es Análisis de Ciclo de Vida (ISO 14040/14044). La norma no exige un ACV completo; exige considerar las etapas del ciclo de vida sobre las que se tiene control o influencia. Exigir un ACV es un error del auditor."
+    },
+    {
+     "id": "14001:6.1.3",
+     "num": "6.1.3",
+     "title": "Requisitos legales y otros requisitos",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Determinar y tener acceso a los requisitos legales y otros requisitos relacionados con sus aspectos ambientales, determinar cómo aplican y tenerlos en cuenta al establecer, implementar, mantener y mejorar continuamente el SGA.",
+     "intent": "",
+     "evidence": [
+      "Matriz legal ambiental por aspecto",
+      "Matriz de compromisos del IGA (EIA/DIA/PAMA/ITS) con estado de cumplimiento y evidencia",
+      "Títulos habilitantes vigentes: certificación ambiental, licencia de uso de agua, autorización de vertimiento, registro de generador, autorizaciones sectoriales"
+     ],
+     "questions": [
+      "Muéstreme la matriz de compromisos de su instrumento de gestión ambiental y el estado de cada uno.",
+      "¿Su autorización de vertimiento está vigente? ¿Y la licencia de uso de agua?",
+      "¿Cómo incorporaron el D. Leg. 1278 y su reglamento?"
+     ],
+     "findings": [
+      {
+       "text": "La matriz legal cita la Ley 27314, derogada por el D. Leg. 1278.",
+       "severity": "NC menor"
+      },
+      {
+       "text": "Los compromisos del EIA no están trazados a un responsable ni a evidencia de cumplimiento.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-28611",
+      "ley-27446",
+      "dl-1278",
+      "ley-29338",
+      "ley-29325"
+     ],
+     "trap": "En el Perú, los compromisos del IGA son \"otros requisitos\" de cumplimiento obligatorio y son lo primero que fiscaliza el OEFA. Un SGA que no los tiene mapeados uno por uno está desconectado de su principal fuente de riesgo legal."
+    },
+    {
+     "id": "14001:8.1",
+     "num": "8.1",
+     "title": "Planificación y control operacional",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Establecer, implementar, controlar y mantener los procesos necesarios: estableciendo criterios de operación y controlando conforme a ellos; controlando los cambios planificados y revisando las consecuencias de los no previstos; asegurando el control o influencia sobre los procesos contratados externamente; y, de forma coherente con la perspectiva de ciclo de vida, estableciendo controles en el diseño, determinando requisitos ambientales para la compra de productos y servicios, comunicando requisitos ambientales pertinentes a proveedores incluidos los contratistas, y considerando la necesidad de suministrar información sobre impactos potenciales asociados al transporte, uso, tratamiento al fin de la vida útil y disposición final.",
+     "intent": "",
+     "evidence": [
+      "Procedimientos e instructivos operativos con criterios ambientales",
+      "Requisitos ambientales en órdenes de compra y contratos",
+      "Comunicación de requisitos ambientales a proveedores y contratistas",
+      "Programa de monitoreo ambiental ejecutado según el IGA",
+      "Gestión de residuos: segregación, almacén central, manifiestos, EO-RS, SIGERSOL"
+     ],
+     "questions": [
+      "¿Qué requisitos ambientales incluyen en sus contratos con proveedores?",
+      "¿Cómo controlan el proceso de transporte de residuos peligrosos que está contratado externamente?",
+      "Muéstreme los manifiestos cerrados de los últimos 3 meses."
+     ],
+     "findings": [
+      {
+       "text": "Los manifiestos de residuos peligrosos de los últimos 4 embarques no cuentan con la copia de cierre firmada por la instalación de disposición final.",
+       "severity": "NC mayor"
+      },
+      {
+       "text": "No se comunican requisitos ambientales a los proveedores pese a que dos aspectos significativos se originan aguas arriba.",
+       "severity": "NC menor"
+      }
+     ],
+     "legal": [
+      "dl-1278",
+      "ds-014-2017-minam",
+      "ley-29338",
+      "ley-27446"
+     ],
+     "trap": "Auditar el almacén central de residuos es el atajo más rápido y más honesto para leer la madurez real de un SGA. Lo que está en el patio no se puede maquillar el día antes."
+    },
+    {
+     "id": "14001:8.2",
+     "num": "8.2",
+     "title": "Preparación y respuesta ante emergencias",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Establecer, implementar y mantener los procesos necesarios para prepararse y responder a situaciones potenciales de emergencia identificadas en 6.1.2: preparar la respuesta para prevenir o mitigar impactos ambientales adversos; responder a las emergencias reales; tomar acciones para prevenir o mitigar las consecuencias apropiadas a la magnitud de la emergencia y al impacto ambiental potencial; probar periódicamente las acciones de respuesta planificadas cuando sea factible; revisar y modificar periódicamente los procesos y las acciones, en particular después de la ocurrencia de emergencias o de las pruebas; y proporcionar información y formación pertinentes a las partes interesadas pertinentes, incluidas las personas que trabajan bajo su control.",
+     "intent": "",
+     "evidence": [
+      "Plan de contingencias ambiental",
+      "Kits antiderrame verificados y ubicados",
+      "Simulacros ambientales con evaluación",
+      "Registro de emergencias reales y su revisión posterior"
+     ],
+     "questions": [
+      "¿Cuándo fue el último simulacro de derrame y qué se corrigió después?",
+      "¿El kit antiderrame de esta zona está completo y quién lo verifica?"
+     ],
+     "findings": [
+      {
+       "text": "El plan de contingencias no fue revisado tras el derrame ocurrido en enero.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-28611",
+      "ley-29325"
+     ],
+     "trap": "Un solo simulacro \"integral\" que se registra como cumplimiento simultáneo de ISO 45001 §8.2 e ISO 14001 §8.2 es aceptable solo si el informe evalúa ambos objetivos por separado. Si el informe solo mide tiempo de evacuación, el requisito ambiental no está cubierto."
+    },
+    {
+     "id": "14001:9.1.2",
+     "num": "9.1.2",
+     "title": "Evaluación del cumplimiento",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Establecer, implementar y mantener los procesos necesarios para evaluar el cumplimiento de los requisitos legales y otros requisitos: determinar la frecuencia; evaluar y emprender acciones si es necesario; mantener el conocimiento y la comprensión de su estado de cumplimiento; y conservar información documentada como evidencia.",
+     "intent": "",
+     "evidence": [
+      "Informe de evaluación de cumplimiento legal ambiental",
+      "Conclusión explícita sobre el estado de cumplimiento",
+      "Plan de acción por incumplimiento"
+     ],
+     "questions": [
+      "¿Cuál es hoy su estado de cumplimiento legal ambiental y cómo lo sabe?"
+     ],
+     "findings": [
+      {
+       "text": "No se ha evaluado el cumplimiento de los compromisos del instrumento de gestión ambiental.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-29325",
+      "ley-28611"
+     ],
+     "trap": "Un \"cumple\" declarado sin evidencia por requisito es una conclusión sin sustento: el auditor debe muestrear y pedir el respaldo de al menos los requisitos de mayor riesgo."
+    },
+    {
+     "id": "14001:10.2",
+     "num": "10.2",
+     "title": "No conformidad y acción correctiva",
+     "kind": "requisito",
+     "parent": null,
+     "summary": "Al ocurrir una no conformidad: reaccionar y, según aplique, tomar acciones para controlarla y corregirla y hacer frente a las consecuencias, incluida la mitigación de los impactos ambientales adversos; evaluar la necesidad de acciones para eliminar las causas y evitar que vuelva a ocurrir; implementar las acciones; revisar su eficacia; y hacer cambios al SGA si es necesario.",
+     "intent": "",
+     "evidence": [
+      "Registro de NC con corrección, análisis de causa, acción correctiva y verificación de eficacia",
+      "Evidencia de mitigación del impacto (remediación, limpieza, restauración)"
+     ],
+     "questions": [
+      "Tras el derrame, ¿qué acciones de mitigación del impacto ambiental ejecutaron y cómo verificaron su suficiencia?"
+     ],
+     "findings": [
+      {
+       "text": "Se controló el derrame pero no se evaluó ni remedió la afectación del suelo.",
+       "severity": "NC mayor"
+      }
+     ],
+     "legal": [
+      "ley-28611",
+      "ds-011-2017-minam",
+      "ley-29325"
+     ],
+     "trap": "En el Perú, la obligación de reparar es independiente de la multa (art. IX de la Ley 28611). Cerrar una NC ambiental sin remediación deja viva la responsabilidad."
+    }
+   ]
+  }
+ ],
+ "sig": {
+  "norms": [
+   {
+    "k": "9001",
+    "n": "ISO 9001:2015",
+    "t": "Sistemas de gestión de la calidad",
+    "obj": "Capacidad demostrada de entregar productos y servicios conformes y aumentar la satisfacción del cliente.",
+    "riesgo": "El objeto de protección es el cliente y la conformidad del producto/servicio.",
+    "ntp": "NTP-ISO 9001:2015 (INACAL)",
+    "propio": [
+     "Enfoque al cliente y satisfacción",
+     "Diseño y desarrollo (cl. 8.3)",
+     "Propiedad del cliente",
+     "Liberación de producto y servicio"
+    ],
+    "cifra": "La norma de gestión más certificada del mundo — más de un millón de certificados vigentes."
+   },
+   {
+    "k": "14001",
+    "n": "ISO 14001:2026",
+    "t": "Sistemas de gestión ambiental",
+    "obj": "Proteger el medio ambiente, prevenir la contaminación y cumplir obligaciones de cumplimiento, con perspectiva de ciclo de vida.",
+    "riesgo": "El objeto de protección es el medio ambiente y el entorno. El impacto se mide sobre un tercero que no participa en el proceso.",
+    "ntp": "Publicada el 15/04/2026. Reemplaza a ISO 14001:2015; transición hasta el 14/04/2029.",
+    "propio": [
+     "Aspectos e impactos ambientales",
+     "Perspectiva de ciclo de vida",
+     "Obligaciones de cumplimiento",
+     "Preparación y respuesta ante emergencias ambientales"
+    ],
+    "cifra": "Única de las cuatro que exige mirar más allá de los límites físicos de la organización."
+   },
+   {
+    "k": "37001",
+    "n": "ISO 37001:2025",
+    "t": "Sistemas de gestión antisoborno",
+    "obj": "Prevenir, detectar y responder al soborno, y cumplir la legislación antisoborno aplicable.",
+    "riesgo": "El objeto de protección es la integridad de la organización y del mercado.",
+    "ntp": "Publicada el 02/03/2025; reemplaza a ISO 37001:2016 (retirada) e incorpora la Amd 1:2024. En Perú se articula con la Ley 30424.",
+    "propio": [
+     "Función de cumplimiento antisoborno",
+     "Debida diligencia sobre socios de negocio",
+     "Controles financieros y no financieros",
+     "Regalos, hospitalidad y donaciones",
+     "Denuncia e investigación"
+    ],
+    "cifra": "Exige un órgano de gobierno independiente para la función de cumplimiento — no puede reportar a quien audita."
+   },
+   {
+    "k": "45001",
+    "n": "ISO 45001:2018",
+    "t": "Sistemas de gestión de la seguridad y salud en el trabajo",
+    "obj": "Prevenir lesiones y deterioro de la salud, y proporcionar lugares de trabajo seguros y saludables.",
+    "riesgo": "El objeto de protección es el trabajador — incluidos contratistas y visitantes bajo control de la organización.",
+    "ntp": "NTP-ISO 45001:2018 (INACAL). En Perú convive con la Ley 29783 y su reglamento.",
+    "propio": [
+     "Consulta y participación de los trabajadores (cl. 5.4)",
+     "Identificación de peligros e IPERC",
+     "Jerarquía de controles",
+     "Investigación de incidentes",
+     "Comité de SST"
+    ],
+    "cifra": "La única con un capítulo de participación obligatoria: el trabajador no es objeto del sistema, es sujeto."
+   }
+  ],
+  "common": [
+   {
+    "num": "4.1",
+    "title": "Comprensión de la organización y su contexto",
+    "requirement": "Determinar las cuestiones externas e internas pertinentes al propósito y dirección estratégica que afectan la capacidad de lograr los resultados previstos del sistema.",
+    "intent": "Obligar a que el sistema se diseñe desde la realidad de la organización, no desde una plantilla. Es la cláusula que hace irrepetible cada SIG.",
+    "evidence": [
+     "Análisis PESTEL o equivalente con fecha y responsable",
+     "FODA cruzado que genere estrategias, no solo listas",
+     "Acta donde la alta dirección revisa y aprueba el contexto",
+     "Evidencia de que el cambio climático fue evaluado como cuestión pertinente (Enmienda 1:2024)",
+     "Trazabilidad de al menos una cuestión del contexto hacia un riesgo del cap. 6.1"
+    ],
+    "questions": [
+     "¿Cuáles son las tres cuestiones externas que más amenazan sus resultados previstos este año?",
+     "Muéstreme cómo esa cuestión se convirtió en un riesgo, un objetivo o un control.",
+     "¿Cuándo revisaron el contexto por última vez y qué cambió?",
+     "¿Evaluaron el cambio climático como cuestión pertinente? ¿Con qué conclusión y qué evidencia?"
+    ],
+    "finding": "Contexto redactado una vez en la implementación y nunca actualizado, sin ninguna conexión demostrable con los riesgos declarados.",
+    "trap": "La norma no exige información documentada del contexto, pero sí exige determinarlo. Sin documento no puedes demostrar la determinación: en la práctica, se documenta."
+   },
+   {
+    "num": "4.2",
+    "title": "Necesidades y expectativas de las partes interesadas",
+    "requirement": "Determinar las partes interesadas pertinentes, sus requisitos pertinentes, y cuáles de esos requisitos se convierten en obligaciones de cumplimiento.",
+    "intent": "Separar el ruido de la obligación. No toda expectativa es un requisito; el sistema debe declarar cuáles adopta.",
+    "evidence": [
+     "Registro de partes interesadas con criterio de pertinencia explícito",
+     "Columna que distingue expectativa de requisito adoptado",
+     "Enlace de los requisitos legales al registro de obligaciones de cumplimiento",
+     "Evidencia de seguimiento y revisión de esa información"
+    ],
+    "questions": [
+     "¿Qué criterio usó para decidir que esta parte interesada es pertinente y aquella no?",
+     "De las expectativas listadas, ¿cuáles adoptó como obligación y quién lo decidió?",
+     "¿Cómo se enteran de que un requisito de una parte interesada cambió?"
+    ],
+    "finding": "Listado genérico (clientes, proveedores, Estado, comunidad) copiado de una plantilla, sin requisitos concretos ni decisión de adopción.",
+    "trap": "En ISO 45001, los trabajadores y sus representantes son parte interesada obligatoria, no opcional. Omitirlos es no conformidad directa."
+   },
+   {
+    "num": "4.3 / 4.4",
+    "title": "Alcance y sistema de gestión",
+    "requirement": "Determinar los límites y aplicabilidad del sistema, mantenerlo como información documentada, y establecer los procesos necesarios con sus criterios, métodos, recursos, responsabilidades y riesgos.",
+    "intent": "Que el alcance sea una decisión defendible y que el sistema exista como red de procesos, no como carpeta.",
+    "evidence": [
+     "Alcance documentado con productos, servicios, sitios y justificación de exclusiones (solo ISO 9001 admite no aplicabilidad)",
+     "Mapa de procesos con secuencia e interacción",
+     "Fichas de caracterización con dueño, entradas, salidas, criterios e indicadores"
+    ],
+    "questions": [
+     "¿Por qué esta sede quedó fuera del alcance? ¿Puede sostenerlo ante un cliente?",
+     "Muéstreme un proceso y dígame quién es su dueño, cómo se mide y qué riesgo tiene asociado.",
+     "¿Cómo determinó que estos son los procesos «necesarios» y no otros?"
+    ],
+    "finding": "Procesos declarados en el mapa sin dueño asignado, sin indicador o sin criterios de control definidos — incumplimiento directo de 4.4.1.",
+    "trap": "ISO 14001, 45001 y 37001 no admiten exclusiones. Solo ISO 9001 permite declarar requisitos no aplicables, y con justificación documentada."
+   },
+   {
+    "num": "5.1",
+    "title": "Liderazgo y compromiso",
+    "requirement": "La alta dirección debe demostrar liderazgo y compromiso asumiendo la responsabilidad de la eficacia del sistema, integrando los requisitos en los procesos de negocio y asegurando recursos.",
+    "intent": "Terminar con el sistema delegado al «encargado de calidad». La rendición de cuentas es indelegable.",
+    "evidence": [
+     "Actas de revisión por la dirección con decisiones y asignación de recursos",
+     "Presupuesto aprobado del SIG",
+     "Participación verificable de la alta dirección en comités y recorridos",
+     "Objetivos del SIG presentes en la evaluación de desempeño de los directivos"
+    ],
+    "questions": [
+     "Gerente General: ¿cuáles son los objetivos del sistema este año y cómo va su cumplimiento?",
+     "¿Qué decisión de negocio se modificó en los últimos doce meses por información del SIG?",
+     "¿Cómo se asegura de que los requisitos del sistema estén en los procesos de negocio y no en un sistema paralelo?"
+    ],
+    "finding": "La alta dirección desconoce los objetivos y el desempeño del sistema; toda la evidencia proviene del coordinador del SIG.",
+    "trap": "Desde 2015 no existe el «representante de la dirección» como requisito. Puedes tenerlo, pero no sustituye la rendición de cuentas de la alta dirección."
+   },
+   {
+    "num": "5.2 / 5.3",
+    "title": "Política y roles organizacionales",
+    "requirement": "Establecer una política apropiada al propósito y contexto, que incluya los compromisos exigidos y sirva de marco para los objetivos; asignar y comunicar responsabilidades y autoridades.",
+    "intent": "Que la política sea un contrato verificable, no un adorno de recepción.",
+    "evidence": [
+     "Política integrada con los compromisos obligatorios de cada norma",
+     "Evidencia de comunicación interna y disponibilidad para partes interesadas",
+     "Organigrama del SIG, matriz RACI o descripciones de puesto"
+    ],
+    "questions": [
+     "¿Qué compromiso de su política se puede verificar hoy en el piso de planta?",
+     "¿Quién tiene autoridad para detener una operación insegura y dónde está documentada?"
+    ],
+    "finding": "Política que enumera adjetivos sin ningún compromiso auditable, o que omite un compromiso obligatorio de alguna de las normas integradas.",
+    "trap": "Los compromisos mínimos difieren: 9001 exige satisfacer requisitos y mejorar; 14001 añade proteger el medio ambiente y prevenir la contaminación; 45001 añade condiciones seguras, eliminar peligros y consulta y participación; 37001 añade prohibir el soborno y fomentar la denuncia de buena fe."
+   },
+   {
+    "num": "6.1",
+    "title": "Acciones para abordar riesgos y oportunidades",
+    "requirement": "Al planificar, considerar las cuestiones del 4.1 y los requisitos del 4.2 para determinar riesgos y oportunidades, planificar acciones y evaluar su eficacia.",
+    "intent": "Sustituir la acción preventiva (eliminada en 2015) por pensamiento basado en riesgos incorporado a la planificación.",
+    "evidence": [
+     "Matriz de riesgos y oportunidades del sistema con trazabilidad al contexto",
+     "Acciones planificadas con responsable, plazo y recurso",
+     "Evaluación posterior de la eficacia de las acciones"
+    ],
+    "questions": [
+     "¿Cómo determinó este riesgo y de qué cuestión del contexto proviene?",
+     "¿Qué acción tomó y cómo verificó que funcionó?",
+     "¿Qué oportunidad identificó y qué hizo con ella?"
+    ],
+    "finding": "Matriz de riesgos que solo replica el IPERC operativo, sin ningún riesgo estratégico o de sistema; oportunidades vacías o inexistentes.",
+    "trap": "ISO 9001 no exige una metodología formal de gestión del riesgo ni una matriz. Pero exige demostrar que se consideró. Y no exige un «procedimiento de gestión de riesgos»: exige acciones."
+   },
+   {
+    "num": "6.2",
+    "title": "Objetivos y planificación para lograrlos",
+    "requirement": "Establecer objetivos coherentes con la política, medibles, objeto de seguimiento, comunicados y actualizados; y planificar qué se hará, con qué recursos, quién, cuándo y cómo se evaluarán los resultados.",
+    "intent": "Convertir la intención en gestión. Los cinco elementos de la planificación son requisito literal.",
+    "evidence": [
+     "Ficha de objetivo con los cinco elementos",
+     "Seguimiento periódico con datos",
+     "Comunicación a los niveles pertinentes"
+    ],
+    "questions": [
+     "Muéstreme el plan de este objetivo: qué, recursos, quién, cuándo y cómo evalúa el resultado.",
+     "¿Qué hizo cuando este objetivo se desvió de la meta?"
+    ],
+    "finding": "Objetivos declarados sin plan asociado, o metas fijadas sin línea base que las haga interpretables.",
+    "trap": "Un objetivo sin línea base no es medible en la práctica: «reducir accidentes» no dice desde cuánto ni hasta cuánto."
+   },
+   {
+    "num": "7.2 / 7.3",
+    "title": "Competencia y toma de conciencia",
+    "requirement": "Determinar la competencia necesaria, asegurarla mediante educación, formación o experiencia, tomar acciones para adquirirla y evaluar su eficacia; asegurar que las personas tomen conciencia de la política, objetivos, su contribución y las implicaciones del incumplimiento.",
+    "intent": "Distinguir formación de competencia. Asistir a un curso no es ser competente.",
+    "evidence": [
+     "Perfil de puesto con competencia requerida",
+     "Registro de formación y, crucialmente, evaluación de eficacia",
+     "Evidencia de conciencia en entrevistas de campo, no en firmas de asistencia"
+    ],
+    "questions": [
+     "A un operario: ¿cuál es la política del sistema y cómo contribuye usted a ella?",
+     "¿Cómo evaluó que la formación fue eficaz? Muéstreme el criterio.",
+     "¿Qué pasa si esta persona no cumple con los requisitos del sistema?"
+    ],
+    "finding": "Lista de asistencia como única evidencia de competencia. No hay evaluación de eficacia — es la no conformidad más frecuente del cap. 7.",
+    "trap": "En ISO 45001 la formación en SST debe ser gratuita y en horario laboral (cl. 7.2 nota y Ley 29783 art. 49). Cobrarla o darla fuera de jornada es hallazgo legal, no solo normativo."
+   },
+   {
+    "num": "7.5",
+    "title": "Información documentada",
+    "requirement": "Incluir la información documentada exigida por la norma y la que la organización determine necesaria; controlar su creación, actualización, distribución, acceso, conservación y disposición.",
+    "intent": "Terminar con la burocracia obligatoria y devolver la decisión a la organización — con la responsabilidad que eso implica.",
+    "evidence": [
+     "Lista maestra con versión, aprobación y retención",
+     "Evidencia de control de documentos de origen externo",
+     "Control de acceso y protección de registros"
+    ],
+    "questions": [
+     "¿Cómo sabe el operario que este es el documento vigente?",
+     "¿Dónde está la versión anterior y por qué la conservó?",
+     "¿Cómo controla los documentos de origen externo, como una norma legal o una especificación de cliente?"
+    ],
+    "finding": "Documentos obsoletos en uso en el punto de operación, o registros sin tiempo de retención definido frente a la exigencia legal.",
+    "trap": "La retención de registros de SST en Perú tiene plazos legales propios (D.S. 005-2012-TR): exámenes médicos ocupacionales 5 años tras el cese, registro de accidentes 10 años, enfermedades ocupacionales 20 años. La norma ISO no los fija; la ley sí."
+   },
+   {
+    "num": "8.1",
+    "title": "Planificación y control operacional",
+    "requirement": "Planificar, implementar y controlar los procesos necesarios; establecer criterios, implementar el control conforme a esos criterios y mantener información documentada que dé confianza en que se ejecutaron según lo planificado.",
+    "intent": "Es la cláusula donde el sistema toca el trabajo real. Todo lo anterior es preparación.",
+    "evidence": [
+     "Procedimientos e instructivos en el punto de uso",
+     "Registros de ejecución y verificación",
+     "Control de cambios (gestión del cambio)",
+     "Control sobre procesos contratados externamente"
+    ],
+    "questions": [
+     "¿Qué criterio define que este trabajo está bien hecho y dónde está escrito?",
+     "¿Qué pasó la última vez que cambió este proceso? Muéstreme la gestión del cambio."
+    ],
+    "finding": "Cambio de proveedor, equipo o método ejecutado sin evaluación previa de riesgos ni actualización del IPERC o de la matriz de aspectos.",
+    "trap": "La gestión del cambio es requisito explícito en 14001 (8.1) y 45001 (8.1.3), e implícito en 9001 (6.3 y 8.5.6). Es el punto de fuga favorito de los auditores externos."
+   },
+   {
+    "num": "9.1",
+    "title": "Seguimiento, medición, análisis y evaluación",
+    "requirement": "Determinar qué, cómo y cuándo se hace el seguimiento y la medición, cuándo se analizan los resultados, y evaluar el desempeño y la eficacia del sistema.",
+    "intent": "Que el sistema genere información para decidir. Medir sin analizar no cumple.",
+    "evidence": [
+     "Plan de seguimiento y medición",
+     "Evidencia de calibración o verificación de equipos",
+     "Análisis de tendencias, no solo tablas de datos",
+     "Evaluación del cumplimiento legal con periodicidad definida"
+    ],
+    "questions": [
+     "¿Qué le dicen estos datos y qué decisión tomó con ellos?",
+     "¿Cuándo evaluó por última vez el cumplimiento de los requisitos legales y con qué resultado?"
+    ],
+    "finding": "Indicadores recolectados y graficados sin análisis ni decisión asociada; evaluación de cumplimiento legal ausente o desactualizada.",
+    "trap": "La evaluación del cumplimiento legal (9.1.2 en 14001, 9.1.2 en 45001) es una cláusula independiente y frecuentemente olvidada. Tener la matriz legal no es evaluarla."
+   },
+   {
+    "num": "9.2",
+    "title": "Auditoría interna",
+    "requirement": "Realizar auditorías internas a intervalos planificados; establecer un programa que considere la importancia de los procesos, los cambios y los resultados previos; definir criterios y alcance; asegurar objetividad e imparcialidad.",
+    "intent": "Autodiagnóstico honesto. Si la auditoría interna no encuentra nada, la externa encontrará todo.",
+    "evidence": [
+     "Programa anual justificado por riesgo",
+     "Planes de auditoría",
+     "Evidencia de competencia e imparcialidad de los auditores",
+     "Informes con hallazgos y seguimiento"
+    ],
+    "questions": [
+     "¿Por qué auditó este proceso dos veces y aquel ninguna?",
+     "¿Cómo asegura que el auditor no audita su propio trabajo?",
+     "Su auditoría interna reportó cero no conformidades: ¿cómo lo explica?"
+    ],
+    "finding": "Programa de auditoría plano (todos los procesos una vez al año) sin criterio de riesgo, o auditores auditando su propia área.",
+    "trap": "El programa debe basarse en la importancia y el riesgo, no en el calendario. Un programa uniforme es un hallazgo defendible del auditor externo."
+   },
+   {
+    "num": "9.3",
+    "title": "Revisión por la dirección",
+    "requirement": "La alta dirección debe revisar el sistema a intervalos planificados considerando las entradas obligatorias y generando salidas sobre oportunidades de mejora, cambios necesarios y necesidades de recursos.",
+    "intent": "Convertir el sistema en insumo de gobierno corporativo.",
+    "evidence": [
+     "Acta con las entradas obligatorias tratadas una por una",
+     "Decisiones con responsable y plazo",
+     "Asignación efectiva de recursos"
+    ],
+    "questions": [
+     "Muéstreme dónde se trató el desempeño de los proveedores externos en esta acta.",
+     "¿Qué recurso se asignó como resultado de esta revisión?"
+    ],
+    "finding": "Acta que presenta información pero no registra decisiones; o entradas obligatorias omitidas (típicamente: adecuación de recursos, eficacia de las acciones de riesgo, desempeño de proveedores).",
+    "trap": "Las entradas son literales y verificables una a una. Un auditor experimentado lleva la lista y las tacha. En un SIG hay que cubrir además las entradas propias de cada norma (p. ej., consulta y participación en 45001)."
+   },
+   {
+    "num": "10.2",
+    "title": "No conformidad y acción correctiva",
+    "requirement": "Reaccionar ante la no conformidad, evaluar la necesidad de eliminar sus causas, implementar acciones, revisar su eficacia y actualizar riesgos si es necesario.",
+    "intent": "Distinguir apagar el fuego (corrección) de evitar que vuelva (acción correctiva).",
+    "evidence": [
+     "Registro de NC con corrección y análisis de causa",
+     "Evidencia del método de causa raíz aplicado",
+     "Verificación posterior de eficacia con dato, no con firma"
+    ],
+    "questions": [
+     "Esta NC se repitió tres veces: ¿qué falló en el análisis de causa?",
+     "¿Cómo verificó que la acción fue eficaz y cuánto tiempo esperó para hacerlo?"
+    ],
+    "finding": "Causa raíz registrada como «falta de capacitación» o «error humano» en el 80 % de los casos — señal inequívoca de análisis ritual.",
+    "trap": "La acción preventiva desapareció en 2015: su función la absorbió el cap. 6.1. Si tu procedimiento aún dice «acción preventiva», estás citando una edición derogada."
+   }
+  ],
+  "specific": [
+   {
+    "num": "5.4",
+    "norm": "45001",
+    "title": "Consulta y participación de los trabajadores",
+    "requirement": "Establecer procesos para la consulta y participación de trabajadores de todos los niveles y funciones, incluidos los no directivos, eliminando obstáculos como el idioma, la alfabetización o las represalias.",
+    "intent": "Es la cláusula que hace a ISO 45001 estructuralmente distinta. El trabajador no es objeto del sistema: es sujeto con derecho a intervenir en su diseño.",
+    "evidence": [
+     "Actas del Comité de SST (en Perú, obligatorio desde 20 trabajadores — Ley 29783)",
+     "Evidencia de consulta previa a la determinación de controles del IPERC",
+     "Mecanismos de sugerencia con respuesta trazable",
+     "Evidencia de eliminación de obstáculos: traducción, pictogramas, canal anónimo"
+    ],
+    "questions": [
+     "A un trabajador no directivo: ¿participó usted en la elaboración del IPERC de su área?",
+     "¿Qué obstáculos identificó para la participación y qué hizo para eliminarlos?",
+     "¿En qué se diferencia lo que ustedes consultan de lo que ustedes informan?"
+    ],
+    "finding": "Actas de comité firmadas sin evidencia de consulta real; el IPERC lo elaboró el área de SSOMA sin participación del personal expuesto.",
+    "trap": "La norma distingue consulta (buscar la opinión antes de decidir — reservada a los no directivos en asuntos clave) de participación (involucrarse en la toma de decisiones). No son sinónimos y la norma lista temas específicos para cada una."
+   },
+   {
+    "num": "6.1.2",
+    "norm": "14001",
+    "title": "Aspectos ambientales e impactos",
+    "requirement": "Determinar los aspectos ambientales de las actividades, productos y servicios que se pueden controlar o influir, y sus impactos asociados, desde una perspectiva de ciclo de vida, considerando condiciones normales, anormales y situaciones de emergencia razonablemente previsibles.",
+    "intent": "Obligar a mirar más allá de la puerta de la planta y más allá del día normal de operación.",
+    "evidence": [
+     "Matriz de aspectos con las tres condiciones operativas diferenciadas",
+     "Al menos una etapa aguas arriba (compras, materias primas) y una aguas abajo (uso, disposición)",
+     "Criterio documentado para determinar la significancia",
+     "Aspectos significativos comunicados a quienes trabajan bajo control de la organización"
+    ],
+    "questions": [
+     "Muéstreme un aspecto de una etapa que usted no controla directamente pero sí influye.",
+     "¿Qué aspecto identificó en condición de emergencia y cómo se refleja en su plan de respuesta?",
+     "¿Cuál es su criterio de significancia y quién lo aprobó?"
+    ],
+    "finding": "Matriz limitada a las operaciones internas en condición normal — sin ciclo de vida ni condiciones anormales o de emergencia.",
+    "trap": "Perspectiva de ciclo de vida no es un ACV (ISO 14040). No hace falta cuantificar huella: hace falta demostrar que se consideraron las etapas. Confundirlos lleva a proyectos innecesariamente caros."
+   },
+   {
+    "num": "6.1.2",
+    "norm": "45001",
+    "title": "Identificación de peligros y evaluación de riesgos SST",
+    "requirement": "Establecer procesos de identificación continua y proactiva de peligros, considerando la organización del trabajo, factores sociales, liderazgo, cultura, actividades rutinarias y no rutinarias, emergencias, personas (incluidos contratistas y visitantes), cambios y conocimiento adquirido de incidentes.",
+    "intent": "Ampliar el foco del peligro físico al peligro psicosocial y organizacional.",
+    "evidence": [
+     "IPERC con línea base, específico y continuo",
+     "Peligros psicosociales identificados (carga de trabajo, acoso, jornadas)",
+     "Evidencia de participación de trabajadores en la identificación",
+     "Actualización tras incidentes y cambios"
+    ],
+    "questions": [
+     "¿Dónde están los peligros psicosociales en su IPERC?",
+     "¿Cómo identifica peligros en actividades no rutinarias como un mantenimiento mayor?",
+     "Ocurrió este incidente hace tres meses: ¿dónde se actualizó el IPERC?"
+    ],
+    "finding": "IPERC exclusivamente de peligros físicos y mecánicos; sin factores psicosociales ni organización del trabajo, pese a ser requisito literal.",
+    "trap": "La norma exige identificación continua y proactiva. Un IPERC con fecha de hace dos años y sin evidencia de revisión tras cambios es no conformidad, aunque el contenido sea técnicamente correcto."
+   },
+   {
+    "num": "4.5 / 8.2",
+    "norm": "37001",
+    "title": "Evaluación del riesgo de soborno y debida diligencia",
+    "requirement": "Evaluar el riesgo de soborno por categoría de operación, socio de negocio y transacción; y aplicar debida diligencia proporcional sobre proyectos, socios y personal en posiciones expuestas.",
+    "intent": "Focalizar los controles donde el riesgo real está, en lugar de aplicar una política uniforme e inoperante.",
+    "evidence": [
+     "Matriz de riesgo de soborno por unidad de negocio y geografía",
+     "Expedientes de debida diligencia de terceros con nivel proporcional al riesgo",
+     "Registro de regalos, hospitalidad y donaciones con umbrales definidos",
+     "Canal de denuncia con protección al denunciante y evidencia de investigación"
+    ],
+    "questions": [
+     "¿Qué socio de negocio tiene el mayor riesgo de soborno y qué debida diligencia le aplicó?",
+     "¿Quién ejerce la función de cumplimiento antisoborno y a quién reporta?",
+     "Muéstreme una denuncia recibida y cómo fue investigada."
+    ],
+    "finding": "Debida diligencia uniforme (el mismo formulario para el proveedor de útiles y para el agente aduanero), lo que demuestra que la evaluación de riesgo no se usó.",
+    "trap": "La función de cumplimiento antisoborno debe tener acceso directo al órgano de gobierno. Si reporta al gerente comercial, el control está estructuralmente comprometido — y es hallazgo mayor."
+   }
+  ],
+  "documents": [
+   {
+    "name": "Alcance del sistema",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en un solo documento"
+   },
+   {
+    "name": "Política",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable — verificar compromisos de las 4"
+   },
+   {
+    "name": "Objetivos y planes",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en una sola matriz"
+   },
+   {
+    "name": "Riesgos y oportunidades",
+    "iso9001": "—",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable a nivel de sistema"
+   },
+   {
+    "name": "Aspectos ambientales significativos",
+    "iso9001": "—",
+    "iso14001": "✔",
+    "iso45001": "—",
+    "iso37001": "—",
+    "note": "No fusionable — metodología propia"
+   },
+   {
+    "name": "Peligros, riesgos SST y controles",
+    "iso9001": "—",
+    "iso14001": "—",
+    "iso45001": "✔",
+    "iso37001": "—",
+    "note": "No fusionable — metodología propia"
+   },
+   {
+    "name": "Evaluación del riesgo de soborno",
+    "iso9001": "—",
+    "iso14001": "—",
+    "iso45001": "—",
+    "iso37001": "✔",
+    "note": "No fusionable — metodología propia"
+   },
+   {
+    "name": "Requisitos legales y otros",
+    "iso9001": "—",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en una matriz legal única"
+   },
+   {
+    "name": "Competencia del personal",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable"
+   },
+   {
+    "name": "Evidencia de operación según lo planificado",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Por proceso, no por norma"
+   },
+   {
+    "name": "Preparación y respuesta ante emergencias",
+    "iso9001": "—",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "—",
+    "note": "Fusionable en un solo plan"
+   },
+   {
+    "name": "Seguimiento, medición y calibración",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en un plan único"
+   },
+   {
+    "name": "Evaluación del cumplimiento legal",
+    "iso9001": "—",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable"
+   },
+   {
+    "name": "Programa e informes de auditoría interna",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable — auditoría combinada"
+   },
+   {
+    "name": "Revisión por la dirección",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en una sola acta"
+   },
+   {
+    "name": "No conformidades y acciones correctivas",
+    "iso9001": "✔",
+    "iso14001": "✔",
+    "iso45001": "✔",
+    "iso37001": "✔",
+    "note": "Fusionable en un solo registro"
+   },
+   {
+    "name": "Investigación de incidentes",
+    "iso9001": "—",
+    "iso14001": "—",
+    "iso45001": "✔",
+    "iso37001": "—",
+    "note": "Propio de SST — obligación legal en Perú"
+   },
+   {
+    "name": "Consulta y participación de trabajadores",
+    "iso9001": "—",
+    "iso14001": "—",
+    "iso45001": "✔",
+    "iso37001": "—",
+    "note": "Propio de SST"
+   },
+   {
+    "name": "Debida diligencia sobre socios de negocio",
+    "iso9001": "—",
+    "iso14001": "—",
+    "iso45001": "—",
+    "iso37001": "✔",
+    "note": "Propio de antisoborno"
+   }
+  ]
+ }
+}
