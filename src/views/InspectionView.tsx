@@ -1,6 +1,6 @@
 import { BookOpenCheck, ExternalLink, FolderKanban, Gavel, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { BINDING_LABELS, CASES, findArticle, findInfraction, OBLIGATIONS } from '../catalog'
+import { BINDING_LABELS, CASES, findArticle, findInfraction, INFRACTIONS, OBLIGATIONS, type CaseItem } from '../catalog'
 import { SUNAFIL_NORMS_SEARCH } from '../catalog/cases'
 import { ContingencyCalculator } from '../components/ContingencyCalculator'
 import { DocActions } from '../components/DocReader'
@@ -190,6 +190,7 @@ export function InspectionView({ tab, onTabChange, onOpenGuide }: InspectionView
                 <p>{item.criterion}</p>
                 <p className="case-use"><b>Uso en la plataforma:</b> {item.platformUse}</p>
                 <div className="guide-norms">{item.topics.map((topic) => <span key={topic}>{topic}</span>)}</div>
+                <CaseDetail item={item} />
                 <a href={item.url ?? SUNAFIL_NORMS_SEARCH} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} aria-hidden="true" /> {item.url ? 'Documento oficial' : 'Buscar en SUNAFIL'}</a>
               </article>
             ))}
@@ -198,6 +199,75 @@ export function InspectionView({ tab, onTabChange, onOpenGuide }: InspectionView
         </section>
       )}
     </div>
+  )
+}
+
+const BINDING_HELP: Record<CaseItem['binding'], string> = {
+  'precedente-vinculante': 'Lo fijó la Sala Plena del Tribunal de Fiscalización Laboral: la inspección y las instancias de SUNAFIL deben aplicarlo en casos iguales.',
+  'no-vinculante': 'Resolución de una sala del Tribunal: muestra cómo se razonó un caso, pero no obliga en otros. Úsela como orientación.',
+  judicial: 'Pronunciamiento del Poder Judicial: pesa en el análisis, pero hay que revisar si fija doctrina para casos similares.',
+  'norma-administrativa': 'Disposición de SUNAFIL que ordena cómo actúa la inspección: conviene conocerla para preparar la defensa.',
+}
+
+/** Detalle plegable del caso: cómo leerlo, obligaciones e infracciones relacionadas, qué hacer. */
+function CaseDetail({ item }: { item: CaseItem }) {
+  const topics = item.topics.map((topic) => topic.toLowerCase())
+  const related = OBLIGATIONS.filter((obligation) => topics.some((topic) => obligation.domain.includes(topic) || obligation.title.toLowerCase().includes(topic))).slice(0, 4)
+  const infractions = INFRACTIONS.filter((infraction) => infraction.topics.some((topic) => topics.includes(topic))).slice(0, 4)
+  return (
+    <details className="case-detail">
+      <summary>Ver detalle del caso</summary>
+      <dl>
+        <div>
+          <dt>Qué tipo de pronunciamiento es</dt>
+          <dd>{BINDING_HELP[item.binding]}</dd>
+        </div>
+        <div>
+          <dt>Criterio</dt>
+          <dd>{item.criterion}</dd>
+        </div>
+        <div>
+          <dt>Qué hacer en su organización</dt>
+          <dd>{item.platformUse}</dd>
+        </div>
+        {related.length > 0 && (
+          <div>
+            <dt>Obligaciones relacionadas</dt>
+            <dd>
+              <ul>
+                {related.map((obligation) => (
+                  <li key={obligation.id}>
+                    {obligation.title} — <small>{obligation.evidence.slice(0, 2).join('; ')}</small>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+        {infractions.length > 0 && (
+          <div>
+            <dt>Infracciones que suelen imputarse</dt>
+            <dd>
+              <ul>
+                {infractions.map((infraction) => (
+                  <li key={infraction.code}>
+                    <b>{infraction.code}</b> ({infraction.severity}): {infraction.text}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>Estado de verificación</dt>
+          <dd>
+            {item.verification === 'ficha-oficial-verificada'
+              ? 'La ficha oficial existe y está enlazada. Lea el texto íntegro antes de citarlo en un descargo.'
+              : 'Caso reportado en los informes entregados: el texto íntegro aún no fue cotejado. No lo cite sin leerlo en la fuente.'}
+          </dd>
+        </div>
+      </dl>
+    </details>
   )
 }
 

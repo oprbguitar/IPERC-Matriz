@@ -1,4 +1,4 @@
-# Observatorio SST Perú
+# Observatorio Prevenir Perú
 
 **https://sst.andesnova.solutions** · Seguridad y Salud en el Trabajo, SSOMA, salud ocupacional, IPERC e ISO para cualquier empresa o institución del Perú.
 
@@ -16,6 +16,19 @@ Plataforma abierta (sin registro) con una zona **Premium** con acceso por correo
 | **Normativa** | 40 normas peruanas con **enlaces directos verificados** (fuente oficial, PDF, El Peruano, texto concordado SINIA y SPIJ), vista en lista o cuadros, y pestaña **ISO y sistemas integrados** (ISO 45001, ISO 14001, tronco común SIG y matriz documental). |
 | **Herramientas** | Generador IPERC, matriz editable, **Analítica** (calculadora de multas SUNAFIL con la tabla oficial del D.S. 008-2020-TR, organización exigible, IF/IS/IA, riesgo inicial vs. residual), **plan de acción con drag & drop**, evidencias con arrastre de archivos, normativa en cuadros/lista, reportes Excel/Word/CSV y registro compacto por pestañas. El panel lateral es un **índice SST** con guías por herramienta. |
 | **Premium** | Login con correo y clave, plan de 22 hitos en 6 fases con **% de avance guardado en la nube** (visible en la barra superior), 6 guías de IA (IA aplicada, sistema de agentes, herramientas open source/pago, seguimiento continuo, prompts, gobernanza de datos), solicitudes de acceso y panel de administración de usuarios. |
+
+## Novedades 2026.11.2
+
+- **Nombre y marca:** Observatorio Prevenir Perú (seguridad, salud, ambiente y gestión integrada), con logo y favicon propios.
+- **Navegación guiada:** cada página tiene dirección propia (atrás y adelante del navegador funcionan), barra "Volver · Inicio › Espacio › Página · Paso n de N · Siguiente" y paginador inferior. Implementar queda reservado a cuentas premium.
+- **67 normas** (27 nuevas verificadas en gob.pe y El Peruano): Ley 32721 (descanso sentado), D.S. 003-2026-SA (radiación UV), teletrabajo 2023–2026, SCTR, valores límite de agentes químicos, salud mental, datos personales y reglamentos sectoriales.
+- **SPIJ directo:** 50 normas abren la página exacta de la edición de normas legales archivada por el SPIJ.
+- **Detalle plegable por norma:** propósito, modificatorias, datos clave, cómo aplicarla y artículos cotejados con su fragmento literal.
+- **Plantillas adaptadas a su empresa:** los datos de la organización se escriben una vez y llenan todas las plantillas (Word, Excel y PDF): una por plantilla de la Biblioteca, por obligación de "Por tamaño y rol" y por tema SOMA.
+- **Manuales descargables:** cada guía descarga un manual completo con portada, índice, procedimiento, ejemplos y listas de verificación.
+- **ISO:** normas relacionadas (familia ISO 45000, 14001, 50001, 19011, 31000, 22301) y NTP de INACAL, con matriz descargable.
+
+Detalle de verificación y pendientes: [docs/AMPLIACION-NORMATIVA-2026-11.md](docs/AMPLIACION-NORMATIVA-2026-11.md).
 
 ## Cumplimiento normativo (versión 2026.11.1)
 

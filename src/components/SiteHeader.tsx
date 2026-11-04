@@ -1,6 +1,7 @@
-import { Crown, Menu, Search, ShieldCheck, UserRound, X } from 'lucide-react'
+import { Crown, Menu, Search, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { NAV_ITEMS, SPACES, spaceOf, type SiteViewId } from '../data/platformContent'
+import { NAV_ITEMS, SPACES, spaceOf, spacesFor, type SiteViewId } from '../data/platformContent'
+import { assetUrl } from '../lib/assets'
 import type { ApiUser } from '../lib/api'
 
 interface SiteHeaderProps {
@@ -16,6 +17,7 @@ const labelOf = (id: SiteViewId) => NAV_ITEMS.find((item) => item.id === id)?.la
 export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent }: SiteHeaderProps) {
   const [openMenu, setOpenMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const visibleSpaces = spacesFor(Boolean(user))
   const activeSpace = spaceOf(active)
   const space = SPACES.find((item) => item.id === activeSpace)
 
@@ -47,18 +49,16 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
   return (
     <header className={`site-header spaced ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-row">
-        <button type="button" className="site-brand" onClick={() => go('inicio')} aria-label="Observatorio SST Perú, ir al inicio">
-          <span className="site-logo" aria-hidden="true">
-            <ShieldCheck size={22} />
-          </span>
+        <button type="button" className="site-brand" onClick={() => go('inicio')} aria-label="Observatorio Prevenir Perú, ir al inicio">
+          <img className="site-logo-img" src={assetUrl('brand/logo-128.png')} width={40} height={40} alt="" />
           <span className="site-brand-text">
-            <strong>Observatorio SST Perú</strong>
-            <small>Normas · cumplimiento · prevención</small>
+            <strong>Observatorio Prevenir Perú</strong>
+            <small>Seguridad · salud · ambiente</small>
           </span>
         </button>
 
         <nav className="site-nav" aria-label="Espacios de trabajo">
-          {SPACES.map((item) => (
+          {visibleSpaces.map((item, index) => (
             <button
               key={item.id}
               type="button"
@@ -67,7 +67,7 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
               title={item.hint}
               onClick={() => go(item.views[0])}
             >
-              {item.label}
+              <span className="space-num" aria-hidden="true">{index + 1}</span> {item.label}
             </button>
           ))}
         </nav>
@@ -110,7 +110,7 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
 
       {openMenu && (
         <nav className="site-nav-mobile" aria-label="Navegación principal (móvil)">
-          {SPACES.map((item) => (
+          {visibleSpaces.map((item) => (
             <div key={item.id} className="mobile-space">
               <small>{item.label}</small>
               {item.views.map((view) => (

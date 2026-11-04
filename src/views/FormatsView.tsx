@@ -118,7 +118,7 @@ function FieldInput({ field, value, onChange }: { field: FormatField; value: str
   return <input type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'} value={value} onChange={(event) => onChange(event.target.value)} />
 }
 
-function FormEditor({ format, onClose }: { format: FormatItem; onClose: () => void }) {
+export function FormEditor({ format, onClose }: { format: FormatItem; onClose: () => void }) {
   const [org, setOrg] = useState<Record<string, string>>(() => ({ version: format.version, fecha: new Date().toISOString().slice(0, 10), ...readOrg() }))
   const [fields, setFields] = useState<Record<string, string>>({})
   const [rows, setRows] = useState<Array<Record<string, string>>>(() => (format.columns ? [{}] : []))

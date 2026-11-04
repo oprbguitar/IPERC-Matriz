@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { DocActions } from '../components/DocReader'
 import { findNorm } from '../data/legalDatabase'
 import iso from '../data/iso.json'
+import { INACAL_CATALOG, ISO_FAMILY, isoFamilyMarkdown } from '../data/isoFamily'
 
 /**
  * ISO 45001, ISO 14001 y Sistemas Integrados de Gestion. Contenido importado de los
@@ -23,13 +24,14 @@ interface Clause {
   trap: string
 }
 
-type TabId = '45001' | '14001' | 'sig' | 'docs'
+type TabId = '45001' | '14001' | 'sig' | 'docs' | 'familia'
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: '45001', label: 'ISO 45001 · SST' },
   { id: '14001', label: 'ISO 14001 · Ambiente' },
   { id: 'sig', label: 'SIG · Tronco común' },
   { id: 'docs', label: 'Matriz documental SIG' },
+  { id: 'familia', label: 'Normas relacionadas e INACAL' },
 ]
 
 /** Los cursos usan "ley-29783"; el catalogo usa "law-29783". */
@@ -71,6 +73,27 @@ function auditMarkdown(tab: TabId, clauses: Clause[]): string {
   return `# Lista de verificación de auditoría — ${label}\n\nParáfrasis interpretativa con fines de formación y autoevaluación; no reproduce el texto de la norma ISO (adquiérala en ISO o INACAL).\n\n${body}`
 }
 
+function sigDocsMarkdown(): string {
+  const rows = iso.sig.documents
+    .map((doc) => `| ${doc.name} | ${doc.iso9001} | ${doc.iso14001} | ${doc.iso45001} | ${doc.iso37001} | ${doc.note} |`)
+    .join('\n')
+  return `# Matriz documental del sistema integrado de gestión
+
+Información documentada que exige cada norma y cómo integrarla en un solo sistema. Úsela como evidencia de planificación del SIG.
+
+## Matriz
+
+| Información documentada | ISO 9001 | ISO 14001 | ISO 45001 | ISO 37001 | Integración |
+|---|---|---|---|---|---|
+${rows}
+
+## Control de la matriz
+
+| Revisado por | Cargo | Fecha | Firma |
+|---|---|---|---|
+| | | | |`
+}
+
 export function IsoView() {
   const [tab, setTab] = useState<TabId>('45001')
   const [query, setQuery] = useState('')
@@ -100,7 +123,8 @@ export function IsoView() {
             </button>
           ))}
         </div>
-        {tab !== 'docs' && <DocActions id={`auditoria-iso-${tab}`} title={`Lista de auditoría ${TABS.find((item) => item.id === tab)?.label}`} markdown={auditMarkdown(tab, clauses)} compact />}
+        {tab !== 'docs' && tab !== 'familia' && <DocActions id={`auditoria-iso-${tab}`} title={`Lista de auditoría ${TABS.find((item) => item.id === tab)?.label}`} markdown={auditMarkdown(tab, clauses)} compact />}
+        {tab === 'docs' && <DocActions id="matriz-documental-sig" title="Matriz documental del sistema integrado de gestión" markdown={sigDocsMarkdown()} compact />}
       </div>
 
       {meta && (
@@ -121,7 +145,32 @@ export function IsoView() {
         </div>
       )}
 
-      {tab === 'docs' ? (
+      {tab === 'familia' ? (
+        <div className="iso-family">
+          <p className="adv-intro">
+            Normas técnicas que complementan la legislación peruana. Son voluntarias salvo que una norma legal las haga exigibles.
+            La adopción como Norma Técnica Peruana (NTP) se confirma en el{' '}
+            <a href={INACAL_CATALOG} target="_blank" rel="noopener noreferrer">catálogo de INACAL</a>.
+          </p>
+          <DocActions id="iso-familia" title="Matriz de normas técnicas relacionadas" markdown={isoFamilyMarkdown()} />
+          <div className="iso-family-grid">
+            {ISO_FAMILY.map((item) => (
+              <details key={item.code} className="iso-family-card">
+                <summary>
+                  <span className={`fam-tag fam-${item.family.split(' ')[0].toLowerCase()}`}>{item.family}</span>
+                  <b>{item.code}</b>
+                  <small>{item.title}</small>
+                </summary>
+                <dl>
+                  <div><dt>Para qué sirve</dt><dd>{item.purpose}</dd></div>
+                  <div><dt>Cómo usarla</dt><dd>{item.howToUse}</dd></div>
+                  <div><dt>En el Perú</dt><dd>{item.peru}</dd></div>
+                </dl>
+              </details>
+            ))}
+          </div>
+        </div>
+      ) : tab === 'docs' ? (
         <div className="md-table iso-docs">
           <table>
             <thead>

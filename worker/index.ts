@@ -1,5 +1,5 @@
 /**
- * Observatorio SST Peru - API en Cloudflare Workers.
+ * Observatorio Prevenir Peru - API en Cloudflare Workers.
  *
  * Sirve el frontend estatico (binding ASSETS) y expone /api/* sobre D1:
  * - autenticacion por correo + clave (PBKDF2) con sesion en cookie HttpOnly

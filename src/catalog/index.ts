@@ -1,5 +1,5 @@
 /**
- * Catalogo central del Observatorio SST Peru (sin dependencias de interfaz).
+ * Catalogo central del Observatorio Prevenir Peru (sin dependencias de interfaz).
  * Lo consumen la aplicacion, el Worker (API /api/v1) y otros repositorios.
  *
  * Relacion: Norma → Articulo → Obligacion → Formato → Evidencia → Infraccion → Casuistica.
@@ -22,10 +22,16 @@ export {
   type OrgProfile,
 } from './obligations'
 
-export const CATALOG_VERSION = '2026.11.1'
+export const CATALOG_VERSION = '2026.11.2'
 
 /** Bitacora de cambios del catalogo (alimenta /api/v1/actualizaciones). */
 export const CATALOG_CHANGELOG: Array<{ version: string; date: string; summary: string }> = [
+  {
+    version: '2026.11.2',
+    date: '2026-11-03',
+    summary:
+      '27 normas nuevas verificadas en gob.pe/El Peruano (Ley 32721, D.S. 003-2026-SA, teletrabajo 2023-2026, SCTR, VLP quimicos, salud mental, datos personales, sectoriales); articulos de la Ley 29783 cotejados con el SPIJ; art. 77 vigente (D.S. 002-2020-TR); periodicidad de auditorias (D.S. 014-2013-TR art. 15); enlaces directos a la pagina exacta del SPIJ; obligaciones SCTR, teletrabajo, bipedestacion, radiacion UV, agentes quimicos y hostigamiento (conexa).',
+  },
   {
     version: '2026.11.1',
     date: '2026-11-03',

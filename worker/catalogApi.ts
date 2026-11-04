@@ -17,6 +17,7 @@ import {
   type OrgProfile,
 } from '../src/catalog'
 import { legalNorms, sectorModules } from '../src/data/legalDatabase'
+import spij from '../src/data/spijLinks.json'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -38,7 +39,7 @@ function serializeObligation(obligation: Obligation, reason?: string) {
 }
 
 function profileFromQuery(params: URLSearchParams): OrgProfile | null {
-  const keys = ['sector', 'trabajadores', 'tipo', 'altoRiesgo', 'contratistas', 'teletrabajo', 'remype']
+  const keys = ['sector', 'trabajadores', 'tipo', 'altoRiesgo', 'contratistas', 'teletrabajo', 'remype', 'dePie', 'sol']
   if (!keys.some((key) => params.has(key))) return null
   const flag = (key: string) => params.get(key) === 'true' || params.get(key) === '1'
   return {
@@ -50,6 +51,8 @@ function profileFromQuery(params: URLSearchParams): OrgProfile | null {
     contractors: flag('contratistas'),
     telework: flag('teletrabajo'),
     remype: flag('remype'),
+    standingWork: flag('dePie'),
+    sunExposure: flag('sol'),
   }
 }
 
@@ -63,7 +66,7 @@ export function handleCatalog(request: Request, url: URL): Response {
 
   if (path === '') {
     return respond({
-      recursos: ['normas', 'normas/:id', 'articulos', 'obligaciones', 'formatos', 'infracciones', 'jurisprudencia', 'sectores', 'actualizaciones'],
+      recursos: ['normas', 'normas/:id', 'spij', 'articulos', 'obligaciones', 'formatos', 'infracciones', 'jurisprudencia', 'sectores', 'actualizaciones'],
       relacion: 'norma → artículo → obligación → formato → evidencia → infracción → casuística',
       aviso: 'Contenido orientativo. Verifique el texto vigente en la fuente oficial.',
     })
@@ -75,12 +78,14 @@ export function handleCatalog(request: Request, url: URL): Response {
     if (!norma) return respond({ error: 'Norma no encontrada.' }, 404)
     return respond({
       norma,
+      spij: (spij as { links: Record<string, unknown> }).links[id] ?? null,
       articulos: ARTICLES.filter((item) => item.normId === id),
       obligaciones: OBLIGATIONS.filter((item) => item.normIds.includes(id)).map((item) => serializeObligation(item)),
       formatos: FORMATS.filter((item) => item.normIds.includes(id)),
     })
   }
   if (path === 'articulos') return respond({ articulos: ARTICLES })
+  if (path === 'spij') return respond({ fuente: 'Ediciones de normas legales archivadas por el SPIJ (Ministerio de Justicia)', enlaces: (spij as { links: unknown }).links })
   if (path === 'obligaciones') {
     const profile = profileFromQuery(params)
     if (profile) return respond({ perfil: profile, obligaciones: applicableObligations(profile).map((item) => serializeObligation(item, item.reason)) })

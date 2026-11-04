@@ -1,6 +1,11 @@
-import { Leaf, ShieldCheck } from 'lucide-react'
+import { BookOpen, ChevronDown, Leaf, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { LegalReference } from '../components/LegalReference'
+import { AdaptedDownload, OrgPanel, useOrg } from '../components/AdaptedDownload'
+import { DocReader } from '../components/DocReader'
+import { SOMA_DETAILS } from '../data/somaDetails'
+import { ADAPTED_FOR_TEMPLATE, obligationTemplate, somaTemplate } from '../lib/adaptedTemplates'
+import { advancedTemplates, type AdvancedTemplate } from '../lib/templateBuilder'
 import { sectorModules } from '../data/legalDatabase'
 import {
   AUDIENCES,
@@ -24,12 +29,17 @@ interface ObligationsViewProps {
   onTabChange: (tab: ObligationsTab) => void
   defaultSize?: SizeBandId
   defaultSector?: string
+  onOpenGuide?: (guideId: string) => void
 }
 
-export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }: ObligationsViewProps) {
+export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector, onOpenGuide }: ObligationsViewProps) {
   const [size, setSize] = useState<SizeBandId>(defaultSize ?? 'medium')
   const [sector, setSector] = useState<string>(defaultSector ?? 'offices')
   const [audience, setAudience] = useState<AudienceId | 'todos'>('todos')
+  const [preview, setPreview] = useState<AdvancedTemplate | null>(null)
+  const [openSoma, setOpenSoma] = useState<string | null>(null)
+  const org = useOrg()
+  const adapted = useMemo(() => new Map(advancedTemplates(org).map((item) => [item.id, item])), [org])
 
   const visible = useMemo(
     () =>
@@ -43,6 +53,11 @@ export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }
   )
 
   const sectorLabel = sectorModules.find((module) => module.id === sector)?.label ?? sector
+  const context = {
+    sizeLabel: SIZE_BANDS.find((band) => band.id === size)?.label ?? size,
+    sectorLabel,
+    audienceLabel: audience === 'todos' ? 'todos los roles' : (AUDIENCES.find((item) => item.id === audience)?.label ?? audience),
+  }
 
   return (
     <div className="view-page">
@@ -72,6 +87,8 @@ export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }
           </button>
         </div>
       </header>
+
+      <OrgPanel compact />
 
       {tab === 'sst' ? (
         <>
@@ -136,6 +153,19 @@ export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }
                     <dd>{item.frequency ?? 'Requiere verificación en la fuente oficial.'}</dd>
                   </div>
                 </dl>
+                <div className="obligation-templates">
+                  <AdaptedDownload
+                    template={obligationTemplate(item, context, org)}
+                    onPreview={setPreview}
+                    label="Plantilla de cumplimiento (norma, por qué aplica, evidencia y seguimiento)"
+                  />
+                  {item.templateIds
+                    .map((templateId) => adapted.get(ADAPTED_FOR_TEMPLATE[templateId] ?? ''))
+                    .filter((template, index, list): template is AdvancedTemplate => Boolean(template) && list.indexOf(template) === index)
+                    .map((template) => (
+                      <AdaptedDownload key={template.id} template={template} onPreview={setPreview} label={template.name} />
+                    ))}
+                </div>
                 <footer>
                   <div className="result-links">
                     <b>Normativa:</b>
@@ -145,7 +175,7 @@ export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }
                   </div>
                   {item.templateIds.length > 0 && (
                     <div className="result-links">
-                      <b>Plantillas:</b>
+                      <b>Plantillas oficiales:</b>
                       {item.templateIds.map((templateId) => {
                         const template = findTemplate(templateId)
                         if (!template) return null
@@ -201,12 +231,43 @@ export function ObligationsView({ tab, onTabChange, defaultSize, defaultSector }
                       <LegalReference key={normId} normId={normId} compact />
                     ))}
                   </div>
+                  {SOMA_DETAILS[topic.id] && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn-ghost small soma-more"
+                        aria-expanded={openSoma === topic.id}
+                        onClick={() => setOpenSoma(openSoma === topic.id ? null : topic.id)}
+                      >
+                        Qué dice la normativa <ChevronDown size={15} aria-hidden="true" className={openSoma === topic.id ? 'rotated' : ''} />
+                      </button>
+                      {openSoma === topic.id && (
+                        <div className="soma-detail">
+                          <ul>
+                            {SOMA_DETAILS[topic.id].facts.map((fact) => <li key={fact}>{fact}</li>)}
+                          </ul>
+                          {SOMA_DETAILS[topic.id].guideId && onOpenGuide && (
+                            <button type="button" className="template-link" onClick={() => onOpenGuide(SOMA_DETAILS[topic.id].guideId!)}>
+                              <BookOpen size={14} aria-hidden="true" /> Leer la guía relacionada
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <AdaptedDownload template={somaTemplate(topic, org, SOMA_DETAILS[topic.id]?.facts)} onPreview={setPreview} label="Plantilla del tema" />
+                  {SOMA_DETAILS[topic.id]?.templateId && adapted.get(SOMA_DETAILS[topic.id].templateId!) && (
+                    <AdaptedDownload template={adapted.get(SOMA_DETAILS[topic.id].templateId!)!} onPreview={setPreview} label={adapted.get(SOMA_DETAILS[topic.id].templateId!)!.name} />
+                  )}
                 </article>
               )
             })}
           </div>
           <p className="site-disclaimer">{PLATFORM_DISCLAIMER}</p>
         </>
+      )}
+      {preview && (
+        <DocReader id={preview.id} title={preview.name} subtitle="Plantilla adaptada · vista previa" markdown={preview.markdown} onClose={() => setPreview(null)} />
       )}
     </div>
   )

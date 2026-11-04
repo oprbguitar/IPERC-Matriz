@@ -115,9 +115,11 @@ export function ComplianceView({ tab, onTabChange, signedIn, onOpenFormat }: Com
           ['contractors', 'Contratistas o terceros'],
           ['telework', 'Personal en teletrabajo'],
           ['remype', 'Inscrita en REMYPE'],
+          ['standingWork', 'Puestos de pie 3 h continuas o más (Ley 32721)'],
+          ['sunExposure', 'Trabajo al sol entre 10:00 y 16:00 (D.S. 003-2026-SA)'],
         ] as const).map(([key, label]) => (
           <label className="check" key={key}>
-            <input type="checkbox" checked={profile[key]} onChange={(event) => setProfile({ [key]: event.target.checked })} /> {label}
+            <input type="checkbox" checked={Boolean(profile[key])} onChange={(event) => setProfile({ [key]: event.target.checked })} /> {label}
           </label>
         ))}
       </section>

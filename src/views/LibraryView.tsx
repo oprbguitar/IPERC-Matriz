@@ -1,11 +1,11 @@
 import { BookOpen, Clock, FileBarChart2, FileSpreadsheet, FolderDown, LibraryBig, Search, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DocActions, DocReader } from '../components/DocReader'
+import { AdaptedDownload, OrgPanel, useOrg } from '../components/AdaptedDownload'
+import { guideManual } from '../data/guideManuals'
 import { findNorm } from '../data/legalDatabase'
 import { GUIDES } from '../data/guides'
 import type { DiagnosticAnswers } from '../lib/diagnostic'
-import { trackDownload } from '../lib/api'
-import { downloadExcel } from '../lib/docgen'
 import { REPORTS } from '../lib/reports'
 import { advancedTemplates } from '../lib/templateBuilder'
 import TemplatesView from './TemplatesView'
@@ -29,10 +29,11 @@ const TABS: Array<{ id: LibraryTab; label: string; icon: typeof BookOpen }> = [
 
 export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpened }: LibraryViewProps) {
   const [query, setQuery] = useState('')
-  const templates = useMemo(advancedTemplates, [])
-  const [reader, setReader] = useState<{ id: string; title: string; subtitle: string; markdown: string } | null>(() => {
+  const org = useOrg()
+  const templates = useMemo(() => advancedTemplates(org), [org])
+  const [reader, setReader] = useState<{ id: string; title: string; subtitle: string; markdown: string; full?: string } | null>(() => {
     const guide = GUIDES.find((item) => item.id === openGuideId)
-    return guide ? { id: guide.id, title: guide.title, subtitle: 'Guía del Observatorio', markdown: guide.body } : null
+    return guide ? { id: guide.id, title: guide.title, subtitle: 'Guía del Observatorio', markdown: guide.body, full: guideManual(guide.id) } : null
   })
 
   const guides = useMemo(
@@ -49,7 +50,7 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
         <div>
           <span className="eyebrow"><LibraryBig size={15} aria-hidden="true" /> Biblioteca</span>
           <h1>Guías, informes y plantillas</h1>
-          <p>Lea en línea o descargue en Word, PDF o Markdown. Todo se adapta a cualquier empresa o institución.</p>
+          <p>Lea la versión rápida en línea y descargue el manual completo en Word o PDF, con portada, índice y los datos de su organización.</p>
         </div>
         <div className="tab-switch" role="tablist" aria-label="Secciones de la biblioteca">
           {TABS.map(({ id, label, icon: Icon }) => (
@@ -66,6 +67,8 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
           ))}
         </div>
       </header>
+
+      <OrgPanel compact />
 
       <section className="provenance" aria-label="Procedencia de los documentos">
         <div><b>Formatos oficiales</b><small>Enlaces directos a MTPE, SUNAFIL, SERVIR, MINSA y MINAM: siempre la versión vigente publicada por la entidad.</small></div>
@@ -99,11 +102,11 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
                   <button
                     type="button"
                     className="btn-primary small"
-                    onClick={() => setReader({ id: guide.id, title: guide.title, subtitle: guide.audience, markdown: guide.body })}
+                    onClick={() => setReader({ id: guide.id, title: guide.title, subtitle: guide.audience, markdown: guide.body, full: guideManual(guide.id) })}
                   >
                     <BookOpen size={15} aria-hidden="true" /> Leer
                   </button>
-                  <DocActions id={guide.id} title={guide.title} markdown={guide.body} compact />
+                  <DocActions id={guide.id} title={guideManual(guide.id) ? `${guide.title} — manual completo` : guide.title} markdown={guideManual(guide.id) ?? guide.body} compact />
                 </footer>
               </article>
             ))}
@@ -158,23 +161,7 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
                 <p>{template.summary}</p>
                 <small className="guide-audience">{template.basis[0]}</small>
                 <footer>
-                  <button type="button" className="btn-secondary small" onClick={() => setReader({ id: template.id, title: template.name, subtitle: 'Plantilla avanzada', markdown: template.markdown })}>
-                    Vista previa
-                  </button>
-                  <div className="doc-actions compact">
-                    <DocActions id={template.id} title={template.name} markdown={template.markdown} compact />
-                    {template.sheet && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          downloadExcel(template.name, [['Plantilla', 'Observatorio SST Perú (propia, no oficial)'], ['Base legal', template.basis.join(' | ')]], template.sheet!.columns, template.sheet!.rows)
-                          trackDownload(`${template.id}-excel`)
-                        }}
-                      >
-                        <FileSpreadsheet size={15} aria-hidden="true" /> Excel
-                      </button>
-                    )}
-                  </div>
+                  <AdaptedDownload template={template} onPreview={(item) => setReader({ id: item.id, title: item.name, subtitle: 'Plantilla avanzada', markdown: item.markdown })} />
                 </footer>
               </article>
             ))}
@@ -190,6 +177,7 @@ export function LibraryView({ tab, onTabChange, answers, openGuideId, onGuideOpe
           title={reader.title}
           subtitle={reader.subtitle}
           markdown={reader.markdown}
+          fullMarkdown={reader.full}
           onClose={() => {
             setReader(null)
             onGuideOpened?.()

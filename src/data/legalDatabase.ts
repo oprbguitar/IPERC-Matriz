@@ -23,7 +23,7 @@ import { extendedLegalNorms } from './legalExtensions'
  */
 
 /** Fecha de la última revisión documental del catálogo. */
-export const LEGAL_CATALOGUE_VERIFIED_AT = '2026-07-25'
+export const LEGAL_CATALOGUE_VERIFIED_AT = '2026-11-03'
 
 export const LEGAL_CATEGORY_LABELS: Record<LegalCategory, string> = {
   'general-sst': 'Marco general de SST',
@@ -837,7 +837,7 @@ const sectorSeeds: SectorSeed[] = [
     id: 'mining',
     label: 'Minería',
     description: 'Operación minera, planta, mantenimiento, transporte interno, perforación y voladura.',
-    sectoralNormIds: ['ds-024-2016-em'],
+    sectoralNormIds: ['ds-024-2016-em', 'ds-034-2023-em'],
     hazardBoostKeywords: ['mina', 'planta', 'voladura', 'perforacion', 'socavon', 'acarreo'],
     hazardGroups: ['explosion', 'confined spaces', 'machinery and tools', 'traffic / vehicle movement', 'chemical'],
     suggestedEvidence: ['Permiso de trabajo', 'Monitoreos ocupacionales', 'Autorización de operador', 'Inspección de equipos'],
@@ -847,7 +847,7 @@ const sectorSeeds: SectorSeed[] = [
     id: 'hydrocarbons',
     label: 'Hidrocarburos',
     description: 'Exploración, producción, almacenamiento, transporte, estaciones y mantenimiento.',
-    sectoralNormIds: [],
+    sectoralNormIds: ['ds-043-2007-em'],
     hazardBoostKeywords: ['combustible', 'gas', 'presion', 'tanque', 'inflamable', 'derrame'],
     hazardGroups: ['fire', 'explosion', 'chemical', 'confined spaces', 'traffic / vehicle movement'],
     suggestedEvidence: ['Plan de contingencias', 'Hojas SDS', 'Monitoreo atmosferico', 'Permisos de trabajo en caliente'],
@@ -867,7 +867,7 @@ const sectorSeeds: SectorSeed[] = [
     id: 'health',
     label: 'Servicios de salud',
     description: 'Hospitales, clinicas, laboratorios, servicios asistenciales y actividades sanitarias.',
-    sectoralNormIds: ['rm-312-2011-minsa'],
+    sectoralNormIds: ['rm-312-2011-minsa', 'rm-826-2024-minsa'],
     hazardBoostKeywords: ['paciente', 'biologico', 'punzocortante', 'laboratorio', 'limpieza'],
     hazardGroups: [
       'biological',

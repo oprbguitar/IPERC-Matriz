@@ -69,6 +69,38 @@ export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: Si
   { id: 'aprender', label: 'Aprender', hint: 'Guías, informes y premium', views: ['plantillas', 'premium'] },
 ]
 
+/** Vistas que solo se muestran con sesión premium (Implementar se trabajará después). */
+export const PREMIUM_VIEWS: SiteViewId[] = ['herramientas', 'formatos']
+
+/** Recorrido guiado: orden en que se aprende y se avanza por la plataforma. */
+export const LEARNING_PATH: SiteViewId[] = [
+  'inicio',
+  'normativa',
+  'evolucion',
+  'casos',
+  'diagnostico',
+  'ruta',
+  'obligaciones',
+  'herramientas',
+  'formatos',
+  'verificar',
+  'fiscalizacion',
+  'plantillas',
+  'premium',
+]
+
+export function pathFor(premium: boolean): SiteViewId[] {
+  return LEARNING_PATH.filter((view) => premium || !PREMIUM_VIEWS.includes(view))
+}
+
+export function spacesFor(premium: boolean) {
+  return SPACES.filter((space) => premium || space.id !== 'implementar')
+}
+
+export function isSiteView(value: string): value is SiteViewId {
+  return NAV_ITEMS.some((item) => item.id === value)
+}
+
 export function spaceOf(view: SiteViewId): SpaceId | null {
   return SPACES.find((space) => space.views.includes(view))?.id ?? null
 }
@@ -822,6 +854,7 @@ export const OBLIGATIONS: ObligationItem[] = [
     kind: 'obligacion-legal',
     responsible: 'Empleador con participación de los trabajadores',
     evidence: 'Convocatoria, acta de elección y actas de reunion',
+    frequency: 'Reunión ordinaria mensual; mandato según el reglamento (Ley 29783, art. 29; D.S. 005-2012-TR)',
     normIds: ['sunafil-guia-comite', 'ds-005-2012-tr', 'ds-001-2021-tr'],
     templateIds: ['convocatoria-eleccion', 'acta-comite', 'guia-comite-sunafil'],
     audiences: ['empleador', 'comite', 'rrhh', 'trabajador'],
@@ -848,6 +881,7 @@ export const OBLIGATIONS: ObligationItem[] = [
     kind: 'obligacion-legal',
     responsible: 'Empleador y responsable de SST',
     evidence: 'Matriz IPERC vigente y acta de revisión',
+    frequency: 'Actualizar sin exceder un año, y antes si cambian las condiciones o hay daños a la salud (Ley 29783, art. 57; D.S. 005-2012-TR, art. 77, texto del D.S. 002-2020-TR)',
     normIds: ['law-29783', 'ds-005-2012-tr', 'rm-375-2008-tr'],
     templateIds: ['iperc-generador'],
     audiences: ['empleador', 'supervisor', 'comite', 'consultor'],
@@ -861,7 +895,7 @@ export const OBLIGATIONS: ObligationItem[] = [
     kind: 'obligacion-legal',
     responsible: 'Empleador y Recursos Humanos',
     evidence: 'Registro de capacitaciones con firma de asistentes',
-    frequency: 'Al menos cuatro veces al año',
+    frequency: 'No menos de cuatro capacitaciones al año, además de la inducción (Ley 29783, art. 35 b)',
     normIds: ['law-29783', 'rm-050-2013-tr'],
     templateIds: ['registro-capacitacion'],
     audiences: ['empleador', 'rrhh', 'supervisor', 'trabajador'],
@@ -875,6 +909,7 @@ export const OBLIGATIONS: ObligationItem[] = [
     kind: 'obligacion-legal',
     responsible: 'Responsable de SST y Recursos Humanos',
     evidence: 'Registros completos y disponibles para consulta',
+    frequency: 'Continua. Conservación: 20 años enfermedades ocupacionales, 10 años accidentes e incidentes peligrosos, 5 años los demás (D.S. 005-2012-TR, art. 35)',
     normIds: ['rm-050-2013-tr', 'ds-005-2012-tr'],
     templateIds: ['formatos-rm-050', 'registro-inspecciones', 'registro-epp'],
     audiences: ['empleador', 'rrhh', 'supervisor', 'comite'],
@@ -901,6 +936,7 @@ export const OBLIGATIONS: ObligationItem[] = [
     kind: 'obligacion-legal',
     responsible: 'Empleador y servicio de salud ocupacional',
     evidence: 'Programa de vigilancia y constancias de aptitud',
+    frequency: 'Exámenes médicos cada dos años; en alto riesgo, al ingreso, durante y al término (Ley 29783, art. 49 d, modificado por la Ley 30222)',
     normIds: ['ds-016-2016-tr', 'rm-312-2011-minsa'],
     templateIds: ['vigilancia-salud'],
     audiences: ['empleador', 'rrhh'],

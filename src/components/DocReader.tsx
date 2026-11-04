@@ -57,11 +57,13 @@ interface DocReaderProps {
   title: string
   subtitle?: string
   markdown: string
+  /** Versión ampliada para descargar (manual completo); si no existe se descarga lo que se lee. */
+  fullMarkdown?: string
   onClose: () => void
 }
 
 /** Lector a pantalla completa con indice lateral generado desde los titulos. */
-export function DocReader({ id, title, subtitle, markdown, onClose }: DocReaderProps) {
+export function DocReader({ id, title, subtitle, markdown, fullMarkdown, onClose }: DocReaderProps) {
   const bodyRef = useRef<HTMLDivElement>(null)
   const html = useMemo(() => markdownToHtml(markdown), [markdown])
   const headings = useMemo(
@@ -94,11 +96,17 @@ export function DocReader({ id, title, subtitle, markdown, onClose }: DocReaderP
             <small>{subtitle ?? 'Documento del Observatorio'}</small>
             <h2>{title}</h2>
           </div>
-          <DocActions id={id} title={title} markdown={markdown} />
+          <DocActions id={id} title={title} markdown={fullMarkdown ?? markdown} />
           <button type="button" className="reader-close" onClick={onClose} aria-label="Cerrar lector">
             <X size={20} />
           </button>
         </header>
+        {fullMarkdown && (
+          <p className="reader-extended">
+            La descarga en Word o PDF incluye el <b>manual ampliado</b>: procedimiento detallado, ejemplos, errores frecuentes,
+            listas de verificación y anexos que no se muestran en esta lectura rápida.
+          </p>
+        )}
         <div className="reader-layout">
           {headings.length > 2 && (
             <nav className="reader-toc" aria-label="Contenido">

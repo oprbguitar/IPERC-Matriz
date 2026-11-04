@@ -1,5 +1,9 @@
 import { Download, ExternalLink, FileSpreadsheet, FileText, FileType2, Link2, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { AdaptedDownload, OrgPanel, useOrg } from '../components/AdaptedDownload'
+import { DocReader } from '../components/DocReader'
+import { ADAPTED_FOR_TEMPLATE } from '../lib/adaptedTemplates'
+import { advancedTemplates, type AdvancedTemplate } from '../lib/templateBuilder'
 import { LegalReference } from '../components/LegalReference'
 import {
   PLATFORM_DISCLAIMER,
@@ -36,7 +40,7 @@ const ORIGINS: Array<[RegExp, string]> = [
 ]
 
 export function templateOrigin(item: { file?: string; externalUrl?: string }): { label: string; own: boolean } {
-  if (item.file) return { label: 'Elaborada por el Observatorio SST Perú (código abierto en GitHub)', own: true }
+  if (item.file) return { label: 'Elaborada por el Observatorio Prevenir Perú (código abierto en GitHub)', own: true }
   const match = ORIGINS.find(([pattern]) => pattern.test(item.externalUrl ?? ''))
   return { label: match ? `Formato oficial publicado por ${match[1]}` : 'Fuente externa', own: false }
 }
@@ -44,6 +48,9 @@ export function templateOrigin(item: { file?: string; externalUrl?: string }): {
 export function TemplatesView() {
   const [category, setCategory] = useState<TemplateCategoryId | 'todas'>('todas')
   const [query, setQuery] = useState('')
+  const org = useOrg()
+  const adapted = useMemo(() => new Map(advancedTemplates(org).map((item) => [item.id, item])), [org])
+  const [preview, setPreview] = useState<AdvancedTemplate | null>(null)
 
   const visible = useMemo(
     () =>
@@ -55,7 +62,7 @@ export function TemplatesView() {
     [category, query],
   )
 
-  const downloadable = TEMPLATES.filter((item) => item.file).length
+  const withAdapted = TEMPLATES.filter((item) => adapted.has(ADAPTED_FOR_TEMPLATE[item.id] ?? '')).length
 
   return (
     <div className="templates-embedded">
@@ -63,11 +70,14 @@ export function TemplatesView() {
         <div>
           <h2>Plantillas</h2>
           <p>
-            {downloadable} archivo(s) se descargan desde esta plataforma. El resto enlaza directamente a los formatos y
-            modelos publicados por entidades oficiales, para que siempre use la versión vigente.
+            Cada plantilla tiene dos caminos: la <b>fuente oficial</b> (MTPE, SUNAFIL, SERVIR, MINSA, MINAM), para usar siempre la
+            versión vigente, y una <b>versión adaptada</b> ({withAdapted} de {TEMPLATES.length}) que mejora y detalla el modelo con los
+            datos de su empresa, la base legal cotejada e instrucciones de llenado, lista para Word, Excel o PDF.
           </p>
         </div>
       </header>
+
+      <OrgPanel />
 
       <div className="filter-row">
         <label className="search-field">
@@ -122,6 +132,13 @@ export function TemplatesView() {
                   <LegalReference key={normId} normId={normId} compact />
                 ))}
               </div>
+              {adapted.get(ADAPTED_FOR_TEMPLATE[item.id] ?? '') && (
+                <AdaptedDownload
+                  template={adapted.get(ADAPTED_FOR_TEMPLATE[item.id])!}
+                  onPreview={setPreview}
+                  label="Versión adaptada a su empresa"
+                />
+              )}
               <a
                 className={isLocal ? 'btn-primary small' : 'btn-secondary small'}
                 href={href}
@@ -144,6 +161,9 @@ export function TemplatesView() {
       </div>
 
       <p className="site-disclaimer">{PLATFORM_DISCLAIMER}</p>
+      {preview && (
+        <DocReader id={preview.id} title={preview.name} subtitle="Plantilla adaptada · vista previa" markdown={preview.markdown} onClose={() => setPreview(null)} />
+      )}
     </div>
   )
 }

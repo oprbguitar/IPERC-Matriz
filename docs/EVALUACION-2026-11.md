@@ -1,6 +1,6 @@
 # Evaluación y ampliación — noviembre de 2026
 
-Respuesta a la evaluación externa «Evaluación y ampliación del Observatorio SST Perú» (3 de noviembre de 2026).
+Respuesta a la evaluación externa «Evaluación y ampliación del Observatorio Prevenir Perú» (3 de noviembre de 2026).
 Se priorizó corrección jurídica y seguridad antes que funciones visuales.
 
 ## Matriz de brechas

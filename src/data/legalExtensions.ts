@@ -1,4 +1,5 @@
 import type { LegalCategory, LegalNorm, ObligationKind, SectorId } from '../types'
+import { UPDATE_SEEDS } from './legalUpdate2026'
 
 /**
  * Ampliacion del catalogo (corte 2026-11-03): normas sectoriales, de fiscalizacion,
@@ -233,7 +234,7 @@ const seeds: Seed[] = [
   })),
 ]
 
-export const extendedLegalNorms: LegalNorm[] = seeds.map((seed) => ({
+export const extendedLegalNorms: LegalNorm[] = [...seeds, ...UPDATE_SEEDS].map((seed) => ({
   id: seed.id,
   shortName: seed.shortName,
   officialTitle: seed.officialTitle,

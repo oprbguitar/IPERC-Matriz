@@ -1,3 +1,5 @@
+import { ARTICLES_UPDATE } from './articlesUpdate'
+
 /**
  * Articulos verificados contra el texto oficial.
  *
@@ -31,9 +33,10 @@ const DS005 = 'https://cdn.www.gob.pe/uploads/document/file/571763/Decreto_Supre
 const RLGIT = 'https://cdn.www.gob.pe/uploads/document/file/2845244/DS%20019-2006-TR%20-%20Aprueban%20Reglamento%20de%20la%20Ley%20General%20de%20Inspecci%C3%B3n%20del%20Trabajo.pdf'
 const DS008 = 'https://cdn.www.gob.pe/uploads/document/file/519862/Decreto-supremo-n-008-2020-tr-1853904-1.pdf'
 const VERIFIED = '2026-11-03'
-const DS005_AMENDED = ['ds-006-2014-tr', 'ds-016-2016-tr', 'ds-020-2019-tr', 'ds-001-2021-tr']
+const DS005_AMENDED = ['ds-006-2014-tr', 'ds-016-2016-tr', 'ds-020-2019-tr', 'ds-001-2021-tr', 'ds-002-2020-tr']
 
-export const ARTICLES: CatalogArticle[] = [
+
+const BASE_ARTICLES: CatalogArticle[] = [
   {
     id: 'ds005-art25',
     normId: 'ds-005-2012-tr',
@@ -180,8 +183,8 @@ export const ARTICLES: CatalogArticle[] = [
   {
     id: 'ds005-art77',
     normId: 'ds-005-2012-tr',
-    label: 'Art. 77',
-    title: 'Evaluación inicial de riesgos',
+    label: 'Art. 77 (texto original 2012)',
+    title: 'Evaluación inicial de riesgos (sustituido por el D.S. 002-2020-TR)',
     excerpt: 'La evaluación inicial de riesgos debe realizarse en cada puesto de trabajo del empleador, por personal competente, en consulta con los trabajadores y sus representantes ante el Comité o Supervisor…',
     plainLanguage: 'La evaluación de riesgos es por puesto, la hace personal competente y se consulta con los trabajadores y el Comité o Supervisor.',
     topics: ['iperc'],
@@ -189,7 +192,7 @@ export const ARTICLES: CatalogArticle[] = [
     verification: 'texto-oficial-verificado',
     verifiedAt: VERIFIED,
     amendedBy: DS005_AMENDED,
-    appliesToIperc: true,
+    appliesToIperc: false,
   },
   {
     id: 'ds005-art82',
@@ -281,6 +284,8 @@ export const ARTICLES: CatalogArticle[] = [
     verifiedAt: VERIFIED,
   },
 ]
+
+export const ARTICLES: CatalogArticle[] = [...BASE_ARTICLES, ...ARTICLES_UPDATE]
 
 export function findArticle(id: string): CatalogArticle | undefined {
   return ARTICLES.find((article) => article.id === id)
