@@ -43,7 +43,7 @@
   padding: 6px 0 8px;
   border-top: 1px solid var(--border);
   overflow-x: auto;
-  animation: obs-rise 0.25s both;
+  animation: obs-fade 0.25s both;
 }
 
 .sub-nav b { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-right: 8px; }
@@ -90,7 +90,7 @@
   padding: 8vh 16px 16px;
   background: rgba(15, 30, 60, 0.45);
   backdrop-filter: blur(4px);
-  animation: obs-rise 0.2s both;
+  animation: obs-fade 0.25s both;
 }
 
 .search-panel {

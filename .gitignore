@@ -31,3 +31,4 @@ output
 # Cloudflare
 .wrangler
 .dev.vars
+.spij-cache/

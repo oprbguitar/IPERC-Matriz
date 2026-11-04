@@ -44,6 +44,7 @@ describe('riesgo residual: proyectado vs. verificado', () => {
   })
 
   it('las filas IPERC citan artículos verificados de evaluación de riesgos', () => {
-    expect(rows[0].legalMatches.some((match) => match.articleLabel === 'Art. 77' && match.status === 'validated')).toBe(true)
+    expect(rows[0].legalMatches.some((match) => match.articleLabel === 'Art. 77 (texto vigente)' && match.status === 'validated')).toBe(true)
+    expect(rows[0].legalMatches.some((match) => match.articleLabel === 'Art. 57' && match.status === 'validated')).toBe(true)
   })
 })

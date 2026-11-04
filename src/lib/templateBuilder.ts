@@ -1,5 +1,7 @@
 import { ARTICLES, findArticle, findInfraction, FORMATS, OBLIGATIONS, ORGANIZATION_FIELDS, type FormatItem } from '../catalog'
 import { findNorm } from '../data/legalDatabase'
+import { orgValue, type OrgData } from './orgStore'
+import { extraTemplates } from './adaptedTemplates'
 
 /**
  * Plantillas avanzadas descargables (Word, Excel, PDF).
@@ -25,11 +27,15 @@ const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', '
 
 const controlBlock = `| Control documental | |\n|---|---|\n| Código | |\n| Versión | |\n| Fecha de aprobación | |\n| Elaborado por | |\n| Revisado por (Comité/Supervisor) | |\n| Aprobado por | |`
 
-const orgBlock = `| Organización | |\n|---|---|\n${ORGANIZATION_FIELDS.map((field) => `| ${field.label} | |`).join('\n')}`
+/** Organización activa al generar: sus datos llenan la cabecera de cada plantilla. */
+let ORG: OrgData = {}
+
+const orgBlock = () =>
+  `| Organización | |\n|---|---|\n${ORGANIZATION_FIELDS.map((field) => `| ${field.label} | ${orgValue(ORG, field.key, '')} |`).join('\n')}`
 
 const signatures = `\n\n## Firmas\n\n| Elaborado | Revisado | Aprobado |\n|---|---|---|\n| Nombre: | Nombre: | Nombre: |\n| Cargo: | Cargo: | Cargo: |\n| Firma y fecha: | Firma y fecha: | Firma y fecha: |`
 
-function basisLines(normIds: string[], articleIds: string[]): string[] {
+export function basisLines(normIds: string[], articleIds: string[]): string[] {
   const articles = articleIds
     .map((id) => findArticle(id))
     .filter(Boolean)
@@ -38,16 +44,16 @@ function basisLines(normIds: string[], articleIds: string[]): string[] {
   return [...articles, ...norms.map((norm) => `${norm} (referencia general; validar artículo aplicable)`)]
 }
 
-function table(columns: string[], rows: string[][]): string {
+export function table(columns: string[], rows: string[][]): string {
   return `| ${columns.join(' | ')} |\n|${columns.map(() => '---').join('|')}|\n${rows.map((row) => `| ${row.map((cell) => cell || ' ').join(' | ')} |`).join('\n')}`
 }
 
-function blankRows(columns: string[], count = BLANK_ROWS): string[][] {
+export function blankRows(columns: string[], count = BLANK_ROWS): string[][] {
   return Array.from({ length: count }, (_, index) => [String(index + 1), ...columns.slice(1).map(() => '')])
 }
 
-function document(name: string, objective: string, basis: string[], body: string, retention?: string): string {
-  return `# ${name}\n\n${controlBlock}\n\n${orgBlock}\n\n## 1. Objetivo\n\n${objective}\n\n## 2. Base legal\n\n${basis.map((line) => `- ${line}`).join('\n')}\n\n${body}${retention ? `\n\n## Conservación\n\n${retention}` : ''}${signatures}\n\n> Plantilla propia del Observatorio SST Perú. No es un formato oficial: contraste los campos mínimos con la norma aplicable antes de usarla.`
+export function document(name: string, objective: string, basis: string[], body: string, retention?: string): string {
+  return `# ${name}\n\n${controlBlock}\n\n${orgBlock()}\n\n## 1. Objetivo\n\n${objective}\n\n## 2. Base legal\n\n${basis.map((line) => `- ${line}`).join('\n')}\n\n${body}${retention ? `\n\n## Conservación\n\n${retention}` : ''}${signatures}\n\n> Plantilla propia del Observatorio Prevenir Perú. No es un formato oficial: contraste los campos mínimos con la norma aplicable antes de usarla.`
 }
 
 /** Plantilla detallada a partir de un formato propio con columnas o campos. */
@@ -146,8 +152,8 @@ function composite(): AdvancedTemplate[] {
       name: 'Matriz IPERC detallada (residual proyectado y verificado)',
       topic: 'iperc',
       summary: `${ipercColumns.length - 1} columnas: proceso a plazo, con residual proyectado y verificado separados.`,
-      basis: ds005(['ds005-art77', 'ds005-art82', 'ds005-art32']),
-      markdown: document('Matriz IPERC detallada', 'Identificar peligros, evaluar riesgos por puesto y definir controles; el residual verificado solo se completa con evidencia.', ds005(['ds005-art77', 'ds005-art82']), `## 3. Instrucciones\n\n- P (probabilidad), S (severidad) y E (exposición) en escala 1 a 5; nivel = P × S × E.\n- Jerarquía: eliminación, sustitución, ingeniería, administrativos, EPP.\n- **Residual proyectado**: estimación si se ejecuta el control. **Residual verificado**: solo tras ejecución y evidencia.\n\n## 4. Matriz\n\n${table(ipercColumns, blankRows(ipercColumns))}`, 'Conservar como sustento de gestión preventiva (versiones históricas incluidas).'),
+      basis: basisLines(['ds-005-2012-tr'], ['ley29783-art57', 'ds005-art77-2020', 'ley29783-art21', 'ds005-art82']),
+      markdown: document('Matriz IPERC detallada', 'Identificar peligros, evaluar riesgos por puesto y definir controles; el residual verificado solo se completa con evidencia.', basisLines(['ds-005-2012-tr'], ['ley29783-art57', 'ds005-art77-2020', 'ley29783-art21']), `## 3. Instrucciones\n\n- P (probabilidad), S (severidad) y E (exposición) en escala 1 a 5; nivel = P × S × E.\n- Jerarquía: eliminación, sustitución, ingeniería, administrativos, EPP.\n- **Residual proyectado**: estimación si se ejecuta el control. **Residual verificado**: solo tras ejecución y evidencia.\n\n## 4. Matriz\n\n${table(ipercColumns, blankRows(ipercColumns))}`, 'Conservar como sustento de gestión preventiva (versiones históricas incluidas).'),
       sheet: { columns: ipercColumns, rows: blankRows(ipercColumns, 25) },
     },
     {
@@ -196,7 +202,8 @@ function composite(): AdvancedTemplate[] {
   ]
 }
 
-export function advancedTemplates(): AdvancedTemplate[] {
+export function advancedTemplates(org: OrgData = {}): AdvancedTemplate[] {
+  ORG = org
   const fromCatalog = FORMATS.filter((format) => format.origin === 'propio' && (format.columns || format.fields)).map(fromFormat)
-  return [...composite(), ...fromCatalog]
+  return [...composite(), ...extraTemplates(org), ...fromCatalog]
 }

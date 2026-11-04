@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Search, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ChevronDown, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
 import { LegalReference } from '../components/LegalReference'
 import { COVERAGE_DOMAINS } from '../data/coverage'
 import { GUIDES } from '../data/guides'
@@ -39,7 +39,7 @@ interface HomeViewProps {
   onOpenRouteCard: (id: RouteCardId) => void
   onOpenNorm: (normId: string) => void
   onOpenGuide: (guideId: string) => void
-  onSearch: () => void
+  onSearch?: () => void
   completedStepIds: string[]
   progressPercent: number
   answers: DiagnosticAnswers
@@ -52,7 +52,6 @@ export function HomeView({
   onOpenRouteCard,
   onOpenNorm,
   onOpenGuide,
-  onSearch,
   completedStepIds,
   progressPercent,
   answers,
@@ -64,10 +63,10 @@ export function HomeView({
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy">
           <h1 id="hero-title">
-            Gestiona <span className="accent-blue">SST</span>, <span className="accent-sky">SOMA</span> e{' '}
-            <span className="accent-teal">IPERC</span> de forma clara y rápida
+            Prevenir es <span className="accent-blue">cumplir</span>: SST, <span className="accent-sky">SOMA</span> e{' '}
+            <span className="accent-teal">IPERC</span> en un solo lugar
           </h1>
-          <p>Orientación práctica, plazos, formatos y herramientas para cualquier profesión o empresa.</p>
+          <p>Normas peruanas verificadas, plantillas listas para su empresa y una ruta guiada paso a paso para cualquier organización.</p>
           <div className="hero-actions">
             <button type="button" className="btn-primary" onClick={() => onNavigate('ruta')}>
               Comenzar ruta <ArrowRight size={17} aria-hidden="true" />
@@ -76,9 +75,6 @@ export function HomeView({
               <Download size={17} aria-hidden="true" /> Descargar plantillas
             </button>
           </div>
-          <button type="button" className="home-search" onClick={onSearch}>
-            <Search size={18} aria-hidden="true" /> ¿Qué debe cumplir? Ej.: «ergonomía en oficinas públicas», «accidente de montacargas»…
-          </button>
           <p className="hero-audience">
             <Users size={16} aria-hidden="true" /> Para empresas, supervisores, comités, trabajadores y consultores.
           </p>
@@ -149,7 +145,7 @@ export function HomeView({
                 <li key={step.id}>
                   <button type="button" className={done ? 'done' : ''} onClick={() => onNavigate(step.view)} title={step.hint}>
                     <span aria-hidden="true">
-                      <Icon size={18} />
+                      <Icon size={24} />
                     </span>
                     <b>{step.label}</b>
                   </button>
@@ -254,8 +250,8 @@ export function HomeView({
         </section>
       </div>
 
-      <section className="tracker" aria-labelledby="tracker-title">
-        <header className="tracker-head">
+      <details className="tracker" aria-labelledby="tracker-title">
+        <summary className="tracker-head">
           <div>
             <span className="eyebrow"><Radar size={15} aria-hidden="true" /> Sistema de seguimiento</span>
             <h2 id="tracker-title">Cobertura SST, SSOMA y salud ocupacional</h2>
@@ -272,7 +268,8 @@ export function HomeView({
               <span><b>Premium</b><small>IA y agentes</small></span>
             </button>
           )}
-        </header>
+          <span className="tracker-toggle" aria-hidden="true">Ver detalle <ChevronDown size={16} /></span>
+        </summary>
         <ul className="tracker-grid">
           {COVERAGE_DOMAINS.map((domain, index) => {
             const Icon = domain.icon
@@ -301,7 +298,7 @@ export function HomeView({
             )
           })}
         </ul>
-      </section>
+      </details>
 
       <p className="site-disclaimer">
         {PLATFORM_DISCLAIMER} Marco base:{' '}

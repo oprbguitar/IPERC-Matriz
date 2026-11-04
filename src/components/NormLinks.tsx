@@ -1,7 +1,15 @@
 import { BookMarked, ExternalLink, FileText, Landmark, Newspaper } from 'lucide-react'
 import { useState } from 'react'
-import { consolidatedUrl, normSource, SPIJ_HOME, spijUrl } from '../data/normLinks'
+import { consolidatedUrl, normSource, SPIJ_HOME, spijPage, spijUrl } from '../data/normLinks'
 import type { LegalNorm } from '../types'
+
+function spijTitle(id: string): string {
+  const page = spijPage(id)
+  if (!page) return 'Abrir en el SPIJ'
+  const [, dd, mm, yy] = page.edition.match(/(\d{2})(\d{2})(\d{2})/) ?? []
+  const year = Number(yy) > 50 ? `19${yy}` : `20${yy}`
+  return `Abre la norma en el SPIJ (Ministerio de Justicia): normas legales del ${dd}/${mm}/${year}, página ${page.page}`
+}
 
 /** Fila de enlaces directos de una norma: oficial, PDF, El Peruano, concordado y SPIJ. */
 export function NormLinks({ norm }: { norm: LegalNorm }) {
@@ -44,8 +52,8 @@ export function NormLinks({ norm }: { norm: LegalNorm }) {
         </a>
       )}
       {spij ? (
-        <a href={spij} target="_blank" rel="noopener noreferrer">
-          <Landmark size={14} aria-hidden="true" /> SPIJ
+        <a href={spij} target="_blank" rel="noopener noreferrer" title={spijTitle(norm.id)}>
+          <Landmark size={14} aria-hidden="true" /> SPIJ (texto directo)
         </a>
       ) : (
         <button type="button" onClick={openSpij} title="Abre el SPIJ (acceso libre) y copia el número de la norma para buscarla">

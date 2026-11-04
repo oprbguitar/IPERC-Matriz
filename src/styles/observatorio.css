@@ -1,5 +1,5 @@
 /* =========================================================================
-   Observatorio SST Perú - capa visual: barra fija, animaciones propias,
+   Observatorio Prevenir Perú - capa visual: barra fija, animaciones propias,
    linea de tiempo, arbol de especializacion, biblioteca, premium y herramientas.
    ========================================================================= */
 
@@ -35,14 +35,20 @@
   100% { transform: translateX(400%); }
 }
 
-.site-main > *,
-.view-page > * {
-  animation: obs-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+/* Entrada de vista: solo opacidad (sin desplazamientos que hagan "saltar" la página). */
+@keyframes obs-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.view-page > *:nth-child(2) { animation-delay: 60ms; }
-.view-page > *:nth-child(3) { animation-delay: 110ms; }
-.view-page > *:nth-child(4) { animation-delay: 160ms; }
+.site-main > * {
+  animation: obs-fade 0.18s ease-out both;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
 
 body.no-scroll {
   overflow: hidden;
@@ -93,14 +99,15 @@ body.no-scroll {
 }
 
 .site-header::after {
-  content: "";
+  content: none;
+  display: none;
   position: absolute;
   left: 0;
   bottom: -1px;
   width: 25%;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--sky), transparent);
-  animation: obs-scan 6s linear infinite;
+  
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -211,7 +218,7 @@ body.no-scroll {
 }
 
 .story-eras li {
-  animation: obs-rise 0.5s both;
+  animation: obs-fade 0.25s both;
   animation-delay: calc(var(--i) * 90ms + 200ms);
 }
 
@@ -442,7 +449,6 @@ body.no-scroll {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--blue), var(--sky), var(--blue));
   background-size: 200% 100%;
-  animation: obs-shimmer 3s linear infinite;
   transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -547,7 +553,7 @@ body.no-scroll {
   border: 1px solid var(--border);
   background: var(--surface);
   text-align: left;
-  animation: obs-rise 0.4s both;
+  animation: obs-fade 0.25s both;
   animation-delay: calc(var(--i) * 60ms);
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
@@ -888,7 +894,7 @@ body.no-scroll {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
-  animation: obs-rise 0.45s both;
+  animation: obs-fade 0.25s both;
   animation-delay: calc(var(--i, 0) * 45ms);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -969,7 +975,7 @@ body.no-scroll {
   padding: 18px;
   background: rgba(15, 30, 60, 0.45);
   backdrop-filter: blur(4px);
-  animation: obs-rise 0.25s both;
+  animation: obs-fade 0.25s both;
 }
 
 .reader-panel {
@@ -1152,7 +1158,7 @@ body.no-scroll {
   border: 1px dashed #e6c675;
   background: linear-gradient(110deg, #fffaf0 30%, #fff3d6 50%, #fffaf0 70%);
   background-size: 200% 100%;
-  animation: obs-shimmer 4s linear infinite, obs-rise 0.4s both;
+  animation: obs-fade 0.3s both;
   animation-delay: 0s, calc(var(--i) * 60ms);
   color: #8a5a00;
 }
@@ -1479,7 +1485,7 @@ body.no-scroll {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xs);
-  animation: obs-rise 0.4s both;
+  animation: obs-fade 0.25s both;
 }
 
 .an-card.wide { grid-column: 1 / -1; }
@@ -1683,3 +1689,8 @@ body.no-scroll {
 .template-origin.official { background: var(--teal-soft); color: #0b5a52; }
 .templates-embedded { display: flex; flex-direction: column; gap: 14px; }
 .templates-embedded .page-head h2 { font-size: 20px; }
+
+/* Accesibilidad: sin animaciones para quien las desactiva en el sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

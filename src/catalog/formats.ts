@@ -55,7 +55,7 @@ export const ORGANIZATION_FIELDS: FormatField[] = [
   { key: 'version', label: 'Versión' },
 ]
 
-const OWN = 'Observatorio SST Perú'
+const OWN = 'Observatorio Prevenir Perú'
 const V = '1.0 (2026-11)'
 const RM050 = ['rm-050-2013-tr', 'ds-005-2012-tr']
 

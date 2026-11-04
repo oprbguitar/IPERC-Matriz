@@ -1,11 +1,14 @@
 import { CalendarCheck, ChevronDown, LayoutGrid, List, Search } from 'lucide-react'
 import { NormLinks } from '../components/NormLinks'
+import { ARTICLES } from '../catalog'
+import { normDetail } from '../data/normDetails'
 import { SOURCES_GENERATED_AT } from '../data/normLinks'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   LEGAL_CATALOGUE_VERIFIED_AT,
   LEGAL_CATEGORY_LABELS,
   LEGAL_STATUS_LABELS,
+  findNorm,
   legalNorms,
   sectoralNormIdsBySector,
   sectorModules,
@@ -202,12 +205,14 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
 
               {isOpen && (
                 <div className="legal-detail" id={`regula-${norm.id}`}>
+                  {normDetail(norm.id)?.purpose && <p className="legal-purpose">{normDetail(norm.id)!.purpose}</p>}
                   <ul>
                     {norm.whatItRegulates.map((point) => (
                       <li key={point}>{point}</li>
                     ))}
                   </ul>
                   {norm.notes && <p className="legal-note">{norm.notes}</p>}
+                  <NormDeepDetail normId={norm.id} />
                   <div className="legal-detail-links">
                     {norm.relatedTemplateIds && norm.relatedTemplateIds.length > 0 && (
                       <div className="result-links">
@@ -249,6 +254,68 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
       )}
 
       <p className="site-disclaimer">{PLATFORM_DISCLAIMER}</p>
+    </div>
+  )
+}
+
+/** Bloques plegables: modificatorias, datos clave, uso práctico y artículos cotejados. */
+function NormDeepDetail({ normId }: { normId: string }) {
+  const detail = normDetail(normId)
+  const articles = ARTICLES.filter((article) => article.normId === normId)
+  if (!detail && articles.length === 0) return null
+  return (
+    <div className="norm-deep">
+      {detail?.keyFacts && (
+        <details open>
+          <summary>Datos clave ({detail.keyFacts.length})</summary>
+          <ul className="deep-facts">
+            {detail.keyFacts.map((fact) => <li key={fact}>{fact}</li>)}
+          </ul>
+        </details>
+      )}
+      {detail?.amendments && (
+        <details>
+          <summary>Modificaciones y normas complementarias ({detail.amendments.length})</summary>
+          <ol className="deep-timeline">
+            {detail.amendments.map((item) => (
+              <li key={item.label}>
+                <b>{item.label}</b> <small>{item.date}</small>
+                <p>{item.what}</p>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+      {detail?.inPractice && (
+        <details>
+          <summary>Cómo aplicarla en la práctica</summary>
+          <ol className="deep-steps">
+            {detail.inPractice.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+        </details>
+      )}
+      {articles.length > 0 && (
+        <details>
+          <summary>Artículos cotejados con el texto oficial ({articles.length})</summary>
+          <div className="deep-articles">
+            {articles.map((article) => (
+              <details key={article.id} className="deep-article">
+                <summary>
+                  <b>{article.label}</b> {article.title}
+                  {article.amendedBy?.length ? <em> · modificado</em> : null}
+                </summary>
+                <blockquote>«{article.excerpt}»</blockquote>
+                <p>{article.plainLanguage}</p>
+                <small>
+                  Cotejado el {article.verifiedAt} ·{' '}
+                  <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer">ver texto oficial</a>
+                  {article.amendedBy?.length ? ` · Modificatorias: ${article.amendedBy.map((id) => findNorm(id)?.shortName ?? id).join(', ')}` : ''}
+                </small>
+              </details>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   )
 }

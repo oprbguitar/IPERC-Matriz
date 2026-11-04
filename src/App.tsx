@@ -1,14 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import './styles/observatorio.css'
 import './styles/compliance.css'
+import './styles/navigation.css'
 import { LegalReference } from './components/LegalReference'
 import { SideDrawer } from './components/SideDrawer'
 import { GlobalSearch, type SearchTarget } from './components/GlobalSearch'
 import { SiteHeader } from './components/SiteHeader'
+import { PagePager, PageTrail } from './components/PageNav'
+import { DocReader } from './components/DocReader'
+import { FORMATS } from './catalog'
+import { GUIDES } from './data/guides'
+import { guideManual } from './data/guideManuals'
+import { PremiumLock } from './components/PremiumLock'
 import {
   findTemplate,
+  isSiteView,
   OBLIGATION_KIND_HELP,
+  PREMIUM_VIEWS,
   OBLIGATION_KIND_LABELS,
   PLATFORM_DISCLAIMER,
   ROUTE_CARDS,
@@ -19,17 +28,23 @@ import {
 import { assetUrl } from './lib/assets'
 import { statusForAnswer, type DiagnosticAnswers } from './lib/diagnostic'
 import { api, type ApiUser } from './lib/api'
-import { ToolsWorkspace } from './tools/ToolsWorkspace'
-import EvolutionView from './views/EvolutionView'
-import LibraryView, { type LibraryTab } from './views/LibraryView'
+import type { LibraryTab } from './views/LibraryView'
 import PremiumView, { computePercent } from './views/PremiumView'
 import HomeView from './views/HomeView'
-import NormativeView from './views/NormativeView'
-import ComplianceView, { type ComplianceTab } from './views/ComplianceView'
-import FormatsView from './views/FormatsView'
-import InspectionView, { type InspectionTab } from './views/InspectionView'
-import ObligationsView, { type ObligationsTab } from './views/ObligationsView'
-import RouteView from './views/RouteView'
+import type { ComplianceTab } from './views/ComplianceView'
+import FormatsView, { FormEditor } from './views/FormatsView'
+import type { InspectionTab } from './views/InspectionView'
+import type { ObligationsTab } from './views/ObligationsView'
+
+// Cada espacio se descarga solo cuando se visita: la portada carga mucho más rápido.
+const ToolsWorkspace = lazy(() => import('./tools/ToolsWorkspace').then((module) => ({ default: module.ToolsWorkspace })))
+const EvolutionView = lazy(() => import('./views/EvolutionView'))
+const LibraryView = lazy(() => import('./views/LibraryView'))
+const NormativeView = lazy(() => import('./views/NormativeView'))
+const ComplianceView = lazy(() => import('./views/ComplianceView'))
+const InspectionView = lazy(() => import('./views/InspectionView'))
+const ObligationsView = lazy(() => import('./views/ObligationsView'))
+const RouteView = lazy(() => import('./views/RouteView'))
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -53,8 +68,16 @@ function readStoredAnswers(): DiagnosticAnswers {
   }
 }
 
+/** Vista inicial desde la dirección (#/normativa), para que atrás/adelante y los enlaces funcionen. */
+function viewFromHash(): SiteViewId {
+  const value = window.location.hash.replace(/^#\/?/, '')
+  return isSiteView(value) ? value : 'inicio'
+}
+
 function App() {
-  const [view, setView] = useState<SiteViewId>('inicio')
+  const [view, setView] = useState<SiteViewId>(viewFromHash)
+  const [readerGuideId, setReaderGuideId] = useState<string | undefined>(undefined)
+  const [editorFormatId, setEditorFormatId] = useState<string | undefined>(undefined)
   const [answers, setAnswers] = useState<DiagnosticAnswers>(readStoredAnswers)
   const [openCard, setOpenCard] = useState<RouteCardId | null>(null)
   const [obligationsTab, setObligationsTab] = useState<ObligationsTab>('sst')
@@ -124,28 +147,42 @@ function App() {
   const defaultSize = (answers.size as SizeBandId | undefined) ?? undefined
   const defaultSector = answers.sector
 
+  // Historial del navegador: cada vista tiene su dirección y los botones atrás/adelante funcionan.
+  useEffect(() => {
+    if (!window.location.hash) window.history.replaceState({ view }, '', `#/${view}`)
+    const onPop = () => {
+      setView(viewFromHash())
+      setOpenCard(null)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const navigate = useCallback((next: SiteViewId) => {
-    setView(next)
+    setView((current) => {
+      if (current !== next) window.history.pushState({ view: next }, '', `#/${next}`)
+      return next
+    })
     setOpenCard(null)
   }, [])
 
+  const premium = Boolean(user)
+
   const openRouteCard = useCallback((id: RouteCardId) => setOpenCard(id), [])
 
-  const openGuide = useCallback((guideId: string) => {
-    setOpenGuideId(guideId)
-    setLibraryTab('guias')
-    setView('plantillas')
-  }, [])
+  // Guías y formatos se abren encima de la página actual: al cerrar, el usuario sigue donde estaba.
+  const openGuide = useCallback((guideId: string) => setReaderGuideId(guideId), [])
 
-  const openNorm = useCallback((normId: string) => {
-    setFocusNormId(normId)
-    setView('normativa')
-  }, [])
+  const openNorm = useCallback(
+    (normId: string) => {
+      setFocusNormId(normId)
+      navigate('normativa')
+    },
+    [navigate],
+  )
 
-  const openFormat = useCallback((formatId: string) => {
-    setOpenFormatId(formatId)
-    setView('formatos')
-  }, [])
+  const openFormat = useCallback((formatId: string) => setEditorFormatId(formatId), [])
 
   const openSearch = useCallback(() => setSearchOpen(true), [])
 
@@ -154,24 +191,46 @@ function App() {
       if (target.kind === 'norma') openNorm(target.id)
       else if (target.kind === 'guia') openGuide(target.id)
       else if (target.kind === 'formato') openFormat(target.id)
-      else if (target.kind === 'obligacion') setView('diagnostico')
+      else if (target.kind === 'obligacion') navigate('diagnostico')
       else if (target.kind === 'caso') {
         setInspectionTab('casos')
-        setView('casos')
+        navigate('casos')
       } else {
         setInspectionTab('contingencia')
-        setView('fiscalizacion')
+        navigate('fiscalizacion')
       }
     },
-    [openNorm, openGuide, openFormat],
+    [openNorm, openGuide, openFormat, navigate],
   )
 
   const card = ROUTE_CARDS.find((item) => item.id === openCard)
+  const readerGuide = GUIDES.find((item) => item.id === readerGuideId)
+  const editorFormat = FORMATS.find((item) => item.id === editorFormatId)
+  const locked = !premium && PREMIUM_VIEWS.includes(view)
 
-  if (view === 'herramientas') {
+  const overlays = (
+    <>
+      {readerGuide && (
+        <DocReader
+          id={readerGuide.id}
+          title={readerGuide.title}
+          subtitle={`${readerGuide.audience} · al cerrar vuelve a esta página`}
+          markdown={readerGuide.body}
+          fullMarkdown={guideManual(readerGuide.id)}
+          onClose={() => setReaderGuideId(undefined)}
+        />
+      )}
+      {editorFormat && <FormEditor format={editorFormat} onClose={() => setEditorFormatId(undefined)} />}
+    </>
+  )
+
+  if (view === 'herramientas' && !locked) {
     return (
       <>
-        <ToolsWorkspace onBackToSite={() => navigate('inicio')} onOpenGuide={openGuide} />
+        <Suspense fallback={<p className="empty-note">Cargando herramientas…</p>}>
+          <ToolsWorkspace onBackToSite={() => window.history.back()} onOpenGuide={openGuide} />
+        </Suspense>
+        {overlays}
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSearch} />
       </>
     )
@@ -181,8 +240,11 @@ function App() {
     <div className="site-shell">
       <SiteHeader active={view} onNavigate={navigate} onSearch={openSearch} user={user} premiumPercent={premiumPercent} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSearch} />
+      {view !== 'inicio' && <PageTrail view={view} premium={premium} onNavigate={navigate} />}
 
-      <main className="site-main" id="contenido">
+      <main className="site-main" id="contenido" key={view}>
+        {locked && <PremiumLock view={view} onNavigate={navigate} />}
+        <Suspense fallback={<p className="empty-note view-loading">Cargando…</p>}>
         {view === 'inicio' && (
           <HomeView
             onNavigate={navigate}
@@ -210,6 +272,7 @@ function App() {
             onTabChange={setObligationsTab}
             defaultSize={defaultSize}
             defaultSector={defaultSector}
+            onOpenGuide={openGuide}
           />
         )}
         {view === 'plantillas' && (
@@ -231,7 +294,7 @@ function App() {
             onOpenFormat={openFormat}
           />
         )}
-        {view === 'formatos' && (
+        {view === 'formatos' && !locked && (
           <FormatsView key={openFormatId ?? 'formatos'} openFormatId={openFormatId} onFormatOpened={() => setOpenFormatId(undefined)} />
         )}
         {(view === 'fiscalizacion' || view === 'casos') && (
@@ -244,7 +307,10 @@ function App() {
             onOpenGuide={openGuide}
           />
         )}
+        </Suspense>
+        {view !== 'inicio' && <PagePager view={view} premium={premium} onNavigate={navigate} />}
       </main>
+      {overlays}
 
       <SideDrawer
         open={Boolean(card)}

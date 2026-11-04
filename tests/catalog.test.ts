@@ -14,6 +14,11 @@ import { legalNorms, sectorModules } from '../src/data/legalDatabase'
 import { computeFine, FINE_TABLE } from '../src/lib/sunafil'
 import { advancedTemplates } from '../src/lib/templateBuilder'
 import { handleCatalog } from '../worker/catalogApi'
+import { GUIDES } from '../src/data/guides'
+import { guideManual } from '../src/data/guideManuals'
+import spij from '../src/data/spijLinks.json'
+import { TEMPLATES } from '../src/data/platformContent'
+import { ADAPTED_FOR_TEMPLATE } from '../src/lib/adaptedTemplates'
 
 const normIds = new Set(legalNorms.map((norm) => norm.id))
 
@@ -21,7 +26,7 @@ describe('integridad referencial del catálogo', () => {
   it('cada artículo pertenece a una norma existente y tiene fuente oficial', () => {
     for (const article of ARTICLES) {
       expect(normIds.has(article.normId), article.id).toBe(true)
-      expect(article.sourceUrl).toMatch(/^https:\/\/cdn\.www\.gob\.pe\//)
+      expect(article.sourceUrl).toMatch(/^https:\/\/(cdn\.www\.gob\.pe|spij\.minjus\.gob\.pe|busquedas\.elperuano\.pe)\//)
     }
   })
 
@@ -41,7 +46,7 @@ describe('integridad referencial del catálogo', () => {
     for (const format of FORMATS) {
       format.normIds.forEach((id) => expect(normIds.has(id), `${format.id} → ${id}`).toBe(true))
       if (format.origin === 'oficial') expect(format.url, format.id).toBeTruthy()
-      if (format.origin === 'propio') expect(format.publisher).toBe('Observatorio SST Perú')
+      if (format.origin === 'propio') expect(format.publisher).toBe('Observatorio Prevenir Perú')
     }
   })
 
@@ -153,5 +158,79 @@ describe('API pública /api/v1', () => {
   it('rechaza escritura', () => {
     const url = new URL('https://sst.test/api/v1/normas')
     expect(handleCatalog(new Request(url, { method: 'POST' }), url).status).toBe(405)
+  })
+})
+
+describe('ampliación normativa 2026-11', () => {
+  it('incorpora las normas verificadas de 2026, SCTR, teletrabajo y salud ocupacional', () => {
+    for (const id of ['law-32721', 'ds-003-2026-sa', 'ds-009-2026-tr', 'rm-051-2026-tr', 'rm-546-2026-minsa', 'ds-008-2026-tr', 'rm-613-2026-minsa', 'law-31572', 'ds-002-2023-tr', 'ds-002-2020-tr', 'rm-245-2021-tr', 'ds-003-98-sa', 'ds-008-2022-sa', 'ds-022-2023-sa', 'rm-480-2008-minsa', 'rm-571-2014-minsa', 'ds-015-2005-sa', 'rm-733-2024-minsa', 'ds-016-2024-jus', 'ds-034-2023-em', 'ds-043-2007-em', 'rm-826-2024-minsa']) {
+      expect(normIds.has(id), id).toBe(true)
+    }
+  })
+
+  it('SCTR y teletrabajo ya no tienen normas vacías', () => {
+    expect(OBLIGATIONS.find((item) => item.id === 'sctr')?.normIds.length).toBeGreaterThan(0)
+    expect(OBLIGATIONS.find((item) => item.id === 'teletrabajo')?.normIds).toContain('ds-009-2026-tr')
+  })
+
+  it('la IPERC exige actualización sin exceder un año con artículos cotejados', () => {
+    const iperc = OBLIGATIONS.find((item) => item.id === 'iperc')!
+    expect(iperc.articleIds).toEqual(expect.arrayContaining(['ley29783-art57', 'ds005-art77-2020']))
+    expect(iperc.frequency).toMatch(/un año/)
+  })
+
+  it('la periodicidad de auditoría depende del riesgo y del tamaño (D.S. 014-2013-TR, art. 15)', () => {
+    const audit = (profile: Partial<typeof DEFAULT_PROFILE>) => applicableObligations({ ...DEFAULT_PROFILE, ...profile }).find((item) => item.id === 'auditoria')?.reason
+    expect(audit({ highRisk: true, workers: 5 })).toMatch(/dos años/)
+    expect(audit({ highRisk: false, workers: 40 })).toMatch(/tres años/)
+    expect(audit({ highRisk: false, workers: 8 })).toBeUndefined()
+  })
+
+  it('bipedestación y radiación UV se activan solo cuando el perfil lo declara', () => {
+    const ids = (profile: Partial<typeof DEFAULT_PROFILE>) => applicableObligations({ ...DEFAULT_PROFILE, ...profile }).map((item) => item.id)
+    expect(ids({})).not.toContain('bipedestacion')
+    expect(ids({ standingWork: true })).toContain('bipedestacion')
+    expect(ids({ sunExposure: true })).toContain('radiacion-uv')
+  })
+
+  it('las normas conexas no se presentan como obligaciones de la Ley 29783', () => {
+    expect(OBLIGATIONS.find((item) => item.id === 'hostigamiento')?.normIds).not.toContain('law-29783')
+  })
+})
+
+describe('enlaces directos al SPIJ', () => {
+  const links = (spij as { links: Record<string, { url: string; page: number }> }).links
+
+  it('apuntan a la página de la edición archivada por el SPIJ', () => {
+    expect(Object.keys(links).length).toBeGreaterThan(40)
+    for (const [id, link] of Object.entries(links)) {
+      expect(link.url, id).toMatch(/^https:\/\/spij\.minjus\.gob\.pe\/Normas\/textos\/\d{6}T\.pdf#page=\d+$/)
+      expect(normIds.has(id), id).toBe(true)
+    }
+  })
+})
+
+describe('plantillas adaptadas y manuales', () => {
+  it('se completan con los datos de la organización', () => {
+    const templates = advancedTemplates({ razonSocial: 'Andina Prueba S.A.C.', ruc: '20999999999', centro: 'Sede Lima' })
+    const politica = templates.find((item) => item.id === 'tpl-politica-sst')!
+    expect(politica.markdown).toContain('Andina Prueba S.A.C.')
+    expect(politica.markdown).toContain('20999999999')
+  })
+
+  it('cada plantilla adaptada de la biblioteca existe', () => {
+    const ids = new Set(advancedTemplates().map((item) => item.id))
+    for (const [templateId, adaptedId] of Object.entries(ADAPTED_FOR_TEMPLATE)) {
+      expect(TEMPLATES.some((item) => item.id === templateId), templateId).toBe(true)
+      expect(ids.has(adaptedId), adaptedId).toBe(true)
+    }
+  })
+
+  it('las guías principales tienen manual ampliado más extenso que la lectura rápida', () => {
+    for (const guide of GUIDES.filter((item) => item.id !== 'guia-panorama-2026')) {
+      const manual = guideManual(guide.id)
+      expect(manual, guide.id).toBeTruthy()
+      expect(manual!.length, guide.id).toBeGreaterThan(guide.body.length * 0.8)
+    }
   })
 })
