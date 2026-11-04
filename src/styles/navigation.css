@@ -966,3 +966,38 @@ li.open .career-num {
   .career-body { padding-left: 16px; }
   .career-map::before { display: none; }
 }
+
+/* ---------- Responsive / móvil ----------
+   .menu-nav (display:flex) anulaba el ocultamiento del menú de escritorio; en pantallas
+   estrechas se usa solo el menú hamburguesa. Además, los hijos de grid/flex no deben
+   crecer más que la pantalla (min-width:0). */
+@media (max-width: 1080px) {
+  .site-nav.menu-nav { display: none; }
+  .site-menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+}
+
+.site-main, .site-main > *, .home, .home > *, .view-page, .view-page > * { min-width: 0; }
+.site-main { max-width: 100vw; }
+.home { width: 100%; }
+img, svg, video, canvas { max-width: 100%; }
+table { max-width: 100%; }
+.md-table, .table-wrap, .iso-docs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+pre, code { overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  html { -webkit-text-size-adjust: 100%; }
+  .site-main { padding-inline: 14px; }
+  .home, .view-page { gap: 14px; }
+  h1 { font-size: clamp(1.45rem, 6.2vw, 1.9rem); line-height: 1.15; overflow-wrap: anywhere; }
+  .page-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .tab-switch { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tab-switch button { flex: 0 0 auto; white-space: nowrap; }
+  .hero, .story-strip, .home-lower, .iso-layout, .career-body { grid-template-columns: 1fr !important; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions button { width: 100%; justify-content: center; }
+  .hero-art { max-width: 320px; margin-inline: auto; }
+  .page-trail { flex-wrap: wrap; font-size: 12.5px; }
+  .iso-list { max-height: 240px; overflow-y: auto; }
+  .site-nav-mobile { max-height: calc(100vh - 70px); overflow-y: auto; }
+  button, .btn-primary, .btn-secondary, a.btn-secondary { min-height: 40px; }
+}
