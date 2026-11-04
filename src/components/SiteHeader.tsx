@@ -1,8 +1,8 @@
-import { Crown, Menu, Search, UserRound, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { NAV_ITEMS, SPACES, spaceOf, spacesFor, type SiteViewId } from '../data/platformContent'
-import { assetUrl } from '../lib/assets'
+import { ChevronDown, Crown, Menu, Search, UserRound, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { NAV_ITEMS, spaceOf, spacesFor, type SiteViewId, type SpaceId } from '../data/platformContent'
 import type { ApiUser } from '../lib/api'
+import { assetUrl } from '../lib/assets'
 
 interface SiteHeaderProps {
   active: SiteViewId
@@ -12,16 +12,22 @@ interface SiteHeaderProps {
   premiumPercent: number | null
 }
 
-const labelOf = (id: SiteViewId) => NAV_ITEMS.find((item) => item.id === id)?.label ?? id
+const itemOf = (id: SiteViewId) => NAV_ITEMS.find((item) => item.id === id)
 
+/**
+ * Menú principal: un botón por espacio que despliega sus secciones (con una línea que
+ * explica cada una). Se abre al pasar el cursor o con clic/teclado y se cierra con Escape
+ * o al hacer clic fuera. En móvil, el mismo árbol aparece en el menú hamburguesa.
+ */
 export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent }: SiteHeaderProps) {
   const [openMenu, setOpenMenu] = useState(false)
+  const [openSpace, setOpenSpace] = useState<SpaceId | null>(null)
   const [scrolled, setScrolled] = useState(false)
-  const visibleSpaces = spacesFor(Boolean(user))
+  const navRef = useRef<HTMLElement>(null)
+  const closeTimer = useRef<number | undefined>(undefined)
+  const spaces = spacesFor(Boolean(user))
   const activeSpace = spaceOf(active)
-  const space = SPACES.find((item) => item.id === activeSpace)
 
-  // La barra queda fija; al desplazarse se compacta y gana sombra.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
     onScroll()
@@ -29,21 +35,39 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Atajo de teclado: Ctrl/Cmd + K abre la búsqueda.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         onSearch()
       }
+      if (event.key === 'Escape') {
+        setOpenSpace(null)
+        ;(document.activeElement as HTMLElement | null)?.blur()
+      }
+    }
+    const onClick = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpenSpace(null)
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onClick)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onClick)
+    }
   }, [onSearch])
 
   function go(view: SiteViewId) {
     onNavigate(view)
     setOpenMenu(false)
+    setOpenSpace(null)
+    ;(document.activeElement as HTMLElement | null)?.blur()
+  }
+
+  function hover(id: SpaceId | null) {
+    window.clearTimeout(closeTimer.current)
+    if (id) setOpenSpace(id)
+    else closeTimer.current = window.setTimeout(() => setOpenSpace(null), 180)
   }
 
   return (
@@ -57,19 +81,44 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
           </span>
         </button>
 
-        <nav className="site-nav" aria-label="Espacios de trabajo">
-          {visibleSpaces.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              className={activeSpace === item.id ? 'active' : ''}
-              aria-current={activeSpace === item.id ? 'true' : undefined}
-              title={item.hint}
-              onClick={() => go(item.views[0])}
-            >
-              <span className="space-num" aria-hidden="true">{index + 1}</span> {item.label}
-            </button>
-          ))}
+        <nav className="site-nav menu-nav" aria-label="Espacios de trabajo" ref={navRef}>
+          {spaces.map((space) => {
+            const isOpen = openSpace === space.id
+            return (
+              <div key={space.id} className={`menu-item ${isOpen ? 'open' : ''}`} onMouseEnter={() => hover(space.id)} onMouseLeave={() => hover(null)}>
+                <button
+                  type="button"
+                  className={activeSpace === space.id ? 'active' : ''}
+                  aria-expanded={isOpen}
+                  aria-haspopup="true"
+                  onClick={() => setOpenSpace(isOpen ? null : space.id)}
+                >
+                  {space.label} <ChevronDown size={14} aria-hidden="true" />
+                </button>
+                {isOpen && (
+                  <div className="menu-panel" role="menu" aria-label={space.label}>
+                    <small className="menu-hint">{space.hint}</small>
+                    {space.views.map((view) => {
+                      const item = itemOf(view)
+                      return (
+                        <button
+                          key={view}
+                          type="button"
+                          role="menuitem"
+                          className={active === view ? 'current' : ''}
+                          aria-current={active === view ? 'page' : undefined}
+                          onClick={() => go(view)}
+                        >
+                          <b>{item?.label ?? view}</b>
+                          <span>{item?.description}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
 
         <button type="button" className="search-trigger" onClick={onSearch} title="Buscar (Ctrl + K)">
@@ -97,25 +146,14 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
         </button>
       </div>
 
-      {space && (
-        <nav className="sub-nav" aria-label={`Secciones de ${space.label}`}>
-          <b>{space.label}</b>
-          {space.views.map((view) => (
-            <button key={view} type="button" className={active === view ? 'active' : ''} aria-current={active === view ? 'page' : undefined} onClick={() => go(view)}>
-              {labelOf(view)}
-            </button>
-          ))}
-        </nav>
-      )}
-
       {openMenu && (
         <nav className="site-nav-mobile" aria-label="Navegación principal (móvil)">
-          {visibleSpaces.map((item) => (
-            <div key={item.id} className="mobile-space">
-              <small>{item.label}</small>
-              {item.views.map((view) => (
+          {spaces.map((space) => (
+            <div key={space.id} className="mobile-space">
+              <small>{space.label}</small>
+              {space.views.map((view) => (
                 <button key={view} type="button" className={active === view ? 'active' : ''} onClick={() => go(view)}>
-                  <b>{labelOf(view)}</b>
+                  <b>{itemOf(view)?.label ?? view}</b>
                 </button>
               ))}
             </div>

@@ -31,9 +31,11 @@ const IsoView = lazy(() => import('./IsoView'))
 interface NormativeViewProps {
   focusNormId?: string
   onNavigate: (view: SiteViewId) => void
+  /** Normas peruanas o ISO: cada una tiene su entrada en el menú Explorar. */
+  section?: 'peru' | 'iso'
 }
 
-export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
+export function NormativeView({ focusNormId, onNavigate, section = 'peru' }: NormativeViewProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<LegalCategory | 'todas'>('todas')
   const [sector, setSector] = useState<string>('todos')
@@ -41,7 +43,7 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
   const [sort, setSort] = useState<SortMode>('relevancia')
   const [expanded, setExpanded] = useState<string | null>(focusNormId ?? null)
   const [layout, setLayout] = useState<'list' | 'grid'>('list')
-  const [section, setSection] = useState<'peru' | 'iso'>('peru')
+  const setSection = (next: 'peru' | 'iso') => onNavigate(next === 'iso' ? 'iso' : 'normativa')
 
   useEffect(() => {
     if (focusNormId) setExpanded(focusNormId)
@@ -71,7 +73,7 @@ export function NormativeView({ focusNormId, onNavigate }: NormativeViewProps) {
     <div className="view-page">
       <header className="page-head">
         <div>
-          <h1>Normativa peruana</h1>
+          <h1>{section === 'iso' ? 'ISO y sistemas integrados' : 'Normativa peruana'}</h1>
           <p>
             Catálogo de normas de seguridad y salud en el trabajo y de ambiente, con enlace directo a la fuente oficial.
             Última revisión del catálogo: {LEGAL_CATALOGUE_VERIFIED_AT}. Enlaces verificados automáticamente el{' '}

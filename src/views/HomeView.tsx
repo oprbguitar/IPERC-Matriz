@@ -1,8 +1,13 @@
-import { ArrowRight, BookOpen, ChevronDown, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
+import { useRef } from 'react'
 import { LegalReference } from '../components/LegalReference'
+import { CAREER_PATHS } from '../data/careerPaths'
 import { COVERAGE_DOMAINS } from '../data/coverage'
 import { GUIDES } from '../data/guides'
-import { featuredNormIds, findNorm, legalNorms } from '../data/legalDatabase'
+import { findNorm, legalNorms } from '../data/legalDatabase'
+
+/** Normas que se listan en la portada (con desplazamiento interno). */
+const HOME_NORM_IDS = ['law-29783', 'ds-005-2012-tr', 'rm-050-2013-tr', 'law-30222', 'ds-002-2020-tr', 'law-32721', 'ds-003-2026-sa', 'rm-245-2021-tr', 'rm-375-2008-tr', 'rm-312-2011-minsa', 'ds-003-98-sa', 'ds-014-2013-tr', 'ds-019-2006-tr', 'law-31572', 'ds-011-2019-tr', 'ds-024-2016-em', 'dl-1278', 'law-28611']
 import { TIMELINE_ERAS, TIMELINE_EVENTS } from '../data/timeline'
 import { statusForAnswer, type DiagnosticAnswers } from '../lib/diagnostic'
 import {
@@ -40,6 +45,7 @@ interface HomeViewProps {
   onOpenNorm: (normId: string) => void
   onOpenGuide: (guideId: string) => void
   onSearch?: () => void
+  onOpenCareer?: (pathId: string) => void
   completedStepIds: string[]
   progressPercent: number
   answers: DiagnosticAnswers
@@ -57,7 +63,10 @@ export function HomeView({
   answers,
   premiumPercent,
   signedIn,
+  onOpenCareer,
 }: HomeViewProps) {
+  const railRef = useRef<HTMLDivElement>(null)
+  const slide = (direction: number) => railRef.current?.scrollBy({ left: direction * railRef.current.clientWidth * 0.8, behavior: 'smooth' })
   return (
     <div className="home">
       <section className="hero" aria-labelledby="hero-title">
@@ -114,7 +123,9 @@ export function HomeView({
         </ol>
       </section>
 
-      <section className="route-cards" aria-label="Ruta práctica en seis pasos">
+      <section className="route-rail" aria-label="Ruta práctica en seis pasos">
+        <button type="button" className="rail-arrow left" onClick={() => slide(-1)} aria-label="Ver pasos anteriores"><ChevronLeft size={18} /></button>
+        <div className="route-cards" ref={railRef}>
         {ROUTE_CARDS.map((card) => {
           const Icon = card.icon
           return (
@@ -132,6 +143,8 @@ export function HomeView({
             </button>
           )
         })}
+        </div>
+        <button type="button" className="rail-arrow right" onClick={() => slide(1)} aria-label="Ver más pasos"><ChevronRight size={18} /></button>
       </section>
 
       <div className="home-lower">
@@ -171,6 +184,17 @@ export function HomeView({
               <i style={{ width: `${progressPercent}%` }} />
             </div>
             <b>{progressPercent}%</b>
+          </div>
+          <div className="career-entry">
+            <b><GraduationCap size={15} aria-hidden="true" /> Rutas de especialista</b>
+            <div>
+              {CAREER_PATHS.map((path) => (
+                <button type="button" key={path.id} onClick={() => onOpenCareer?.(path.id)} title={path.summary}>
+                  <span><small>Cómo ser especialista en</small><strong>{path.short}</strong></span>
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -227,8 +251,8 @@ export function HomeView({
               Ver más
             </button>
           </div>
-          <ul>
-            {featuredNormIds.map((id) => {
+          <ul className="norm-scroll" tabIndex={0} aria-label="Normas destacadas (desplazable)">
+            {HOME_NORM_IDS.map((id) => {
               const norm = findNorm(id)
               if (!norm) return null
               return (

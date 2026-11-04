@@ -7,7 +7,7 @@ import { LegalReference } from './components/LegalReference'
 import { SideDrawer } from './components/SideDrawer'
 import { GlobalSearch, type SearchTarget } from './components/GlobalSearch'
 import { SiteHeader } from './components/SiteHeader'
-import { PagePager, PageTrail } from './components/PageNav'
+import { PageTrail } from './components/PageNav'
 import { DocReader } from './components/DocReader'
 import { FORMATS } from './catalog'
 import { GUIDES } from './data/guides'
@@ -45,6 +45,7 @@ const ComplianceView = lazy(() => import('./views/ComplianceView'))
 const InspectionView = lazy(() => import('./views/InspectionView'))
 const ObligationsView = lazy(() => import('./views/ObligationsView'))
 const RouteView = lazy(() => import('./views/RouteView'))
+const CareerView = lazy(() => import('./views/CareerView'))
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -78,6 +79,7 @@ function App() {
   const [view, setView] = useState<SiteViewId>(viewFromHash)
   const [readerGuideId, setReaderGuideId] = useState<string | undefined>(undefined)
   const [editorFormatId, setEditorFormatId] = useState<string | undefined>(undefined)
+  const [careerId, setCareerId] = useState<string>('sst')
   const [answers, setAnswers] = useState<DiagnosticAnswers>(readStoredAnswers)
   const [openCard, setOpenCard] = useState<RouteCardId | null>(null)
   const [obligationsTab, setObligationsTab] = useState<ObligationsTab>('sst')
@@ -240,7 +242,7 @@ function App() {
     <div className="site-shell">
       <SiteHeader active={view} onNavigate={navigate} onSearch={openSearch} user={user} premiumPercent={premiumPercent} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSearch} />
-      {view !== 'inicio' && <PageTrail view={view} premium={premium} onNavigate={navigate} />}
+      {view !== 'inicio' && <PageTrail view={view} onNavigate={navigate} />}
 
       <main className="site-main" id="contenido" key={view}>
         {locked && <PremiumLock view={view} onNavigate={navigate} />}
@@ -249,6 +251,10 @@ function App() {
           <HomeView
             onNavigate={navigate}
             onOpenRouteCard={openRouteCard}
+            onOpenCareer={(pathId: string) => {
+              setCareerId(pathId)
+              navigate('rutas')
+            }}
             onOpenNorm={openNorm}
             onOpenGuide={openGuide}
             onSearch={openSearch}
@@ -266,10 +272,13 @@ function App() {
         {view === 'ruta' && (
           <RouteView answers={answers} onAnswer={handleAnswer} onReset={resetAnswers} onNavigate={navigate} />
         )}
-        {view === 'obligaciones' && (
+        {(view === 'obligaciones' || view === 'soma') && (
           <ObligationsView
-            tab={obligationsTab}
-            onTabChange={setObligationsTab}
+            tab={view === 'soma' ? 'soma' : obligationsTab === 'soma' ? 'sst' : obligationsTab}
+            onTabChange={(next) => {
+              setObligationsTab(next)
+              navigate(next === 'soma' ? 'soma' : 'obligaciones')
+            }}
             defaultSize={defaultSize}
             defaultSector={defaultSector}
             onOpenGuide={openGuide}
@@ -285,7 +294,10 @@ function App() {
             onGuideOpened={() => setOpenGuideId(undefined)}
           />
         )}
-        {view === 'normativa' && <NormativeView focusNormId={focusNormId} onNavigate={navigate} />}
+        {(view === 'normativa' || view === 'iso') && (
+          <NormativeView focusNormId={focusNormId} onNavigate={navigate} section={view === 'iso' ? 'iso' : 'peru'} />
+        )}
+        {view === 'rutas' && <CareerView pathId={careerId} onSelectPath={setCareerId} onNavigate={navigate} onOpenNorm={openNorm} onOpenGuide={openGuide} />}
         {(view === 'diagnostico' || view === 'verificar') && (
           <ComplianceView
             tab={view === 'diagnostico' ? 'aplicables' : 'seguimiento'}
@@ -308,7 +320,6 @@ function App() {
           />
         )}
         </Suspense>
-        {view !== 'inicio' && <PagePager view={view} premium={premium} onNavigate={navigate} />}
       </main>
       {overlays}
 
