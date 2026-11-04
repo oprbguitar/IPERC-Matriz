@@ -40,21 +40,27 @@ export type SiteViewId =
   | 'fiscalizacion'
   | 'casos'
   | 'normativa'
+  | 'iso'
+  | 'soma'
+  | 'rutas'
   | 'premium'
 
 export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: string }> = [
   { id: 'inicio', label: 'Inicio', description: 'Vista general del observatorio' },
-  { id: 'normativa', label: 'Normativa e ISO', description: 'Normas, artículos verificados e ISO' },
+  { id: 'normativa', label: 'Normas peruanas', description: 'Leyes y reglamentos con artículos cotejados y enlace al SPIJ' },
+  { id: 'iso', label: 'ISO y sistemas integrados', description: 'ISO 45001, 14001, SIG, normas relacionadas e INACAL' },
   { id: 'evolucion', label: 'Evolución', description: 'Línea de tiempo normativa, ramas y especialidades' },
   { id: 'casos', label: 'Casuística', description: 'Precedentes del TFL y resoluciones' },
   { id: 'ruta', label: 'Mi Ruta', description: 'Diagnóstico guiado paso a paso' },
   { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
   { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
+  { id: 'soma', label: 'SOMA y ambiente', description: 'Residuos, aspectos ambientales, químicos y derrames' },
   { id: 'herramientas', label: 'IPERC y herramientas', description: 'IPERC, analítica, plan de acción y reportes' },
   { id: 'formatos', label: 'Formatos y registros', description: 'Formatos oficiales y editables en línea' },
   { id: 'verificar', label: 'Cumplimiento y evidencias', description: 'Estado, evidencia y responsable por obligación' },
   { id: 'fiscalizacion', label: 'Fiscalización', description: 'Contingencias, expediente y defensa documentada' },
   { id: 'plantillas', label: 'Biblioteca', description: 'Guías, informes y plantillas descargables' },
+  { id: 'rutas', label: 'Rutas de especialista', description: 'Cómo formarse en SST, SOMA e IPERC paso a paso' },
   { id: 'premium', label: 'Premium', description: 'Guías de IA, agentes y seguimiento de avance' },
 ]
 
@@ -62,11 +68,11 @@ export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' 
 
 /** Cinco espacios de trabajo: cada vista pertenece a uno. */
 export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
-  { id: 'explorar', label: 'Explorar', hint: 'Normas, evolución y casos', views: ['normativa', 'evolucion', 'casos'] },
-  { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones'] },
+  { id: 'explorar', label: 'Explorar', hint: 'Normas, ISO, evolución y casos', views: ['normativa', 'iso', 'evolucion', 'casos'] },
+  { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
   { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
   { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
-  { id: 'aprender', label: 'Aprender', hint: 'Guías, informes y premium', views: ['plantillas', 'premium'] },
+  { id: 'aprender', label: 'Aprender', hint: 'Guías, plantillas y rutas de especialista', views: ['plantillas', 'rutas', 'premium'] },
 ]
 
 /** Vistas que solo se muestran con sesión premium (Implementar se trabajará después). */
