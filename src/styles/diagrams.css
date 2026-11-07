@@ -1,0 +1,50 @@
+@import './ssoma.css';
+
+.diagrams { gap: 14px; }
+.diagram-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.diagram-canvas { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.diagram-canvas figcaption { font-size: 14px; color: var(--text-soft); }
+.diagram-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.diagram-scroll svg { width: 100%; height: auto; display: block; }
+
+.d-node { cursor: pointer; outline: none; }
+.d-node rect, .d-node path { fill: var(--surface); stroke: var(--blue); stroke-width: 2; transition: fill .15s, opacity .15s; }
+.d-node text { font: 600 12.5px Arial, sans-serif; fill: var(--text); pointer-events: none; }
+.d-node:hover rect, .d-node:hover path, .d-node:focus-visible rect, .d-node:focus-visible path { fill: var(--blue-soft); }
+.d-node.sel rect, .d-node.sel path { stroke-width: 3.5; fill: var(--blue-soft); }
+.d-node.k-inicio rect { stroke: var(--teal); }
+.d-node.k-fin rect { stroke: var(--green); }
+.d-node.k-decision path { stroke: var(--amber); fill: var(--amber-soft); }
+.d-node.k-documento rect { stroke: var(--violet); stroke-dasharray: 6 3; }
+.d-node.k-alerta rect { stroke: #d92d20; fill: var(--red-soft); }
+.d-node.dim, .d-edge.dim { opacity: .18; }
+.d-clock { fill: #d92d20; stroke: #fff; stroke-width: 2; }
+.d-edge path { stroke: var(--text-muted); stroke-width: 1.8; }
+.d-arrow { fill: var(--text-muted); }
+.d-elabel { font: 700 11px Arial, sans-serif; fill: var(--blue-dark); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+
+.diagram-paths { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--text-muted); }
+.diagram-paths button { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--blue-dark); }
+.diagram-paths button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+.diagram-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--text-muted); }
+.diagram-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.diagram-legend i { width: 14px; height: 10px; border: 2px solid var(--blue); border-radius: 3px; display: inline-block; }
+.diagram-legend i.k-inicio { border-color: var(--teal); border-radius: 6px; }
+.diagram-legend i.k-fin { border-color: var(--green); border-radius: 6px; }
+.diagram-legend i.k-decision { border-color: var(--amber); background: var(--amber-soft); transform: rotate(45deg); width: 10px; }
+.diagram-legend i.k-documento { border-color: var(--violet); border-style: dashed; }
+.diagram-legend i.k-alerta { border-color: #d92d20; background: var(--red-soft); }
+.diagram-legend i.d-clock-legend { width: 10px; height: 10px; border-radius: 50%; background: #d92d20; border-color: #d92d20; }
+
+.diagram-panel { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.diagram-panel h2 { margin: 0; font-size: 18px; }
+.diagram-panel p { margin: 0; font-size: 14px; color: var(--text-soft); line-height: 1.5; }
+.diagram-kind { align-self: flex-start; font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; background: var(--blue-soft); color: var(--blue-dark); }
+.diagram-meta { display: flex; gap: 6px; align-items: center; }
+
+@media (max-width: 860px) {
+  .diagram-layout { grid-template-columns: minmax(0, 1fr); }
+  .diagram-panel { position: static; }
+}
+@media (prefers-reduced-motion: reduce) { .d-node rect, .d-node path { transition: none; } }

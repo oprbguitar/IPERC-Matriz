@@ -48,6 +48,7 @@ const ObligationsView = lazy(() => import('./views/ObligationsView'))
 const RouteView = lazy(() => import('./views/RouteView'))
 const CareerView = lazy(() => import('./views/CareerView'))
 const SsomaVisorView = lazy(() => import('./views/SsomaVisorView'))
+const DiagramsView = lazy(() => import('./views/DiagramsView'))
 const GlossaryView = lazy(() => import('./views/GlossaryView'))
 const SignageView = lazy(() => import('./views/SignageView'))
 const SimulatorView = lazy(() => import('./views/SimulatorView'))
@@ -277,6 +278,7 @@ function App() {
         {view === 'visor' && <SsomaVisorView onOpenNorm={openNorm} onNavigate={navigate} />}
         {view === 'senales' && <SignageView />}
         {view === 'glosario' && <GlossaryView />}
+        {view === 'diagramas' && <DiagramsView />}
         {view === 'simulador' && <SimulatorView onOpenVisor={() => navigate('visor')} />}
         {view === 'premium' && (
           <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} onPercentChange={setPremiumPercent} />
