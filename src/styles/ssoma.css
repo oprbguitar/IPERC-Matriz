@@ -1,0 +1,122 @@
+/* Visor SSOMA: todo plegable, pensado para consulta rápida en el celular. */
+.ssoma-visor { gap: 16px; }
+
+.ssoma-search {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 999px;
+  padding: 10px 16px; box-shadow: var(--shadow-xs); color: var(--text-muted);
+}
+.ssoma-search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+.ssoma-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 16px; color: var(--text); }
+.ssoma-search button { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; display: grid; place-items: center; }
+.ssoma-search.small { padding: 7px 14px; margin: 8px 0; }
+
+.ssoma-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.ssoma-quick button, .ssoma-filter button {
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--blue-dark);
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+}
+.ssoma-quick button:hover, .ssoma-filter button:hover { background: var(--blue-soft); }
+.ssoma-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.ssoma-filter button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+.ssoma-section { display: flex; flex-direction: column; gap: 10px; }
+.ssoma-lead { font-size: 15px; line-height: 1.6; color: var(--text); margin: 0; }
+.ssoma-count { font-size: 13px; color: var(--text-muted); margin: 0; }
+.ssoma-sub { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin: 10px 0 4px; }
+
+.ssoma-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.ssoma-stats div { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; }
+.ssoma-stats b { font-size: 26px; color: var(--blue-dark); line-height: 1.1; }
+.ssoma-stats span { font-size: 12px; color: var(--text-muted); }
+
+/* Plegables */
+.ssoma-fold, .ssoma-risk { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.ssoma-fold > summary, .ssoma-risk > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 11px 14px; font-weight: 600; color: var(--text);
+}
+.ssoma-fold > summary::-webkit-details-marker, .ssoma-risk > summary::-webkit-details-marker { display: none; }
+.ssoma-fold > summary span { flex: 1; min-width: 0; }
+.ssoma-fold > summary em { font-style: normal; font-size: 12px; background: var(--surface-muted); color: var(--text-soft); border-radius: 999px; padding: 1px 8px; }
+.fold-icon { transition: transform .15s; flex: 0 0 auto; color: var(--text-muted); }
+details[open] > summary .fold-icon { transform: rotate(180deg); }
+.ssoma-fold-body { padding: 0 14px 12px; font-size: 14px; line-height: 1.55; color: var(--text-soft); }
+.ssoma-fold-body ul, .ssoma-fold-body ol { margin: 4px 0; padding-left: 20px; }
+.ssoma-fold-body li { margin: 3px 0; }
+.ssoma-norm-body .ssoma-fold { background: var(--surface-soft); }
+
+/* Fichas de norma */
+.ssoma-norm { border: 1px solid var(--border); border-left: 4px solid var(--branch-color, var(--blue)); border-radius: var(--radius); background: var(--surface); scroll-margin-top: 90px; }
+.ssoma-norm.branch-ambiental, .ssoma-tl-item.b-ambiental { --branch-color: var(--green); }
+.ssoma-norm.branch-salud, .ssoma-tl-item.b-salud { --branch-color: var(--violet); }
+.ssoma-norm.branch-quimicos, .ssoma-tl-item.b-quimicos { --branch-color: var(--amber); }
+.ssoma-norm-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: transparent; border: 0; text-align: left; cursor: pointer; color: var(--text); }
+.ssoma-year { font-weight: 700; font-size: 13px; color: var(--branch-color, var(--blue)); min-width: 38px; }
+.ssoma-norm-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ssoma-norm-title small { color: var(--text-muted); font-size: 13px; }
+.ssoma-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 45%; }
+.ssoma-badge { font-size: 11px; border-radius: 999px; padding: 2px 8px; background: var(--blue-soft); color: var(--blue-dark); white-space: nowrap; }
+.ssoma-badge.b-ambiental { background: var(--green-soft); color: var(--green); }
+.ssoma-badge.b-salud { background: var(--surface-muted); color: var(--violet); }
+.ssoma-badge.b-quimicos { background: var(--amber-soft); color: var(--text); }
+.ssoma-badge.status { background: var(--surface-muted); color: var(--text-soft); }
+.ssoma-norm-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.ssoma-summary { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text); }
+.ssoma-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 0; }
+.ssoma-meta div { background: var(--surface-soft); border-radius: var(--radius); padding: 8px 10px; }
+.ssoma-meta dt { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+.ssoma-meta dd { margin: 2px 0 0; font-size: 13px; color: var(--text); }
+.ssoma-articles li b { color: var(--blue-dark); }
+.ssoma-check { list-style: none; padding-left: 0 !important; }
+.ssoma-check li { padding-left: 22px; position: relative; }
+.ssoma-check li::before { content: '✓'; position: absolute; left: 4px; color: var(--green); font-weight: 700; }
+.ssoma-intl li svg { vertical-align: -2px; color: var(--teal); }
+.ssoma-source { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; word-break: break-word; }
+.ssoma-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Tablas */
+.ssoma-table { margin: 8px 0; }
+.ssoma-table figcaption { display: flex; flex-direction: column; margin-bottom: 6px; }
+.ssoma-table figcaption span { font-size: 12px; color: var(--text-muted); }
+.ssoma-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius); }
+.ssoma-table table, .ssoma-clp-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.ssoma-table th, .ssoma-table td, .ssoma-clp-table th, .ssoma-clp-table td { padding: 6px 9px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; color: var(--text); }
+.ssoma-table th, .ssoma-clp-table th { background: var(--surface-muted); font-weight: 700; position: sticky; top: 0; white-space: nowrap; }
+.ssoma-table tbody tr:nth-child(even), .ssoma-clp-table tbody tr:nth-child(even) { background: var(--surface-soft); }
+.ssoma-clp-table td small { display: block; color: var(--text-muted); font-size: 11px; }
+
+/* Riesgos */
+.ssoma-risk-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ssoma-risk-name small { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+.ssoma-freq { font-size: 11px; text-transform: uppercase; font-weight: 700; border-radius: 999px; padding: 2px 8px; min-width: 52px; text-align: center; }
+.freq-alta .ssoma-freq { background: var(--red-soft); color: #b42318; }
+.freq-media .ssoma-freq { background: var(--amber-soft); color: var(--text); }
+.freq-baja .ssoma-freq { background: var(--green-soft); color: var(--green); }
+
+/* Línea de tiempo */
+.ssoma-timeline { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--border-strong); }
+.ssoma-timeline > li { display: flex; gap: 12px; padding: 6px 0 10px 14px; position: relative; }
+.ssoma-timeline > li::before { content: ''; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+.ssoma-tl-year { font-weight: 700; color: var(--blue-dark); min-width: 42px; padding-top: 4px; }
+.ssoma-timeline > li > div { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.ssoma-tl-item { text-align: left; border: 1px solid var(--border); border-left: 3px solid var(--branch-color, var(--blue)); background: var(--surface); border-radius: var(--radius); padding: 6px 10px; cursor: pointer; font-size: 13px; color: var(--text-soft); }
+.ssoma-tl-item b { color: var(--text); }
+.ssoma-tl-item:hover { background: var(--blue-soft); }
+
+/* Químicos */
+.ssoma-ghs { list-style: none; padding: 0 !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.ssoma-ghs li { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; background: var(--surface-soft); }
+.ssoma-ghs li b { color: #b42318; margin-right: 4px; }
+.ssoma-ghs li small { display: block; color: var(--text-muted); font-size: 12px; }
+
+@media (max-width: 640px) {
+  .ssoma-norm-head { flex-wrap: wrap; gap: 8px; }
+  .ssoma-badges { max-width: 100%; order: 3; width: 100%; justify-content: flex-start; padding-left: 50px; }
+  .ssoma-norm-head > svg { order: 2; }
+  .ssoma-norm-title { flex: 1 1 60%; }
+  .ssoma-quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .ssoma-quick button { flex: 0 0 auto; white-space: nowrap; }
+  .ssoma-stats b { font-size: 22px; }
+}
+.ssoma-contrast { padding-left: 18px; } .ssoma-contrast li { margin: 8px 0; } .ssoma-contrast .ssoma-chips { margin-top: 4px; }
+.ssoma-badge.status { white-space: normal; text-align: left; }

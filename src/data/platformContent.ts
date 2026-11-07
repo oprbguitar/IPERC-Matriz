@@ -42,6 +42,7 @@ export type SiteViewId =
   | 'normativa'
   | 'iso'
   | 'soma'
+  | 'visor'
   | 'rutas'
   | 'premium'
 
@@ -54,6 +55,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'ruta', label: 'Mi Ruta', description: 'Diagnóstico guiado paso a paso' },
   { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
   { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
+  { id: 'visor', label: 'Visor SSOMA', description: 'Normas SST y ambientales en detalle, cuadros, riesgos y químicos' },
   { id: 'soma', label: 'SOMA y ambiente', description: 'Residuos, aspectos ambientales, químicos y derrames' },
   { id: 'herramientas', label: 'IPERC y herramientas', description: 'IPERC, analítica, plan de acción y reportes' },
   { id: 'formatos', label: 'Formatos y registros', description: 'Formatos oficiales y editables en línea' },
@@ -68,7 +70,7 @@ export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' 
 
 /** Cinco espacios de trabajo: cada vista pertenece a uno. */
 export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
-  { id: 'explorar', label: 'Explorar', hint: 'Normas, ISO, evolución y casos', views: ['normativa', 'iso', 'evolucion', 'casos'] },
+  { id: 'explorar', label: 'Explorar', hint: 'Normas, ISO, evolución y casos', views: ['normativa', 'visor', 'iso', 'evolucion', 'casos'] },
   { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
   { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
   { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
@@ -82,6 +84,7 @@ export const PREMIUM_VIEWS: SiteViewId[] = ['herramientas', 'formatos']
 export const LEARNING_PATH: SiteViewId[] = [
   'inicio',
   'normativa',
+  'visor',
   'evolucion',
   'casos',
   'diagnostico',

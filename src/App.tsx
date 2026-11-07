@@ -46,6 +46,7 @@ const InspectionView = lazy(() => import('./views/InspectionView'))
 const ObligationsView = lazy(() => import('./views/ObligationsView'))
 const RouteView = lazy(() => import('./views/RouteView'))
 const CareerView = lazy(() => import('./views/CareerView'))
+const SsomaVisorView = lazy(() => import('./views/SsomaVisorView'))
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -266,6 +267,7 @@ function App() {
           />
         )}
         {view === 'evolucion' && <EvolutionView onOpenNorm={openNorm} />}
+        {view === 'visor' && <SsomaVisorView onOpenNorm={openNorm} />}
         {view === 'premium' && (
           <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} onPercentChange={setPremiumPercent} />
         )}

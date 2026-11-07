@@ -1,0 +1,123 @@
+[
+  {
+    "code": "01_ley_29783_sst",
+    "label": "Ley N.° 29783 — Seguridad y Salud en el Trabajo",
+    "file": "1. LEY DE SST 29783.pdf",
+    "md": "01_ley_29783_sst.md",
+    "pages": 55,
+    "scanned": 0,
+    "tables": 18,
+    "images": 0,
+    "forms": 0
+  },
+  {
+    "code": "02_ds_005_2012_tr",
+    "label": "D. S. N.° 005-2012-TR — Reglamento de SST",
+    "file": "2. Decreto Supremo N° 005-2012-TR.pdf",
+    "md": "02_ds_005_2012_tr.md",
+    "pages": 36,
+    "scanned": 0,
+    "tables": 0,
+    "images": 0,
+    "forms": 0
+  },
+  {
+    "code": "03_anexos_sst_construccion",
+    "label": "Anexos del Reglamento de SST para Construcción",
+    "file": "ANEXOS_REGLAMENTO_SST_CONSTRUCCION.pdf",
+    "md": "03_anexos_sst_construccion.md",
+    "pages": 9,
+    "scanned": 1,
+    "tables": 4,
+    "images": 4,
+    "forms": 0
+  },
+  {
+    "code": "04_ds_011_2019_tr",
+    "label": "D. S. N.° 011-2019-TR — SST para Construcción",
+    "file": "DS 011-2019-TR REGLAMENTO SST SECTOR CONSTRUCCION.pdf",
+    "md": "04_ds_011_2019_tr.md",
+    "pages": 13,
+    "scanned": 0,
+    "tables": 5,
+    "images": 0,
+    "forms": 0
+  },
+  {
+    "code": "05_ntp_350_043_extintores",
+    "label": "NTP 350.043-1:2011 — Extintores portátiles",
+    "file": "NTP 350 43 Extintores portátiles 2.pdf",
+    "md": "05_ntp_350_043_extintores.md",
+    "pages": 147,
+    "scanned": 0,
+    "tables": 30,
+    "images": 28,
+    "forms": 0
+  },
+  {
+    "code": "06_rm_245_2021_tr_elecciones",
+    "label": "R. M. N.° 245-2021-TR — Elecciones de representantes de SST",
+    "file": "RM 245-2021-TR.pdf",
+    "md": "06_rm_245_2021_tr_elecciones.md",
+    "pages": 28,
+    "scanned": 28,
+    "tables": 0,
+    "images": 28,
+    "forms": 19
+  },
+  {
+    "code": "07_rm_312_2011_minsa_medicos",
+    "label": "R. M. N.° 312-2011-MINSA — Exámenes médicos ocupacionales",
+    "file": "RM 312-2011-MINSA Protocolo Examenes Médicos Ocupacionales .pdf",
+    "md": "07_rm_312_2011_minsa_medicos.md",
+    "pages": 42,
+    "scanned": 0,
+    "tables": 0,
+    "images": 0,
+    "forms": 0
+  },
+  {
+    "code": "08_rm_375_2008_tr_anexo_ergonomia",
+    "label": "R. M. N.° 375-2008-TR — Anexo de Ergonomía y Riesgo Disergonómico",
+    "file": "RM 375-2008-TR Anexo 1 - Norma básica de ergonomía y proc de eval de riesgos disergonómicos_VALORES.pdf",
+    "md": "08_rm_375_2008_tr_anexo_ergonomia.md",
+    "pages": 17,
+    "scanned": 0,
+    "tables": 8,
+    "images": 1,
+    "forms": 0
+  },
+  {
+    "code": "09_rm_375_2008_tr_resolucion",
+    "label": "R. M. N.° 375-2008-TR — Resolución",
+    "file": "RM_375-2008-TR Norma básica de Ergonomía.pdf",
+    "md": "09_rm_375_2008_tr_resolucion.md",
+    "pages": 2,
+    "scanned": 2,
+    "tables": 0,
+    "images": 2,
+    "forms": 1
+  },
+  {
+    "code": "10_rm_050_2013_tr_formatos",
+    "label": "R. M. N.° 050-2013-TR — Formatos referenciales SGSST",
+    "file": "RM-050-2013-TR-Formatos-referenciales SSO.pdf",
+    "md": "10_rm_050_2013_tr_formatos.md",
+    "pages": 186,
+    "scanned": 96,
+    "tables": 45,
+    "images": 124,
+    "forms": 49
+  },
+  {
+    "code": "11_rm_374_2008_tr_gestantes",
+    "label": "R. M. N.° 374-2008-TR — Anexo de agentes para mujer gestante",
+    "file": "RM-374-2008-TR_Anexo Mujer Gestante.pdf",
+    "md": "11_rm_374_2008_tr_gestantes.md",
+    "pages": 19,
+    "scanned": 0,
+    "tables": 16,
+    "images": 5,
+    "forms": 0
+  }
+]
