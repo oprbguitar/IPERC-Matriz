@@ -131,3 +131,10 @@ details[open] > summary .fold-icon { transform: rotate(180deg); }
 .flow-dot { flex: 0 0 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--blue); color: #fff; position: relative; z-index: 1; }
 .ssoma-flow > li.locked .flow-dot { background: var(--surface-muted); color: var(--text-muted); }
 .ssoma-flow > li.locked > div > b { color: var(--text-muted); }
+
+/* Glosario y colores */
+.gloss-letters button { min-width: 34px; padding: 4px 8px; }
+.color-list { list-style: none; padding: 0 !important; display: flex; flex-direction: column; gap: 6px; }
+.color-list li { display: flex; align-items: center; gap: 10px; }
+.color-chip { flex: 0 0 132px; border: 1px solid var(--border-strong); border-radius: 6px; padding: 6px 8px; font-size: 12px; font-weight: 700; text-align: center; }
+@media (max-width: 640px) { .color-chip { flex-basis: 104px; } .gloss-letters { flex-wrap: nowrap; overflow-x: auto; } }
