@@ -1,0 +1,49 @@
+/* Generador de señales, stickers y etiquetas. Reutiliza .ssoma-filter, .ssoma-fold y .ssoma-search de ssoma.css. */
+@import './ssoma.css';
+
+.signage { gap: 16px; }
+.sign-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sign-config, .sign-preview { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sign-preview { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+.sign-preview > .sign-svg { width: 100%; max-width: 340px; margin: 0 auto; display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); }
+.sign-preview > .label-svg { max-width: 460px; }
+
+.sign-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.sign-picker button { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-soft); }
+.sign-picker button.active { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-soft); }
+.sign-picker button svg { width: 64px; height: auto; }
+.sign-picker button span { font-size: 10.5px; line-height: 1.2; text-align: center; }
+
+.sign-check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--text); }
+.sign-check input { margin-top: 3px; }
+.sign-range { display: flex; flex-direction: column; gap: 6px; }
+.sign-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-muted); }
+.sign-field input { border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 8px 10px; font-size: 15px; background: var(--surface); color: var(--text); }
+
+.sign-export { display: flex; flex-direction: column; gap: 10px; }
+.sign-export label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-muted); }
+.sign-export select { border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 8px; background: var(--surface); color: var(--text); }
+.sign-export-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.sign-export-buttons button { display: inline-flex; align-items: center; gap: 6px; }
+
+.sign-results { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.sign-results button { width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; color: var(--text); }
+.sign-results button.active { border-color: var(--blue); background: var(--blue-soft); }
+.sign-results small { color: var(--text-muted); }
+
+.sign-ficha { background: var(--surface); border: 2px solid var(--blue); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.sign-ficha h2 { margin: 4px 0; font-size: 20px; }
+.sign-ficha-head { display: flex; gap: 16px; align-items: center; }
+.sign-ficha-svg svg { width: 110px; height: auto; }
+.sign-family { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.sign-ficha-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.sign-ficha-grid section { background: var(--surface-soft); border-radius: var(--radius); padding: 10px 12px; font-size: 14px; color: var(--text-soft); }
+.sign-ficha-grid h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+.sign-ficha-grid ul { margin: 0; padding-left: 18px; }
+
+@media (max-width: 860px) {
+  .sign-layout { grid-template-columns: minmax(0, 1fr); }
+  .sign-preview { position: static; order: -1; }
+  .sign-ficha-head { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 860px) { .sign-preview > .sign-svg { max-width: 230px; } .sign-preview > .label-svg { max-width: 100%; } }

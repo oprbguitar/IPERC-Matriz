@@ -47,6 +47,8 @@ const ObligationsView = lazy(() => import('./views/ObligationsView'))
 const RouteView = lazy(() => import('./views/RouteView'))
 const CareerView = lazy(() => import('./views/CareerView'))
 const SsomaVisorView = lazy(() => import('./views/SsomaVisorView'))
+const SignageView = lazy(() => import('./views/SignageView'))
+const SimulatorView = lazy(() => import('./views/SimulatorView'))
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -72,7 +74,7 @@ function readStoredAnswers(): DiagnosticAnswers {
 
 /** Vista inicial desde la dirección (#/normativa), para que atrás/adelante y los enlaces funcionen. */
 function viewFromHash(): SiteViewId {
-  const value = window.location.hash.replace(/^#\/?/, '')
+  const value = window.location.hash.replace(/^#\/?/, '').split('?')[0]
   return isSiteView(value) ? value : 'inicio'
 }
 
@@ -267,7 +269,9 @@ function App() {
           />
         )}
         {view === 'evolucion' && <EvolutionView onOpenNorm={openNorm} />}
-        {view === 'visor' && <SsomaVisorView onOpenNorm={openNorm} />}
+        {view === 'visor' && <SsomaVisorView onOpenNorm={openNorm} onNavigate={navigate} />}
+        {view === 'senales' && <SignageView />}
+        {view === 'simulador' && <SimulatorView onOpenVisor={() => navigate('visor')} />}
         {view === 'premium' && (
           <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} onPercentChange={setPremiumPercent} />
         )}

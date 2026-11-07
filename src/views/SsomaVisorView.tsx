@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BookOpen, ChevronDown, FlaskConical, Globe2, Leaf, ListTree, Search, ShieldCheck, Table2, TriangleAlert, X } from 'lucide-react'
+import { BookOpen, ChevronDown, FlaskConical, Globe2, Leaf, ListTree, Search, ShieldCheck, Table2, TriangleAlert, Workflow, X } from 'lucide-react'
 import {
   BRANCH_LABELS,
   CONTRAST_NOTES,
@@ -17,10 +17,11 @@ import {
 import { assetUrl } from '../lib/assets'
 import '../styles/ssoma.css'
 
-type Section = 'que-es' | 'normas' | 'riesgos' | 'cuadros' | 'linea' | 'quimicos'
+type Section = 'que-es' | 'flujo' | 'normas' | 'riesgos' | 'cuadros' | 'linea' | 'quimicos'
 
 const SECTIONS: Array<{ id: Section; label: string; icon: typeof Leaf }> = [
   { id: 'que-es', label: '¿Qué es SSOMA?', icon: BookOpen },
+  { id: 'flujo', label: 'Flujo de riesgos', icon: Workflow },
   { id: 'normas', label: 'Normativa', icon: ShieldCheck },
   { id: 'riesgos', label: 'Riesgos comunes', icon: TriangleAlert },
   { id: 'cuadros', label: 'Cuadros y límites', icon: Table2 },
@@ -34,6 +35,7 @@ const QUICK: Array<{ label: string; section: Section; query?: string; branch?: S
   { label: '¿Qué normativa aplica?', section: 'normas', branch: 'todas' },
   { label: 'Leyes ambientales', section: 'normas', branch: 'ambiental' },
   { label: '¿Riesgos más comunes?', section: 'riesgos' },
+  { label: 'Riesgos por ambiente', section: 'flujo' },
   { label: 'Límites de ruido', section: 'cuadros', query: 'ruido' },
   { label: 'Calidad de agua', section: 'cuadros', query: 'agua' },
   { label: 'Colores de residuos', section: 'cuadros', query: 'color' },
@@ -195,9 +197,95 @@ function NormCard({ norm, open, onToggle, onOpenCatalog }: { norm: SsomaNorm; op
   )
 }
 
+/** Ambientes de trabajo del flujo progresivo y los riesgos que suelen presentarse en cada uno. */
+const ENVIRONMENTS: Array<{ id: string; label: string; riskIds: string[] }> = [
+  { id: 'oficina', label: 'Oficina administrativa', riskIds: ['caida-mismo-nivel', 'contacto-electrico', 'posturas-forzadas', 'movimientos-repetitivos', 'riesgo-psicosocial', 'incendio'] },
+  { id: 'almacen', label: 'Almacén logístico', riskIds: ['transito-vehiculos', 'manipulacion-cargas', 'golpes-atrapamientos', 'caida-distinto-nivel', 'incendio', 'derrames-quimicos-hidrocarburos'] },
+  { id: 'planta', label: 'Planta de manufactura', riskIds: ['golpes-atrapamientos', 'ruido-ocupacional', 'exposicion-quimicos', 'contacto-electrico', 'trabajos-caliente', 'residuos-peligrosos', 'emisiones-atmosfericas'] },
+  { id: 'obra', label: 'Obra de construcción', riskIds: ['caida-distinto-nivel', 'polvo-silice', 'radiacion-uv', 'estres-termico', 'golpes-atrapamientos', 'ruido-ambiental'] },
+  { id: 'laboratorio', label: 'Laboratorio o tópico', riskIds: ['exposicion-quimicos', 'riesgo-biologico', 'derrames-quimicos-hidrocarburos', 'residuos-peligrosos', 'vertimiento-aguas-residuales'] },
+]
+
+const FLOW_STEPS = ['Ficha IPERC: peligro y consecuencias', 'Evaluación y controles por jerarquía', 'Marco normativo aplicable', 'Generar señal, informe o practicar'] as const
+
+function RiskFlow({ onPickNorm, onNavigate }: { onPickNorm: (id: string) => void; onNavigate?: (view: 'simulador' | 'senales') => void }) {
+  const [envId, setEnvId] = useState<string | null>(null)
+  const [riskId, setRiskId] = useState<string | null>(null)
+  const env = ENVIRONMENTS.find((item) => item.id === envId)
+  const risk = SSOMA_RISKS.find((item) => item.id === riskId)
+  const envRisks = env ? SSOMA_RISKS.filter((item) => env.riskIds.includes(item.id)) : []
+  const step = !env ? 1 : !risk ? 2 : 3
+  return (
+    <ol className="ssoma-flow">
+      <li className="done">
+        <span className="flow-dot">1</span>
+        <div>
+          <b>Seleccione el ambiente de trabajo</b>
+          <div className="ssoma-filter">
+            {ENVIRONMENTS.map((item) => (
+              <button type="button" key={item.id} className={envId === item.id ? 'active' : ''} onClick={() => { setEnvId(item.id); setRiskId(null) }}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </li>
+      <li className={step >= 2 ? 'done' : 'locked'}>
+        <span className="flow-dot">2</span>
+        <div>
+          <b>Seleccione un peligro</b>
+          {env && (
+            <div className="ssoma-filter">
+              {envRisks.map((item) => (
+                <button type="button" key={item.id} className={riskId === item.id ? 'active' : ''} onClick={() => setRiskId(item.id)}>
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </li>
+      {FLOW_STEPS.map((title, index) => (
+        <li key={title} className={step >= 3 ? 'done' : 'locked'}>
+          <span className="flow-dot">{index + 3}</span>
+          <div>
+            <b>{title}</b>
+            {risk && index === 0 && (
+              <>
+                <p className="ssoma-sub">Dónde aparece</p>
+                <ul>{risk.examples.map((item) => <li key={item}>{item}</li>)}</ul>
+                <p className="ssoma-sub">Consecuencias</p>
+                <ul>{risk.consequences.map((item) => <li key={item}>{item}</li>)}</ul>
+              </>
+            )}
+            {risk && index === 1 && (
+              <>
+                <p className="ssoma-count">
+                  Frecuencia en el Perú: <b>{risk.frequency}</b>. Evalúe probabilidad × severidad (D.S. 005-2012-TR) antes y después de los
+                  controles; el riesgo residual se verifica en campo.
+                </p>
+                <ol>{risk.controls.map((item) => <li key={item}>{item}</li>)}</ol>
+              </>
+            )}
+            {risk && index === 2 && <NormChips ids={risk.normIds} onPick={onPickNorm} />}
+            {risk && index === 3 && onNavigate && (
+              <div className="ssoma-chips">
+                <button type="button" className="btn-primary small" onClick={() => onNavigate('senales')}>Generar señal o sticker con QR</button>
+                <button type="button" className="btn-ghost small" onClick={() => onNavigate('simulador')}>Practicar en el simulador</button>
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 interface ClpRow {
   i: string
   n: string
+  es?: string
+  a3?: number
   ec?: string
   cas?: string
   c?: string
@@ -224,12 +312,13 @@ function ClpSearch() {
     if (term.length < 2) return []
     const rank = (row: ClpRow) => {
       const name = normalize(row.n)
-      if (name === term || row.cas === term || row.ec === term) return 0
-      if (name.startsWith(term)) return 1
+      const es = normalize(row.es ?? '')
+      if (name === term || es === term || row.cas === term || row.ec === term) return 0
+      if (name.startsWith(term) || es.startsWith(term)) return 1
       return 2
     }
     return rows
-      .filter((row) => normalize(`${row.n} ${row.cas ?? ''} ${row.ec ?? ''} ${row.i}`).includes(term))
+      .filter((row) => normalize(`${row.n} ${row.es ?? ''} ${row.cas ?? ''} ${row.ec ?? ''} ${row.i}`).includes(term))
       .sort((a, b) => rank(a) - rank(b) || a.n.length - b.n.length)
       .slice(0, 40)
   }, [rows, query])
@@ -238,11 +327,11 @@ function ClpSearch() {
     <div className="ssoma-clp">
       <p>
         Contraste con el <b>Anexo VI del Reglamento CLP (UE) 1272/2008</b> (clasificación armonizada, ATP 23):
-        escriba el nombre en inglés, el n.° CAS o el n.° CE de la sustancia.
+        contrastado con el <b>Anexo 3 del D.S. 005-2026-MINAM</b> (nombres en español). Escriba el nombre en español o inglés, el n.° CAS o el n.° CE.
       </p>
       <label className="ssoma-search small">
         <Search size={16} aria-hidden="true" />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej.: toluene, 108-88-3, benzene…" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej.: tolueno, hidróxido de sodio, 108-88-3…" />
       </label>
       {error && <p className="empty-note">No se pudo cargar la tabla CLP.</p>}
       {!rows && !error && <p className="empty-note">Cargando tabla CLP…</p>}
@@ -258,7 +347,7 @@ function ClpSearch() {
             <tbody>
               {results.map((row) => (
                 <tr key={row.i + row.n}>
-                  <td><b>{row.n}</b><small>Índice {row.i}</small></td>
+                  <td><b>{row.es ?? row.n}</b><small>{row.es ? `${row.n} · ` : ''}Índice {row.i}{row.a3 ? ' · nombre ES del Anexo 3 Perú (OCR)' : ''}</small></td>
                   <td>{row.cas || '—'}<small>{row.ec}</small></td>
                   <td>{row.c}</td>
                   <td>{row.h}</td>
@@ -273,7 +362,7 @@ function ClpSearch() {
   )
 }
 
-export default function SsomaVisorView({ onOpenNorm }: { onOpenNorm?: (normId: string) => void }) {
+export default function SsomaVisorView({ onOpenNorm, onNavigate }: { onOpenNorm?: (normId: string) => void; onNavigate?: (view: 'simulador' | 'senales') => void }) {
   const [section, setSection] = useState<Section>('que-es')
   const [query, setQuery] = useState('')
   const [branch, setBranch] = useState<SsomaBranch | 'todas'>('todas')
@@ -336,7 +425,7 @@ export default function SsomaVisorView({ onOpenNorm }: { onOpenNorm?: (normId: s
   // Buscar desde cualquier sección: si la sección actual no tiene resultados, saltar a Normativa.
   const onSearch = (value: string) => {
     setQuery(value)
-    if (value.trim() && (section === 'que-es' || section === 'linea' || section === 'quimicos')) setSection('normas')
+    if (value.trim() && (section === 'que-es' || section === 'flujo' || section === 'linea' || section === 'quimicos')) setSection('normas')
   }
 
   return (
@@ -432,6 +521,13 @@ export default function SsomaVisorView({ onOpenNorm }: { onOpenNorm?: (normId: s
               El Peruano o el SPIJ antes de citarla en un trámite.
             </p>
           </Fold>
+        </section>
+      )}
+
+      {section === 'flujo' && (
+        <section className="ssoma-section">
+          <p className="ssoma-count">Recorra el proceso paso a paso: cada nodo se abre al completar el anterior.</p>
+          <RiskFlow onPickNorm={goToNorm} onNavigate={onNavigate} />
         </section>
       )}
 
