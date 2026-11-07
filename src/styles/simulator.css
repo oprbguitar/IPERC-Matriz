@@ -1,0 +1,153 @@
+.simulator { display: flex; flex-direction: column; gap: 14px; }
+.simulator .sim-notice { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--amber-soft); border: 1px solid var(--border); color: var(--text-soft); font-size: 13px; }
+.simulator .sim-notice svg { color: var(--amber); flex: none; margin-top: 2px; }
+.simulator .tab-switch { flex-wrap: wrap; }
+.simulator .tab-switch button:disabled { opacity: 0.55; cursor: not-allowed; }
+.simulator .sim-soon { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.simulator .sim-blurb { color: var(--text-soft); font-size: 14px; margin: 0; }
+
+.simulator .sim-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.simulator .sim-progress { display: flex; flex-direction: column; gap: 4px; min-width: 220px; flex: 1 1 240px; font-size: 14px; }
+.simulator progress { width: 100%; height: 8px; accent-color: var(--green); }
+.simulator .sim-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.simulator .sim-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--blue); background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.simulator .sim-btn:hover { background: var(--blue-dark); }
+.simulator .sim-btn.ghost { background: var(--surface); color: var(--blue-dark); border-color: var(--border-strong); }
+.simulator .sim-btn.ghost:hover { background: var(--blue-soft); }
+.simulator button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.simulator .sim-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 900px) { .simulator .sim-layout { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
+.simulator .sim-scene { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.simulator .sim-scene svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.simulator .sim-hint { display: flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--text-muted); margin: 8px 0; }
+
+/* Escena */
+.simulator .sim-floor { fill: var(--surface-muted); stroke: var(--border-strong); stroke-width: 1; }
+.simulator .sim-grid { fill: none; stroke: var(--border); stroke-width: 0.6; }
+.simulator .sim-wall-l { fill: color-mix(in srgb, var(--surface-soft) 85%, var(--blue-soft)); stroke: var(--border-strong); }
+.simulator .sim-wall-r { fill: color-mix(in srgb, var(--surface-soft) 95%, var(--blue-soft)); stroke: var(--border-strong); }
+.simulator .sf-t { fill: var(--c); }
+.simulator .sf-l { fill: color-mix(in srgb, var(--c) 80%, #000); }
+.simulator .sf-r { fill: color-mix(in srgb, var(--c) 66%, #000); }
+.simulator .sf-t, .simulator .sf-l, .simulator .sf-r { stroke: color-mix(in srgb, var(--text) 28%, transparent); stroke-width: 0.6; stroke-linejoin: round; }
+.simulator .sim-cable { fill: none; stroke: var(--text); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.simulator .sim-seam { fill: none; stroke: color-mix(in srgb, var(--text) 45%, transparent); stroke-width: 1; }
+.simulator .sim-bar { fill: none; stroke: var(--text); stroke-width: 3; stroke-linecap: round; }
+.simulator .sim-brace, .simulator .sim-wrap { fill: none; stroke: var(--text-soft); stroke-width: 1.6; }
+.simulator .sim-wrap { stroke: var(--blue); stroke-width: 2; }
+.simulator .sim-path { fill: none; stroke: var(--amber); stroke-width: 2; stroke-dasharray: 6 5; }
+.simulator .sim-blind { fill: none; stroke: color-mix(in srgb, var(--text-muted) 70%, transparent); stroke-width: 2; }
+.simulator .sim-window { fill: var(--sky-soft); stroke: var(--border-strong); }
+.simulator .sim-dock { fill: color-mix(in srgb, var(--text-muted) 25%, var(--surface)); stroke: var(--border-strong); }
+.simulator .sim-door { fill: color-mix(in srgb, var(--green) 25%, var(--surface)); stroke: var(--green); stroke-width: 1.2; }
+.simulator .sim-strip { fill: color-mix(in srgb, var(--green) 25%, transparent); stroke: var(--green); stroke-width: 1.4; stroke-dasharray: 5 3; }
+.simulator .sim-lane { fill: color-mix(in srgb, var(--green) 35%, transparent); stroke: var(--green); stroke-dasharray: 4 3; }
+.simulator .sim-line-y { fill: none; stroke: var(--amber); stroke-width: 3; stroke-dasharray: 10 5; }
+.simulator .sim-beam { fill: color-mix(in srgb, var(--amber) 28%, transparent); }
+.simulator .sim-glare-spot { fill: rgba(255, 255, 255, 0.85); }
+.simulator .sim-lampglow { fill: color-mix(in srgb, var(--amber) 35%, transparent); }
+.simulator .sim-liquid { fill: color-mix(in srgb, var(--sky) 55%, transparent); stroke: var(--sky); stroke-width: 1; }
+.simulator .sim-drip { fill: none; stroke: var(--sky); stroke-width: 2; stroke-dasharray: 3 3; }
+.simulator .sim-aframe { fill: var(--amber); stroke: var(--text); stroke-width: 0.8; }
+.simulator .sim-ghost { fill: none; stroke: var(--text-muted); stroke-dasharray: 3 3; opacity: 0.5; }
+.simulator .sim-led { fill: var(--green); }
+.simulator .sim-bolt { fill: var(--amber); stroke: var(--text); stroke-width: 0.6; }
+.simulator .sim-weight { fill: var(--surface); stroke: var(--red); }
+.simulator .sim-weight-t { font-size: 9px; font-weight: 700; fill: var(--red); text-anchor: middle; }
+.simulator .sim-person line { stroke: var(--blue-dark); stroke-width: 7; stroke-linecap: round; }
+.simulator .sim-person circle { fill: var(--amber); stroke: var(--text); stroke-width: 0.8; }
+.simulator .sim-person.hv line { stroke: var(--amber); }
+.simulator .sim-sign { stroke: var(--surface); stroke-width: 1; }
+.simulator .sim-sign-t { font-size: 7px; font-weight: 700; fill: #fff; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.simulator .sg-prohibicion, .simulator .sg-incendios { fill: var(--red); }
+.simulator .sg-obligacion { fill: var(--blue); }
+.simulator .sg-advertencia { fill: var(--amber); }
+.simulator .sg-emergencia { fill: var(--green); }
+
+/* Marcadores */
+.simulator .sim-marker { cursor: pointer; }
+.simulator .sim-marker .hit { fill: transparent; }
+.simulator .sim-marker .core { stroke: #fff; stroke-width: 2; fill: var(--lv); }
+.simulator .sim-marker .num { font-size: 11px; font-weight: 800; fill: #fff; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.simulator .sim-marker .pulse { fill: none; stroke: var(--lv); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: simPulse 1.8s ease-out infinite; }
+.simulator .sim-marker.sel .core { stroke: var(--text); stroke-width: 3; }
+.simulator .sim-marker:focus { outline: none; }
+.simulator .sim-marker:focus-visible .core { stroke: var(--blue-dark); stroke-width: 3.5; }
+@keyframes simPulse { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(2.2); opacity: 0; } }
+.simulator .sim-flicker { animation: simFlicker 1.2s steps(2, jump-none) infinite; }
+@keyframes simFlicker { 50% { opacity: 0.45; } }
+
+/* Niveles */
+.simulator .lv-trivial { --lv: var(--green); }
+.simulator .lv-tolerable { --lv: var(--teal); }
+.simulator .lv-moderado { --lv: var(--amber); }
+.simulator .lv-importante { --lv: var(--red); }
+.simulator .lv-intolerable { --lv: color-mix(in srgb, var(--red) 65%, #000); }
+.simulator .sim-level { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--lv); color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.simulator .sim-dot { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--lv); color: #fff; font-size: 11px; font-weight: 700; flex: none; }
+
+/* Lista y panel */
+.simulator .sim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.simulator .sim-list button { width: 100%; display: flex; gap: 8px; align-items: center; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; }
+.simulator .sim-list button span:nth-child(2) { flex: 1; }
+.simulator .sim-list button.on, .simulator .sim-list button:hover { border-color: var(--blue); background: var(--blue-soft); }
+.simulator .sim-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; min-width: 0; }
+@media (min-width: 900px) { .simulator .sim-panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; } }
+.simulator .sim-panel h2 { font-size: 17px; margin: 0 0 8px; }
+.simulator .sim-panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 16px 0 6px; }
+.simulator .sim-dl { margin: 0; display: grid; gap: 2px; font-size: 14px; }
+.simulator .sim-dl dt { font-weight: 700; color: var(--text-soft); margin-top: 6px; }
+.simulator .sim-dl dd { margin: 0; color: var(--text); }
+.simulator .sim-formula { font-size: 13.5px; margin: 8px 0 0; overflow-wrap: anywhere; }
+.simulator .sim-controls { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.simulator .sim-controls li { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); padding: 4px; }
+.simulator .sim-controls li.on { border-color: var(--green); background: var(--green-soft); }
+.simulator .sim-controls button { width: 100%; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 8px; border: 0; background: transparent; color: var(--text); cursor: pointer; font-size: 13.5px; }
+.simulator .sim-ctl-label { font-weight: 600; }
+.simulator .sim-ctl-detail { color: var(--text-soft); font-size: 12.5px; }
+.simulator .sim-why { display: block; padding: 0 8px 6px; color: var(--text-muted); font-size: 12px; }
+.simulator .sim-hier { padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; background: var(--blue); }
+.simulator .h-eliminacion { background: var(--green); }
+.simulator .h-sustitucion { background: var(--teal); }
+.simulator .h-ingenieria { background: var(--blue); }
+.simulator .h-administrativo { background: var(--violet); }
+.simulator .h-epp { background: var(--amber); }
+.simulator .sim-effects { display: flex; flex-wrap: wrap; gap: 4px; }
+.simulator .sim-effects em { font-style: normal; font-size: 11.5px; padding: 1px 7px; border-radius: 999px; background: var(--surface-muted); border: 1px solid var(--border); color: var(--text-soft); }
+.simulator .sim-warn { display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; color: var(--text-soft); background: var(--amber-soft); border-radius: 10px; padding: 8px 10px; margin: 8px 0 0; }
+.simulator .sim-warn svg { color: var(--amber); flex: none; margin-top: 2px; }
+.simulator .sim-fam { display: inline-block; padding: 1px 8px; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 700; margin-right: 6px; }
+.simulator .sim-fam.sg-advertencia { background: var(--amber); }
+.simulator .sim-fam.sg-prohibicion, .simulator .sim-fam.sg-incendios { background: var(--red); }
+.simulator .sim-fam.sg-obligacion { background: var(--blue); }
+.simulator .sim-fam.sg-emergencia { background: var(--green); }
+.simulator .sim-refs { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-soft); }
+.simulator .sim-method { margin-top: 14px; font-size: 13px; color: var(--text-soft); }
+.simulator .sim-method summary { cursor: pointer; font-weight: 600; color: var(--blue-dark); }
+
+/* Tablas */
+.simulator .sim-table-wrap { overflow-x: auto; max-width: 100%; }
+.simulator .sim-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.simulator .sim-table th, .simulator .sim-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.simulator .sim-table thead th { color: var(--text-muted); font-size: 12px; }
+.simulator .sim-idx th { font-weight: 600; color: var(--text-soft); }
+.simulator .sim-idx .n { font-weight: 800; text-align: center; width: 28px; }
+.simulator .sim-idx tr.chg { background: var(--green-soft); }
+.simulator .sim-summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.simulator .sim-summary h2 { font-size: 16px; margin: 0 0 8px; }
+
+/* Reporte: oculto en pantalla, único visible al imprimir */
+.simulator .sim-report { display: none; }
+@media print {
+  body * { visibility: hidden !important; }
+  .simulator .sim-report, .simulator .sim-report * { visibility: visible !important; }
+  .simulator .sim-report { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 12mm; background: #fff; color: #000; font-size: 11pt; }
+  .simulator .sim-report .sim-level { background: none; color: #000; border: 1px solid #000; }
+  .simulator .sim-report article { break-inside: avoid; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .simulator .sim-marker .pulse, .simulator .sim-flicker { animation: none; }
+  .simulator .sim-marker .pulse { opacity: 0.4; }
+}

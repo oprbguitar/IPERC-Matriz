@@ -21,7 +21,7 @@ export const GHS_PICTOGRAMS: { code: string; name: string; hazards: string }[] =
   { code: 'GHS09', name: 'Medio ambiente', hazards: 'Peligro agudo y crónico para el medio ambiente acuático (agudo 1; crónico 1 y 2).' },
 ]
 
-const H_TABLE_ROWS: string[][] = [
+export const H_TABLE_ROWS: string[][] = [
   ['H200', 'Explosivo inestable.', 'Explosivos: inestable'],
   ['H201', 'Explosivo; peligro de explosión en masa.', 'Explosivos: división 1.1'],
   ['H202', 'Explosivo; grave peligro de proyección.', 'Explosivos: división 1.2'],
@@ -110,14 +110,15 @@ const H_TABLE_ROWS: string[][] = [
 export const QUIMICOS_NORMS: SsomaNorm[] = [
   {
     id: 'proyecto-sga-peru',
-    code: 'Proyecto de D.S. y Reglamento del D.Leg. 1570 (gestión integral de sustancias químicas / SGA)',
-    title: 'Proyecto de Decreto Supremo que aprueba el Reglamento del Decreto Legislativo N.° 1570, Ley de Gestión Integral de Sustancias Químicas',
-    year: 2024,
+    code: 'D.S. N.° 005-2026-MINAM (Reglamento del D. Leg. 1570, sustancias químicas / SGA)',
+    title: 'Reglamento del Decreto Legislativo N.° 1570, Ley de Gestión Integral de Sustancias Químicas (analizado sobre su proyecto prepublicado en 2024)',
+    year: 2026,
+    date: '2026-04-08',
     branch: 'quimicos',
     authority: 'MINAM (rector y administrador del RENASQ); con MINSA, PRODUCE, MTPE, MIDAGRI, OEFA/EFA y demás sectores refrendantes',
-    status: 'Proyecto (prepublicación)',
+    status: 'Aprobado (D.S. 005-2026-MINAM, El Peruano 08/04/2026); rige a los seis meses, con adecuación gradual de obligaciones',
     summary:
-      'Proyecto de reglamento del D.Leg. 1570 (publicado para comentarios mediante R.M. N.° 00214-2024-MINAM). Implementa en el Perú el Sistema Globalmente Armonizado (SGA/GHS): clasificación de peligros, etiquetado y fichas de datos de seguridad (FDS) en español; crea el Registro Nacional de Sustancias Químicas (RENASQ); establece evaluaciones de riesgo para sustancias de interés nacional, medidas específicas en instrumentos de gestión ambiental, gestión al final del ciclo de vida, confidencialidad y régimen de supervisión y sanción. Texto: 9 títulos, 15 capítulos, 72 artículos, 5 disposiciones complementarias finales, 3 transitorias y 1 anexo (listado de clasificación anticipada).',
+      'Reglamento aprobado por D.S. N.° 005-2026-MINAM (El Peruano, 8 de abril de 2026), en vigor seis meses después de su publicación con plazos graduales de adecuación. La ficha se elaboró sobre el proyecto del D.Leg. 1570 (publicado para comentarios mediante R.M. N.° 00214-2024-MINAM). Implementa en el Perú el Sistema Globalmente Armonizado (SGA/GHS): clasificación de peligros, etiquetado y fichas de datos de seguridad (FDS) en español; crea el Registro Nacional de Sustancias Químicas (RENASQ); establece evaluaciones de riesgo para sustancias de interés nacional, medidas específicas en instrumentos de gestión ambiental, gestión al final del ciclo de vida, confidencialidad y régimen de supervisión y sanción. Texto: 9 títulos, 15 capítulos, 72 artículos, 5 disposiciones complementarias finales, 3 transitorias y 1 anexo (listado de clasificación anticipada).',
     scope:
       'Toda persona natural o jurídica, pública o privada, que gestione sustancias químicas (sustancias puras y mezclas) o sea usuaria de ellas en el territorio nacional (art. 2). Excluye lo indicado en el art. 3.2 del D.Leg. 1570, precisado en el art. 4 (muestras sin valor comercial, resultados de reacciones no intencionales, impurezas bajo el valor de corte, sustancias contenidas en artículos que no se liberan en uso normal). Los productos de competencia del MINSA (p. ej., sustancias peligrosas de uso doméstico, industrial o en salud pública, D.S. 031-2023-SA) se evalúan por su propio procedimiento, interoperable con el RENASQ.',
     howItWorks: [
@@ -260,7 +261,7 @@ export const QUIMICOS_NORMS: SsomaNorm[] = [
     year: 2024,
     branch: 'quimicos',
     authority: 'MINAM (anexo técnico del proceso de adopción del SGA); referencia ONU SGA/GHS',
-    status: 'Proyecto (prepublicación)',
+    status: 'Anexo del reglamento (versión del proyecto; contrastar con el D.S. 005-2026-MINAM)',
     summary:
       'Cuadro de 31 páginas que relaciona cada clase y categoría de peligro del SGA con su código de indicación de peligro (H200 a H420) y compara las ediciones 6.ª, 7.ª, 8.ª, 9.ª y 10.ª, anotando las revisiones (nuevas clases como productos químicos a presión y explosivos insensibilizados, regrupación de categorías, cambios de pictogramas). El archivo fuente es un escaneo; el Markdown transcribe las tablas y conserva las páginas como imágenes.',
     scope:

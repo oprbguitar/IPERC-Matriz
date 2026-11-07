@@ -17,6 +17,12 @@ Plataforma abierta (sin registro) con una zona **Premium** con acceso por correo
 | **Herramientas** | Generador IPERC, matriz editable, **Analítica** (calculadora de multas SUNAFIL con la tabla oficial del D.S. 008-2020-TR, organización exigible, IF/IS/IA, riesgo inicial vs. residual), **plan de acción con drag & drop**, evidencias con arrastre de archivos, normativa en cuadros/lista, reportes Excel/Word/CSV y registro compacto por pestañas. El panel lateral es un **índice SST** con guías por herramienta. |
 | **Premium** | Login con correo y clave, plan de 22 hitos en 6 fases con **% de avance guardado en la nube** (visible en la barra superior), 6 guías de IA (IA aplicada, sistema de agentes, herramientas open source/pago, seguimiento continuo, prompts, gobernanza de datos), solicitudes de acceso y panel de administración de usuarios. |
 
+## Novedades 2026.11.4 · Señales, simulador y Anexo 3
+
+- **Señales y etiquetas** (`#/senales`): 26 señales de seguridad en 5 familias (geometría y colores NTP 399.010-1:2016), formatos A4/A5/A6, sticker y hoja de 6 stickers; exportación PDF (impresión), SVG y PNG; QR que abre la ficha de la señal (`#/senales?s=<id>`) con peligro, controles, EPP y norma; calculadora de tamaño mínimo S ≥ L²/2000. Incluye **etiquetas SGA** a partir de la clasificación armonizada (pictogramas, palabra de advertencia, frases H, QR a la FDS) y **etiquetas operativas** (inspección de extintor, EPP, mantenimiento, acceso). Pictogramas ilustrativos: no reproducen ISO 7010.
+- **Simulador de ambientes** (`#/simulador`): oficina (7 peligros) y almacén (6) en 2D isométrico; evaluación IPERC con la metodología del D.S. 005-2012-TR (P = A+B+C+D, P × S), controles por jerarquía que cambian la escena y recalculan el residual proyectado (nunca cero), reporte .md e impresión.
+- **Visor SSOMA:** flujo progresivo ambiente → peligro → evaluación → norma → señal; ficha del **D.S. 005-2026-MINAM** (reglamento SGA aprobado el 08/04/2026) y **Anexo 3** peruano cruzado con el CLP ATP 23 (`scripts/merge-anexo3.py`): 2379 sustancias con nombre en español (OCR).
+
 ## Novedades 2026.11.3 · Visor SSOMA
 
 - **Visor SSOMA** (`#/visor`, espacio Explorar): 20 normas SST, de salud ocupacional, ambientales y de químicos con qué regulan, cómo funcionan, artículos clave, obligaciones, cuadros (ECA aire, agua, suelo y ruido, VMA, colores NTP 900.058, extintores, ergonomía, gestantes), riesgos comunes, línea de tiempo y referentes internacionales. Todo plegable y con búsqueda, pensado para el celular.

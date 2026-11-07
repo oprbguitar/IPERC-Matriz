@@ -1,0 +1,434 @@
+{
+ "source": "Anexo 3 del Reglamento de la Ley de Gestión Integral de Sustancias Químicas (D.S. 005-2026-MINAM): Anexo VI CLP en español, rev. 01.12.2023 (OCR, 1351 páginas)",
+ "declaredEntries": 4378,
+ "parsedIndexes": 2384,
+ "clpRows": 4441,
+ "matched": 2379,
+ "onlyInAnexo3Count": 5,
+ "onlyInAnexo3": [
+  {
+   "i": "022-006-00-2",
+   "es": "Dióxido de titanio"
+  },
+  {
+   "i": "023-041-00-X",
+   "es": "Tetrasulfuro de triníquel"
+  },
+  {
+   "i": "607-331-00-5",
+   "es": "Masa de reacción de: 1,10-deca"
+  },
+  {
+   "i": "612-043-00-5",
+   "es": "Dipropilamina"
+  },
+  {
+   "i": "649-433-00-5",
+   "es": "Aceites lubricantes (petróleo)"
+  }
+ ],
+ "onlyInClpCount": 2062,
+ "onlyInClpSample": [
+  {
+   "i": "001-001-00-9",
+   "n": "hydrogen",
+   "cas": "1333-74-0"
+  },
+  {
+   "i": "001-003-00-X",
+   "n": "sodium hydride",
+   "cas": "7646-69-7"
+  },
+  {
+   "i": "003-001-00-4",
+   "n": "lithium",
+   "cas": "7439-93-2"
+  },
+  {
+   "i": "003-002-00-X",
+   "n": "n-hexyllithium",
+   "cas": "21369-64-2"
+  },
+  {
+   "i": "003-003-00-5",
+   "n": "(2-methylpropyl)lithium; isobutyllithium",
+   "cas": "920-36-5"
+  },
+  {
+   "i": "004-002-00-2",
+   "n": "beryllium compounds with the exception of aluminium beryllium silicates, and with those specified elsewhere in this Annex",
+   "cas": ""
+  },
+  {
+   "i": "005-001-00-X",
+   "n": "boron trifluoride",
+   "cas": "7637-07-2"
+  },
+  {
+   "i": "005-004-00-6",
+   "n": "trialkylboranes, solid",
+   "cas": ""
+  },
+  {
+   "i": "005-005-00-1",
+   "n": "trimethyl borate",
+   "cas": "121-43-7"
+  },
+  {
+   "i": "005-007-00-2",
+   "n": "boric acid [1] boric acid [2]",
+   "cas": "10043-35-3 [1] 11113-50-1 [2]"
+  },
+  {
+   "i": "005-009-00-3",
+   "n": "tetrabutylammonium butyltriphenylborate",
+   "cas": "120307-06-4"
+  },
+  {
+   "i": "005-011-00-4",
+   "n": "tetraboron disodium heptaoxide, hydrate [1] disodium tetraborate, anhydrous [2] orthoboric acid, sodium salt [3] disodium tetraborate decahydrate [4] disodium tetraborate pentahydrate [5]",
+   "cas": "12267-73-1 [1] 1330-43-4 [2] 13840-56-7 [3] 1303-96-4 [4] 12179-04-3 [5]"
+  },
+  {
+   "i": "005-012-00-X",
+   "n": "diethyl{4-[1,5,5-tris(4-diethylaminophenyl)penta-2,4-dienylidene]cyclohexa-2,5-dienylidene}ammonium butyltriphenylborate",
+   "cas": "141714-54-7"
+  },
+  {
+   "i": "005-013-00-5",
+   "n": "diethylmethoxyborane",
+   "cas": "7397-46-8"
+  },
+  {
+   "i": "005-014-00-0",
+   "n": "4-formylphenylboronic acid",
+   "cas": "87199-17-5"
+  },
+  {
+   "i": "005-015-00-6",
+   "n": "1-chloromethyl-4-fluoro-1,4-diazoniabicyclo[2.2.2]octane bis(tetrafluoroborate)",
+   "cas": "140681-55-6"
+  },
+  {
+   "i": "005-020-00-3",
+   "n": "disodium octaborate anhydrous [1] disodium octaborate tetrahydrate [2]",
+   "cas": "12008-41-2 [1] 12280-03-4 [2]"
+  },
+  {
+   "i": "005-022-00-4",
+   "n": "perboric acid, sodium salt [1] perboric acid, sodium salt, monohydrate [2] perboric acid (HBO(O2)), sodium salt, monohydrate [3] sodium peroxoborate [4] sodium perborate [5]",
+   "cas": "11138-47-9 [1] 12040-72-1 [2] 10332-33-9 [3] - [4] 15120-21-5 [5]"
+  },
+  {
+   "i": "005-023-00-X",
+   "n": "perboric acid (H3BO2(O2)), monosodium salt trihydrate [1] perboric acid, sodium salt, tetrahydrate [2] perboric acid (HBO(O2)), sodium salt, tetrahydrate [3] sodium peroxoborate, hexahydrate [4]",
+   "cas": "13517-20-9 [1] 37244-98-7 [2] 10486-00-7 [3] - [4]"
+  },
+  {
+   "i": "005-024-00-5",
+   "n": "sodium peroxometaborate",
+   "cas": "7632-04-4"
+  },
+  {
+   "i": "006-002-00-8",
+   "n": "phosgene; carbonyl chloride",
+   "cas": "75-44-5"
+  },
+  {
+   "i": "006-003-00-3",
+   "n": "carbon disulphide",
+   "cas": "75-15-0"
+  },
+  {
+   "i": "006-004-00-9",
+   "n": "calcium carbide",
+   "cas": "75-20-7"
+  },
+  {
+   "i": "006-006-00-X",
+   "n": "hydrogen cyanide; hydrocyanic acid",
+   "cas": "74-90-8"
+  },
+  {
+   "i": "006-007-00-5",
+   "n": "salts of hydrogen cyanide with the exception of complex cyanides such as ferrocyanides, ferricyanides and mercuric oxycyanide and those specified elsewhere in this Annex",
+   "cas": ""
+  },
+  {
+   "i": "006-009-00-6",
+   "n": "1-isopropyl-3-methylpyrazol-5-yl dimethylcarbamate; isolan",
+   "cas": "119-38-0"
+  },
+  {
+   "i": "006-010-00-1",
+   "n": "5,5-dimethyl-3-oxocyclohex-1-enyl dimethylcarbamate 5,5-dimethyldihydroresorcinol dimethylcarbamate; dimetan",
+   "cas": "122-15-6"
+  },
+  {
+   "i": "006-011-00-7",
+   "n": "carbaryl (ISO); 1-naphthyl methylcarbamate",
+   "cas": "63-25-2"
+  },
+  {
+   "i": "006-012-00-2",
+   "n": "ziram (ISO); zinc bis dimethyldithiocarbamate",
+   "cas": "137-30-4"
+  },
+  {
+   "i": "006-013-00-8",
+   "n": "metam-sodium (ISO); sodium methyldithiocarbamate",
+   "cas": "137-42-8"
+  },
+  {
+   "i": "006-015-00-9",
+   "n": "diuron (ISO); 3-(3,4-dichlorophenyl)–1,1-dimethylurea",
+   "cas": "330-54-1"
+  },
+  {
+   "i": "006-017-00-X",
+   "n": "aldicarb (ISO); 2-methyl-2-(methylthio)propanal-O-(N-methylcarbamoyl)oxime",
+   "cas": "116-06-3"
+  },
+  {
+   "i": "006-019-00-0",
+   "n": "di-allate (ISO); S-(2,3-dichloroallyl)-N,N-diisopropylthiocarbamate",
+   "cas": "2303-16-4"
+  },
+  {
+   "i": "006-021-00-1",
+   "n": "linuron (ISO); 3-(3,4-dichlorophenyl)-1-methoxy-1-methylurea",
+   "cas": "330-55-2"
+  },
+  {
+   "i": "006-022-00-7",
+   "n": "decarbofuran (ISO); 2,3-dihydro-2-methylbenzofuran-7-yl methylcarbamate",
+   "cas": "1563-67-3"
+  },
+  {
+   "i": "006-023-00-2",
+   "n": "mercaptodimethur (ISO); methiocarb (ISO); 3,5-dimethyl-4-methylthiophenyl N-methylcarbamate",
+   "cas": "2032-65-7"
+  },
+  {
+   "i": "006-025-00-3",
+   "n": "allethrin; S-bioallethrin; esbiothrin; (RS)-3-allyl-2-methyl-4-oxocyclopent-2-enyl (1R,3R)-2,2-dimethyl-3-(2-methylprop-1-enyl)cyclopropanecarboxylate; [1]; (S)-3-allyl-2-methyl-4-oxocyclopent-2-enyl (1R,3R)-2,2-dimethyl-3-(2-methylprop-1-enyl)cyclopropanecarboxylate; [2]; (RS)-3-allyl-2-methyl-4-oxocyclopent-2-enyl (1R,3R)-2,2-dimethyl-3-(2-methylprop-1-enyl)cyclopropanecarboxylate [3] [1] (RS)-3-allyl-2-methyl-4-oxocyclopent-2-enyl (1RS,3RS;1RS,3SR)-2,2-dimethyl-3-(2-methylprop-1-enyl)cyclopropanecarboxylate [2] bioallethrin [3]",
+   "cas": "584-79-2 [1] 28434-00-6 [2] 84030-86-4 [3]"
+  },
+  {
+   "i": "006-028-00-X",
+   "n": "dinobuton (ISO); 2-(1-methylpropyl)-4,6-dinitrophenyl isopropyl carbonate",
+   "cas": "973-21-7"
+  },
+  {
+   "i": "006-029-00-5",
+   "n": "dioxacarb (ISO); 2-(1,3-dioxolan-2-yl)phenyl N-methylcarbamate",
+   "cas": "6988-21-2"
+  },
+  {
+   "i": "006-030-00-0",
+   "n": "EPTC (ISO); S-ethyl dipropylthiocarbamate",
+   "cas": "759-94-4"
+  },
+  {
+   "i": "006-031-00-6",
+   "n": "formetanate (ISO); 3-[(EZ)-dimethylaminomethyleneamino]phenyl methylcarbamate",
+   "cas": "22259-30-9"
+  },
+  {
+   "i": "006-032-00-1",
+   "n": "monolinuron (ISO); 3-(4-chlorophenyl)-1-methoxy-1-methylurea",
+   "cas": "1746-81-2"
+  },
+  {
+   "i": "006-034-00-2",
+   "n": "pebulate (ISO); N-butyl-N-ethyl-S-propylthiocarbamate",
+   "cas": "1114-71-2"
+  },
+  {
+   "i": "006-035-00-8",
+   "n": "pirimicarb (ISO); 2-(dimethylamino)-5,6-dimethylpyrimidin-4-yl dimethylcarbamate",
+   "cas": "23103-98-2"
+  },
+  {
+   "i": "006-036-00-3",
+   "n": "benzthiazuron (ISO); 1-benzothiazol-2-yl-3-methylurea",
+   "cas": "1929-88-0"
+  },
+  {
+   "i": "006-038-00-4",
+   "n": "sulfallate (ISO); 2-chloroallyl N,N-dimethyldithiocarbamate",
+   "cas": "95-06-7"
+  },
+  {
+   "i": "006-039-00-X",
+   "n": "tri-allate (ISO); S-2,3,3-trichloroallyl diisopropylthiocarbamate",
+   "cas": "2303-17-5"
+  },
+  {
+   "i": "006-040-00-5",
+   "n": "3-methylpyrazol-5-yl-dimethylcarbamate; monometilan",
+   "cas": "2532-43-6"
+  },
+  {
+   "i": "006-042-00-6",
+   "n": "monuron (ISO); 3-(4-chlorophenyl)-1,1-dimethylurea",
+   "cas": "150-68-5"
+  },
+  {
+   "i": "006-043-00-1",
+   "n": "3-(4-chlorophenyl)-1,1-dimethyluronium trichloroacetate; monuron-TCA",
+   "cas": "140-41-0"
+  },
+  {
+   "i": "006-044-00-7",
+   "n": "isoproturon (ISO); 3-(4-isopropylphenyl)-1,1-dimethylurea",
+   "cas": "34123-59-6"
+  },
+  {
+   "i": "006-047-00-3",
+   "n": "bufencarb (ISO); reaction mass of 3-(1-methylbutyl)phenyl N-methylcarbamate and 3-(1-ethylpropyl)phenyl N-methylcarbamate",
+   "cas": "8065-36-9"
+  },
+  {
+   "i": "006-049-00-4",
+   "n": "dixanthogen; O,O-diethyl dithiobis(thioformate)",
+   "cas": "502-55-6"
+  },
+  {
+   "i": "006-051-00-5",
+   "n": "ferbam (ISO); iron tris(dimethyldithiocarbamate)",
+   "cas": "14484-64-1"
+  },
+  {
+   "i": "006-053-00-6",
+   "n": "isoprocarb (ISO); 2-isopropylphenyl N-methylcarbamate",
+   "cas": "2631-40-5"
+  },
+  {
+   "i": "006-054-00-1",
+   "n": "mexacarbate (ISO); 3,5-dimethyl-4-dimethylaminophenyl N-methylcarbamate",
+   "cas": "315-18-4"
+  },
+  {
+   "i": "006-055-00-7",
+   "n": "xylylcarb (ISO); 3,4-dimethylphenyl N-methylcarbamate; 3,4-xylyl methylcarbamate; MPMC",
+   "cas": "2425-10-7"
+  },
+  {
+   "i": "006-057-00-8",
+   "n": "nitrapyrin (ISO); 2-chloro-6-trichloromethylpyridine",
+   "cas": "1929-82-4"
+  },
+  {
+   "i": "006-059-00-9",
+   "n": "oxamyl (ISO); N',N'-dimethylcarbamoyl(methylthio)methylenamine N-methylcarbamate",
+   "cas": "23135-22-0"
+  },
+  {
+   "i": "006-061-00-X",
+   "n": "S-ethyl N-(dimethylaminopropyl)thiocarbamatehydrochloride; prothiocarb hydrochloride",
+   "cas": "19622-19-6"
+  },
+  {
+   "i": "006-062-00-5",
+   "n": "methyl 3,4-dichlorophenylcarbanilate; SWEP.",
+   "cas": "1918-18-9"
+  },
+  {
+   "i": "006-063-00-0",
+   "n": "thiobencarb (ISO); S-4-chlorobenzyl diethylthiocarbamate",
+   "cas": "28249-77-6"
+  },
+  {
+   "i": "006-064-00-6",
+   "n": "thiofanox (ISO); 3,3-dimethyl-1-(methylthio)butanone-O-(N-methylcarbamoyl)oxime",
+   "cas": "39196-18-4"
+  },
+  {
+   "i": "006-065-00-1",
+   "n": "3-chloro-6-cyano-bicyclo(2,2,1)heptan-2-one-O-(N-methylcarbamoyl)oxime; triamid",
+   "cas": "15271-41-7"
+  },
+  {
+   "i": "006-067-00-2",
+   "n": "XMC; 3,5-xylyl methylcarbamate",
+   "cas": "2655-14-3"
+  },
+  {
+   "i": "006-069-00-3",
+   "n": "thiophanate-methyl (ISO); dimethyl (1,2-phenylenedicarbamothioyl)biscarbamate; dimethyl 4,4′-(o-phenylene)bis(3-thioallophanate)",
+   "cas": "23564-05-8"
+  },
+  {
+   "i": "006-070-00-9",
+   "n": "furmecyclox (ISO); N-cyclohexyl-N-methoxy-2,5-dimethyl-3-furamide",
+   "cas": "60568-05-0"
+  },
+  {
+   "i": "006-071-00-4",
+   "n": "cyclooct-4-en-1-yl methyl carbonate",
+   "cas": "87731-18-8"
+  },
+  {
+   "i": "006-072-00-X",
+   "n": "prosulfocarb (ISO); S-benzyl N,N-dipropylthiocarbamate",
+   "cas": "52888-80-9"
+  },
+  {
+   "i": "006-073-00-5",
+   "n": "3-(dimethylamino)propylurea",
+   "cas": "31506-43-1"
+  },
+  {
+   "i": "006-074-00-0",
+   "n": "2-(3-(prop-1-en-2-yl)phenyl)prop-2-yl isocyanate",
+   "cas": "2094-99-7"
+  },
+  {
+   "i": "006-076-00-1",
+   "n": "mancozeb (ISO); manganese ethylenebis(dithiocarbamate) (polymeric) complex with zinc salt",
+   "cas": "8018-01-7"
+  },
+  {
+   "i": "006-078-00-2",
+   "n": "zineb (ISO); zinc ethylenebis(dithiocarbamate) (polymeric)",
+   "cas": "12122-67-7"
+  },
+  {
+   "i": "006-079-00-8",
+   "n": "disulfiram; tetraethylthiuramdisulfide",
+   "cas": "97-77-8"
+  },
+  {
+   "i": "006-080-00-3",
+   "n": "tetramethylthiuram monosulphide",
+   "cas": "97-74-5"
+  },
+  {
+   "i": "006-082-00-4",
+   "n": "zinc bis(diethyldithiocarbamate)",
+   "cas": "14324-55-1"
+  },
+  {
+   "i": "006-084-00-5",
+   "n": "carbosulfan (ISO); 2,3-dihydro-2,2-dimethyl-7-benzofuryl [(dibutylamino)thio]methylcarbamate",
+   "cas": "55285-14-8"
+  },
+  {
+   "i": "006-086-00-6",
+   "n": "fenoxycarb (ISO); ethyl [2-(4-phenoxyphenoxy)ethyl]carbamate",
+   "cas": "72490-01-8"
+  },
+  {
+   "i": "006-087-00-1",
+   "n": "furathiocarb (ISO); 2,3-dihydro-2,2-dimethyl-7-benzofuryl 2,4-dimethyl-6-oxa-5-oxo-3-thia-2,4-diazadecanoate",
+   "cas": "65907-30-4"
+  },
+  {
+   "i": "006-088-00-7",
+   "n": "benfuracarb (ISO); ethyl N-[2,3-dihydro-2,2-dimethylbenzofuran-7-yloxycarbonyl(methyl)aminothio]-N-isopropyl- β-alaninate",
+   "cas": "82560-54-1"
+  }
+ ],
+ "ecDifferences": 41
+}

@@ -120,3 +120,14 @@ details[open] > summary .fold-icon { transform: rotate(180deg); }
 }
 .ssoma-contrast { padding-left: 18px; } .ssoma-contrast li { margin: 8px 0; } .ssoma-contrast .ssoma-chips { margin-top: 4px; }
 .ssoma-badge.status { white-space: normal; text-align: left; }
+
+/* Flujo progresivo */
+.ssoma-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ssoma-flow > li { display: flex; gap: 12px; padding: 0 0 16px; position: relative; }
+.ssoma-flow > li::before { content: ''; position: absolute; left: 14px; top: 30px; bottom: 0; width: 2px; background: var(--border-strong); }
+.ssoma-flow > li:last-child::before { display: none; }
+.ssoma-flow > li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 4px; font-size: 14px; color: var(--text-soft); }
+.ssoma-flow > li > div > b { color: var(--text); }
+.flow-dot { flex: 0 0 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--blue); color: #fff; position: relative; z-index: 1; }
+.ssoma-flow > li.locked .flow-dot { background: var(--surface-muted); color: var(--text-muted); }
+.ssoma-flow > li.locked > div > b { color: var(--text-muted); }
