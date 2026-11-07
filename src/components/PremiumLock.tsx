@@ -6,7 +6,7 @@ export function PremiumLock({ view, onNavigate }: { view: SiteViewId; onNavigate
   return (
     <section className="premium-lock" aria-labelledby="lock-title">
       <span className="lock-icon" aria-hidden="true"><Lock size={26} /></span>
-      <h1 id="lock-title">{view === 'herramientas' ? 'IPERC y herramientas' : 'Formatos y registros editables'}</h1>
+      <h1 id="lock-title">{view === 'herramientas' ? 'IPERC y herramientas' : view === 'ia' ? 'IA: diagnóstico y agentes (administradores)' : 'Formatos y registros editables'}</h1>
       <p>
         El espacio <b>Implementar</b> está disponible para cuentas premium mientras lo terminamos de afinar.
         Mientras tanto, puede descargar todas las plantillas adaptadas a su empresa desde la Biblioteca.
