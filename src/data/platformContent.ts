@@ -47,6 +47,7 @@ export type SiteViewId =
   | 'senales'
   | 'glosario'
   | 'diagramas'
+  | 'ia'
   | 'simulador'
   | 'rutas'
   | 'premium'
@@ -62,6 +63,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
   { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
   { id: 'visor', label: 'Visor SSOMA', description: 'Normas SST y ambientales en detalle, cuadros, riesgos y químicos' },
+  { id: 'ia', label: 'IA: diagnóstico y agentes', description: 'Diagnóstico por foto, llaves de API y modelos (solo administradores)' },
   { id: 'diagramas', label: 'Diagramas de procesos', description: 'PHVA, IPERC, accidentes, residuos, SUNAFIL y emergencias en flujos interactivos' },
   { id: 'glosario', label: 'Glosario y colores', description: 'Términos, siglas, leyes y códigos de colores de la industria' },
   { id: 'senales', label: 'Señales y etiquetas', description: 'Señales de seguridad, stickers con QR y etiquetas SGA para imprimir' },
@@ -82,13 +84,13 @@ export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' 
 export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
   { id: 'explorar', label: 'Explorar', hint: 'Riesgos, controles, normas y casos', views: ['explorador', 'normativa', 'visor', 'diagramas', 'glosario', 'iso', 'evolucion', 'casos'] },
   { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
-  { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
+  { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos', 'ia'] },
   { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
   { id: 'aprender', label: 'Aprender', hint: 'Guías, plantillas y rutas de especialista', views: ['plantillas', 'senales', 'simulador', 'rutas', 'premium'] },
 ]
 
 /** Vistas que solo se muestran con sesión premium (Implementar se trabajará después). */
-export const PREMIUM_VIEWS: SiteViewId[] = ['herramientas', 'formatos']
+export const PREMIUM_VIEWS: SiteViewId[] = ['herramientas', 'formatos', 'ia']
 
 /** Recorrido guiado: orden en que se aprende y se avanza por la plataforma. */
 export const LEARNING_PATH: SiteViewId[] = [
