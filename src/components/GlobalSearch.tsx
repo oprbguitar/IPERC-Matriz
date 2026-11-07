@@ -1,12 +1,17 @@
-import { BookOpen, FileText, Gavel, Scale, ScrollText, Search, ShieldCheck, X } from 'lucide-react'
+import { BookOpen, FileText, Gavel, LayoutGrid, Scale, ScrollText, Search, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ARTICLES, CASES, FORMATS, INFRACTIONS, OBLIGATIONS } from '../catalog'
 import { GUIDES } from '../data/guides'
 import { findNorm, legalNorms } from '../data/legalDatabase'
 import { PREVENTION_TOPICS } from '../data/prevention'
+import { NAV_ITEMS, type SiteViewId } from '../data/platformContent'
+import { DIAGRAMS } from '../data/diagrams'
+import { TERMS } from '../data/glossary'
+import { SIGNS } from '../data/signs'
 
 export type SearchTarget =
+  | { kind: 'vista'; id: SiteViewId }
   | { kind: 'riesgo'; id: string }
   | { kind: 'norma'; id: string }
   | { kind: 'obligacion'; id: string }
@@ -28,6 +33,19 @@ const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, 
 
 function buildIndex(): Result[] {
   const items: Result[] = []
+  // Páginas de la plataforma: el buscador también lleva a cada sección del menú.
+  for (const item of NAV_ITEMS) {
+    items.push({ group: 'Páginas', icon: LayoutGrid, title: item.label, detail: item.description, target: { kind: 'vista', id: item.id }, haystack: `${item.label} ${item.description}` })
+  }
+  for (const diagram of DIAGRAMS) {
+    items.push({ group: 'Diagramas de procesos', icon: LayoutGrid, title: diagram.title, detail: diagram.summary, target: { kind: 'vista', id: 'diagramas' }, haystack: `diagrama flujo proceso ${diagram.title} ${diagram.summary} ${diagram.nodes.map((node) => node.label).join(' ')}` })
+  }
+  for (const sign of SIGNS) {
+    items.push({ group: 'Señales', icon: ShieldCheck, title: sign.text, detail: sign.description, target: { kind: 'vista', id: 'senales' }, haystack: `señal ${sign.text} ${sign.description}` })
+  }
+  for (const term of TERMS) {
+    items.push({ group: 'Glosario', icon: BookOpen, title: term.t, detail: term.d, target: { kind: 'vista', id: 'glosario' }, haystack: `${term.t} ${term.d}` })
+  }
   for (const topic of PREVENTION_TOPICS) {
     items.push({ group: 'Riesgos y controles', icon: ShieldCheck, title: topic.title, detail: topic.summary, target: { kind: 'riesgo', id: topic.id }, haystack: `${topic.title} ${topic.summary} ${topic.controls.join(' ')} ${topic.instruments.join(' ')} ${topic.ppe.join(' ')}` })
   }

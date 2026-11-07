@@ -197,7 +197,8 @@ function App() {
 
   const handleSearch = useCallback(
     (target: SearchTarget) => {
-      if (target.kind === 'norma') openNorm(target.id)
+      if (target.kind === 'vista') navigate(target.id)
+      else if (target.kind === 'norma') openNorm(target.id)
       else if (target.kind === 'riesgo') { setFocusTopicId(target.id); navigate('explorador') }
       else if (target.kind === 'guia') openGuide(target.id)
       else if (target.kind === 'formato') openFormat(target.id)

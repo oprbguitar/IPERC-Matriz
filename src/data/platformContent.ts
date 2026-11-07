@@ -80,7 +80,7 @@ export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' 
 
 /** Cinco espacios de trabajo: cada vista pertenece a uno. */
 export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
-  { id: 'explorar', label: 'Explorar', hint: 'Riesgos, controles, normas y casos', views: ['explorador', 'normativa', 'visor', 'glosario', 'iso', 'evolucion', 'casos'] },
+  { id: 'explorar', label: 'Explorar', hint: 'Riesgos, controles, normas y casos', views: ['explorador', 'normativa', 'visor', 'diagramas', 'glosario', 'iso', 'evolucion', 'casos'] },
   { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
   { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
   { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
