@@ -8,12 +8,15 @@
  * - solicitudes de acceso y administracion basica de usuarios
  * - contador publico de descargas
  */
+import { handleAi } from './ai'
 import { handleCatalog } from './catalogApi'
 import { PREMIUM_GUIDES } from './premiumGuides'
 
 interface Env {
   DB: D1Database
   ASSETS: Fetcher
+  AI?: Ai
+  AI_KEY_SECRET?: string
 }
 
 interface UserRow {
@@ -120,6 +123,7 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   // --- Administracion ---
   if (pathname.startsWith('/api/admin/')) {
     if (user.role !== 'admin') return json({ error: 'Solo administradores.' }, 403)
+    if (pathname.startsWith('/api/admin/ai/')) return handleAi(request, env, pathname, user.id)
     if (pathname === '/api/admin/users' && method === 'GET') return listUsers(env)
     if (pathname === '/api/admin/users' && method === 'POST') return createUser(request, env)
     if (pathname.startsWith('/api/admin/users/') && method === 'DELETE') {
