@@ -51,3 +51,13 @@ tests/              Vitest.
 - Normas: 40 con enlaces activos y huella de contenido; ningún cambio pendiente de validación.
 - Artículos cotejados: 19. Obligaciones: 25. Infracciones SST: 33. Casos: 15 (6 con ficha oficial). Formatos: 24. Plantillas avanzadas: 25 (7 compuestas + 18 derivadas de formatos).
 - Pendientes: ver `docs/EVALUACION-2026-11.md`.
+
+## Ampliación preventiva (2026-11-07)
+
+La inspección de la aplicación identificó rutas públicas por hash en `App.tsx`, navegación declarada en `platformContent.ts`, buscador transversal en `GlobalSearch.tsx`, vistas diferidas con React `lazy`, catálogo normativo en `legalDatabase.ts` y sus extensiones, visor SSOMA y simulador 2D isométrico ya existentes. Los estilos se distribuyen entre `App.css` y hojas por módulo. El despliegue configurado es Cloudflare Workers con assets Vite y D1, en `sst.andesnova.solutions`; el remoto del proyecto es `oprbguitar/IPERC-Matriz`.
+
+El Explorador amplía esas capas sin reconstruir el portal. `prevention.ts` añade 16 fichas, 16 sectores, 9 familias y 5 perfiles; `preventionScenes.ts` define ocho ambientes y relaciona puntos con fichas únicas. `lib/prevention.ts` encapsula búsqueda y cálculos educativos. Las fichas resuelven normas mediante los identificadores del catálogo existente, sin duplicar texto legal ni crear una API paralela.
+
+Se conserva el simulador previo y su método IPERC. El nuevo visor SVG explica peligros y controles; su estado visual no es evidencia de implementación ni recalcula riesgo acreditado. La portada ofrece una entrada compacta, la navegación conserva sus espacios, y las nuevas fichas se conectan a búsqueda, normativa, documentos y seguimiento existentes. No se eliminan los 17 dominios ni las 67 referencias declaradas en la versión previa por introducir estas nuevas taxonomías.
+
+No se añaden dependencias 3D, servicios de pago, migraciones ni cambios de credenciales. `docgen.ts` mantiene la generación de Word compatible `.doc`, Markdown e impresión a PDF. Las recomendaciones de equipo no son un catálogo certificado ni acreditación metrológica. El estado de implementación y los pendientes están en [implementation-status.md](implementation-status.md); las fuentes en [normative-traceability.md](normative-traceability.md) y las decisiones del visor en [visual-risk-viewer.md](visual-risk-viewer.md).

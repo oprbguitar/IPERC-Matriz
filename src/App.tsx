@@ -3,6 +3,7 @@ import './App.css'
 import './styles/observatorio.css'
 import './styles/compliance.css'
 import './styles/navigation.css'
+import './styles/prevention.css'
 import { LegalReference } from './components/LegalReference'
 import { SideDrawer } from './components/SideDrawer'
 import { GlobalSearch, type SearchTarget } from './components/GlobalSearch'
@@ -50,6 +51,7 @@ const SsomaVisorView = lazy(() => import('./views/SsomaVisorView'))
 const GlossaryView = lazy(() => import('./views/GlossaryView'))
 const SignageView = lazy(() => import('./views/SignageView'))
 const SimulatorView = lazy(() => import('./views/SimulatorView'))
+const PreventionView = lazy(() => import('./views/PreventionView'))
 
 const ANSWERS_STORAGE_KEY = 'ruta-sst-peru:diagnostico'
 
@@ -92,6 +94,7 @@ function App() {
   const [inspectionTab, setInspectionTab] = useState<InspectionTab>('contingencia')
   const [openFormatId, setOpenFormatId] = useState<string | undefined>(undefined)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [focusTopicId, setFocusTopicId] = useState<string | undefined>()
   const [openGuideId, setOpenGuideId] = useState<string | undefined>(undefined)
   const [user, setUser] = useState<ApiUser | null>(null)
   const [authReady, setAuthReady] = useState(false)
@@ -166,10 +169,8 @@ function App() {
   }, [])
 
   const navigate = useCallback((next: SiteViewId) => {
-    setView((current) => {
-      if (current !== next) window.history.pushState({ view: next }, '', `#/${next}`)
-      return next
-    })
+    if (viewFromHash() !== next) window.history.pushState({ view: next }, '', `#/${next}`)
+    setView(next)
     setOpenCard(null)
   }, [])
 
@@ -191,10 +192,12 @@ function App() {
   const openFormat = useCallback((formatId: string) => setEditorFormatId(formatId), [])
 
   const openSearch = useCallback(() => setSearchOpen(true), [])
+  const consumeTopicFocus = useCallback(() => setFocusTopicId(undefined), [])
 
   const handleSearch = useCallback(
     (target: SearchTarget) => {
       if (target.kind === 'norma') openNorm(target.id)
+      else if (target.kind === 'riesgo') { setFocusTopicId(target.id); navigate('explorador') }
       else if (target.kind === 'guia') openGuide(target.id)
       else if (target.kind === 'formato') openFormat(target.id)
       else if (target.kind === 'obligacion') navigate('diagnostico')
@@ -270,6 +273,7 @@ function App() {
           />
         )}
         {view === 'evolucion' && <EvolutionView onOpenNorm={openNorm} />}
+        {view === 'explorador' && <PreventionView onOpenNorm={openNorm} onNavigate={navigate} focusTopicId={focusTopicId} onFocusConsumed={consumeTopicFocus} />}
         {view === 'visor' && <SsomaVisorView onOpenNorm={openNorm} onNavigate={navigate} />}
         {view === 'senales' && <SignageView />}
         {view === 'glosario' && <GlossaryView />}

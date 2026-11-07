@@ -6,6 +6,12 @@ Plataforma abierta (sin registro) con una zona **Premium** con acceso por correo
 
 ## Qué incluye
 
+### Ampliación preventiva · 7 de noviembre de 2026
+
+Abra **Explorar → Riesgos y controles** o [`#/explorador`](https://sst.andesnova.solutions/#/explorador). El nuevo espacio permite consultar 16 fichas relacionadas con 16 sectores, recorrer ocho ambientes isométricos y comparar controles ilustrados. Incluye una práctica editable de actividad, tarea, peligro, evento, daño, control y evidencia, basada en la jerarquía de controles; guarda borradores en el navegador y exporta documentos sin enviar esos datos a un servidor.
+
+Búsqueda transversal, filtros, enlaces permanentes, QR, fichas Word/Markdown y PDF por impresión reutilizan la aplicación existente. Ruido e índice UV son herramientas educativas, sin mediciones reales. La consulta pública no requiere cuenta; la matriz y las funciones premium conservan sus accesos actuales. El detalle de alcance y pendientes está en [docs/implementation-status.md](docs/implementation-status.md), las fuentes en [docs/normative-traceability.md](docs/normative-traceability.md) y la validación en [docs/testing.md](docs/testing.md).
+
 | Sección | Para qué sirve |
 |---|---|
 | **Inicio** | Historia en 60 segundos, ruta en 6 pasos, descargas rápidas y el **sistema de seguimiento** con 17 dominios (SST, IPERC, comité, registros, salud ocupacional, higiene, ergonomía, psicosocial, inspecciones SUNAFIL, auditoría, emergencias, incendios, riesgo eléctrico, residuos, ambiente, capacitación/contratistas, SST digital e IA). |

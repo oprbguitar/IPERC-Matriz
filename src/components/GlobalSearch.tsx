@@ -4,8 +4,10 @@ import { createPortal } from 'react-dom'
 import { ARTICLES, CASES, FORMATS, INFRACTIONS, OBLIGATIONS } from '../catalog'
 import { GUIDES } from '../data/guides'
 import { findNorm, legalNorms } from '../data/legalDatabase'
+import { PREVENTION_TOPICS } from '../data/prevention'
 
 export type SearchTarget =
+  | { kind: 'riesgo'; id: string }
   | { kind: 'norma'; id: string }
   | { kind: 'obligacion'; id: string }
   | { kind: 'formato'; id: string }
@@ -26,6 +28,9 @@ const normalize = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, 
 
 function buildIndex(): Result[] {
   const items: Result[] = []
+  for (const topic of PREVENTION_TOPICS) {
+    items.push({ group: 'Riesgos y controles', icon: ShieldCheck, title: topic.title, detail: topic.summary, target: { kind: 'riesgo', id: topic.id }, haystack: `${topic.title} ${topic.summary} ${topic.controls.join(' ')} ${topic.instruments.join(' ')} ${topic.ppe.join(' ')}` })
+  }
   for (const norm of legalNorms) {
     items.push({ group: 'Normas', icon: Scale, title: norm.shortName, detail: norm.plainLanguageSummary, target: { kind: 'norma', id: norm.id }, haystack: `${norm.shortName} ${norm.officialTitle} ${norm.keyTopics.join(' ')} ${norm.plainLanguageSummary}` })
   }
@@ -84,7 +89,7 @@ export function GlobalSearch({ open, onClose, onSelect }: { open: boolean; onClo
       <div className="search-panel" onClick={(event) => event.stopPropagation()}>
         <div className="search-input">
           <Search size={18} aria-hidden="true" />
-          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Busque una obligación, norma, formato, caso o tema…" />
+          <input aria-label="Buscar en el Observatorio" ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Busque una obligación, norma, formato, caso o tema…" />
           <button type="button" onClick={onClose} aria-label="Cerrar búsqueda"><X size={18} /></button>
         </div>
         {results.length === 0 && (

@@ -121,7 +121,7 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
           })}
         </nav>
 
-        <button type="button" className="search-trigger" onClick={onSearch} title="Buscar (Ctrl + K)">
+        <button type="button" className="search-trigger" onClick={onSearch} title="Buscar (Ctrl + K)" aria-label="Buscar en el Observatorio">
           <Search size={16} aria-hidden="true" /> <span>Buscar</span> <kbd>Ctrl K</kbd>
         </button>
 

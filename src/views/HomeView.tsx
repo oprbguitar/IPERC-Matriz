@@ -1,5 +1,6 @@
 import { ArrowRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
 import { useRef } from 'react'
+import PreventionPreview from '../components/PreventionPreview'
 import { LegalReference } from '../components/LegalReference'
 import { CAREER_PATHS } from '../data/careerPaths'
 import { COVERAGE_DOMAINS } from '../data/coverage'
@@ -101,6 +102,7 @@ export function HomeView({
         </picture>
       </section>
 
+      <PreventionPreview onNavigate={onNavigate} />
       <section className="story-strip" aria-label="Historia de la normativa SST en el Perú">
         <div className="story-copy">
           <span className="eyebrow"><History size={15} aria-hidden="true" /> La historia en 60 segundos</span>

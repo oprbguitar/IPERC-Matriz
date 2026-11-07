@@ -29,6 +29,7 @@ export type IconType = ComponentType<{ size?: number | string; className?: strin
 /** Vistas públicas de la plataforma. */
 export type SiteViewId =
   | 'inicio'
+  | 'explorador'
   | 'evolucion'
   | 'ruta'
   | 'obligaciones'
@@ -51,6 +52,7 @@ export type SiteViewId =
 
 export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: string }> = [
   { id: 'inicio', label: 'Inicio', description: 'Vista general del observatorio' },
+  { id: 'explorador', label: 'Riesgos y controles', description: 'Sectores, fichas preventivas, ambientes interactivos y práctica IPERC' },
   { id: 'normativa', label: 'Normas peruanas', description: 'Leyes y reglamentos con artículos cotejados y enlace al SPIJ' },
   { id: 'iso', label: 'ISO y sistemas integrados', description: 'ISO 45001, 14001, SIG, normas relacionadas e INACAL' },
   { id: 'evolucion', label: 'Evolución', description: 'Línea de tiempo normativa, ramas y especialidades' },
@@ -76,7 +78,7 @@ export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' 
 
 /** Cinco espacios de trabajo: cada vista pertenece a uno. */
 export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: SiteViewId[] }> = [
-  { id: 'explorar', label: 'Explorar', hint: 'Normas, ISO, evolución y casos', views: ['normativa', 'visor', 'glosario', 'iso', 'evolucion', 'casos'] },
+  { id: 'explorar', label: 'Explorar', hint: 'Riesgos, controles, normas y casos', views: ['explorador', 'normativa', 'visor', 'glosario', 'iso', 'evolucion', 'casos'] },
   { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
   { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos'] },
   { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
