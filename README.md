@@ -17,6 +17,13 @@ Plataforma abierta (sin registro) con una zona **Premium** con acceso por correo
 | **Herramientas** | Generador IPERC, matriz editable, **Analítica** (calculadora de multas SUNAFIL con la tabla oficial del D.S. 008-2020-TR, organización exigible, IF/IS/IA, riesgo inicial vs. residual), **plan de acción con drag & drop**, evidencias con arrastre de archivos, normativa en cuadros/lista, reportes Excel/Word/CSV y registro compacto por pestañas. El panel lateral es un **índice SST** con guías por herramienta. |
 | **Premium** | Login con correo y clave, plan de 22 hitos en 6 fases con **% de avance guardado en la nube** (visible en la barra superior), 6 guías de IA (IA aplicada, sistema de agentes, herramientas open source/pago, seguimiento continuo, prompts, gobernanza de datos), solicitudes de acceso y panel de administración de usuarios. |
 
+## Novedades 2026.11.3 · Visor SSOMA
+
+- **Visor SSOMA** (`#/visor`, espacio Explorar): 20 normas SST, de salud ocupacional, ambientales y de químicos con qué regulan, cómo funcionan, artículos clave, obligaciones, cuadros (ECA aire, agua, suelo y ruido, VMA, colores NTP 900.058, extintores, ergonomía, gestantes), riesgos comunes, línea de tiempo y referentes internacionales. Todo plegable y con búsqueda, pensado para el celular.
+- **Contraste de fuentes:** 13 hallazgos entre los textos oficiales, la presentación del curso y el catálogo (plazos de registros, periodicidad de EMO, ediciones de NTP, errores del Anexo 1 del proyecto SGA).
+- **Químicos:** pictogramas SGA, 87 códigos H y buscador de 4.441 sustancias del Anexo VI del Reglamento CLP (UE), generado con `scripts/build-clp-json.py`.
+- Fuentes en `data/fundamentos ssoma` (Markdown, imágenes y Excel; los PDF originales no se versionan por su tamaño).
+
 ## Novedades 2026.11.2
 
 - **Nombre y marca:** Observatorio Prevenir Perú (seguridad, salud, ambiente y gestión integrada), con logo y favicon propios.

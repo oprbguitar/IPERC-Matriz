@@ -1,0 +1,8 @@
+{
+  "source": "Reglamento (CE) 1272/2008 (CLP), Anexo VI, parte 3 - tabla Excel no oficial (hoja ATP23)",
+  "atp": "23",
+  "rows": 4441,
+  "generated": "2026-11-07",
+  "fields": "i=N.º índice; n=nombre químico (EN); ec; cas; c=clase y categoría; h=códigos H de clasificación; p=pictogramas y palabra de advertencia (Dgr=Peligro, Wng=Atención); e=EUH suplementarios; l=límites específicos/factores M/ETA; nt=notas",
+  "disclaimer": "DISCLAIMER: This is an unofficial excel table containing the substances with harmonised classification and labelling up until the 23rd Adaptation to Technical Progress, i.e. Commission Delegated Regulation (EU) No 2025/1222 of 20 June 2025 amending Regulation (EC) No 1272/2008 of the European Parliament and of the Council as regards the harmonised classification and labelling of certain substances. ECHA assumes no responsibility of any kind for your use of the data inter alia in the context of fulfilling the requirements of the relevant legal obligations. Please note that this document should be treated only for informative purposes not including commercial activities or reproduction."
+}
