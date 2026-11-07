@@ -38,4 +38,10 @@ Limitaciones: pruebas de navegador automatizadas y revisión visual en escritori
 
 ## Publicación
 
-La publicación y su verificación remota se registran al completar el despliegue. La versión Cloudflare anterior a esta intervención es `62dcf6d7-f94c-448c-9613-e0c231abb581`; no hubo migraciones de esquema.
+Publicación completada y verificada el 7 de noviembre de 2026:
+
+- Código: commit `c811ec84837d259dcfe9d66ce5e3996c23854802` en `main` de [oprbguitar/IPERC-Matriz](https://github.com/oprbguitar/IPERC-Matriz).
+- Producción: [Explorador de Riesgos y Controles](https://sst.andesnova.solutions/#/explorador), Worker `observatorio-sst`, versión `08f77de8-c687-49d2-a904-8b7185f8621b`.
+- Ambos recorridos de navegador repetidos satisfactoriamente sobre el dominio de producción: explorador completo y 21 rutas. Sin errores JavaScript; API pública de sesión respondió HTTP 200 y `user: null` para la consulta sin cuenta.
+- GitHub Pages conserva su publicación secundaria; se comprobó también la compilación con base `/IPERC-Matriz/` y la resolución de las dos fuentes locales en esa base. Su workflow ejecuta pruebas antes de publicar.
+- No hubo migraciones de esquema, cambios de acceso ni modificación de credenciales. La versión Cloudflare anterior es `62dcf6d7-f94c-448c-9613-e0c231abb581`, disponible como referencia de reversión del código.
