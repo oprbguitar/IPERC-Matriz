@@ -46,6 +46,7 @@ export type SiteViewId =
   | 'visor'
   | 'senales'
   | 'glosario'
+  | 'diagramas'
   | 'simulador'
   | 'rutas'
   | 'premium'
@@ -61,6 +62,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
   { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
   { id: 'visor', label: 'Visor SSOMA', description: 'Normas SST y ambientales en detalle, cuadros, riesgos y químicos' },
+  { id: 'diagramas', label: 'Diagramas de procesos', description: 'PHVA, IPERC, accidentes, residuos, SUNAFIL y emergencias en flujos interactivos' },
   { id: 'glosario', label: 'Glosario y colores', description: 'Términos, siglas, leyes y códigos de colores de la industria' },
   { id: 'senales', label: 'Señales y etiquetas', description: 'Señales de seguridad, stickers con QR y etiquetas SGA para imprimir' },
   { id: 'simulador', label: 'Simulador de ambientes', description: 'Oficina y almacén: identifique peligros y compare el riesgo inicial y residual' },

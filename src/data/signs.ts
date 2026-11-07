@@ -1,3 +1,4 @@
+import { EXTRA_SIGNS } from './signsExtra'
 /**
  * Catálogo de señales de seguridad para el generador de señales y stickers.
  * Geometría y colores según NTP 399.010-1:2016 (concordante con ISO 3864-1). Los pictogramas son
@@ -38,7 +39,7 @@ export const SIGN_NORMS = [
   'Ley 29783, art. 21 y D.S. 005-2012-TR — La señalización es un control administrativo dentro de la jerarquía',
 ]
 
-export const SIGNS: SafetySign[] = [
+const BASE_SIGNS: SafetySign[] = [
   // Prohibición
   { id: 'no-fumar', family: 'prohibicion', text: 'PROHIBIDO FUMAR', icon: 'CigaretteOff', iso: 'P002', description: 'Prohíbe fumar en el área.', where: ['Almacenes de combustibles y químicos', 'Oficinas y ambientes cerrados', 'Grifos y talleres'], risks: ['Incendio y explosión', 'Exposición a humo de tabaco'], controls: ['Áreas designadas para fumadores fuera de zonas de riesgo', 'Inspección periódica'], norms: ['Ley 28705 (control del tabaco)', 'NTP 399.010-1:2016'] },
   { id: 'no-llama', family: 'prohibicion', text: 'PROHIBIDO LLAMA ABIERTA', icon: 'Flame', iso: 'P003', description: 'Prohíbe fuego, llamas abiertas y fuentes de ignición.', where: ['Almacén de inflamables', 'Zona de recarga de baterías', 'Tanques de combustible'], risks: ['Incendio', 'Explosión de vapores'], controls: ['Permiso de trabajo en caliente', 'Herramientas antichispa', 'Ventilación'], norms: ['D.S. 005-2012-TR', 'NTP 399.010-1:2016'] },
@@ -71,6 +72,8 @@ export const SIGNS: SafetySign[] = [
   { id: 'alarma', family: 'incendios', text: 'ALARMA CONTRA INCENDIOS', icon: 'BellRing', iso: 'F005', description: 'Ubica el pulsador de alarma.', where: ['Rutas de evacuación', 'Salidas'], risks: ['Demora en la evacuación'], controls: ['Prueba periódica del sistema', 'Simulacros'], norms: ['Norma A.130 del RNE'] },
   { id: 'telefono-emergencia', family: 'incendios', text: 'TELÉFONO DE EMERGENCIA', icon: 'Phone', iso: 'F006', description: 'Ubica el teléfono para emergencias.', where: ['Garitas', 'Recepción'], risks: ['Demora en la respuesta'], controls: ['Directorio de emergencia visible (116 bomberos)'], norms: ['Norma A.130 del RNE'] },
 ]
+
+export const SIGNS: SafetySign[] = [...BASE_SIGNS, ...EXTRA_SIGNS]
 
 /** Tamaño mínimo de una señal según la distancia de observación (NTP 399.010-1 / ISO 3864-1): S ≥ L² / 2000, para L < 50 m. */
 export function minSignArea(distanceMeters: number): { areaM2: number; sideCm: number } {

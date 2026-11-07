@@ -1,20 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import {
-  ArrowBigRight, BellRing, Biohazard, Bomb, CigaretteOff, Cylinder, DoorOpen, Download, Droplets, Ear, FireExtinguisher, Fish, Flame,
-  FlaskConical, Footprints, Forklift, Glasses, Hand, HardHat, Package, Phone, PersonStanding, Plus, Printer, Search, Shirt, ShowerHead,
-  Skull, Smartphone, TriangleAlert, Zap,
-} from 'lucide-react'
+import { Download, Printer, Search, TriangleAlert } from 'lucide-react'
+import { SIGN_ICONS as ICONS } from '../lib/signIcons'
 import { FAMILY_INFO, minSignArea, SIGN_NORMS, SIGNS, type SafetySign, type SignFamily } from '../data/signs'
 import { H_TABLE_ROWS } from '../data/ssoma/quimicos'
 import { assetUrl } from '../lib/assets'
 import '../styles/signage.css'
-
-type IconComp = ComponentType<{ x?: number; y?: number; size?: number; color?: string; strokeWidth?: number }>
-const ICONS: Record<string, IconComp> = {
-  ArrowBigRight, BellRing, Biohazard, Bomb, CigaretteOff, Cylinder, DoorOpen, Droplets, Ear, FireExtinguisher, Fish, Flame, FlaskConical,
-  Footprints, Forklift, Glasses, Hand, HardHat, Package, Phone, PersonStanding, Plus, Shirt, ShowerHead, Skull, Smartphone, TriangleAlert, Zap,
-}
 
 type Tab = 'senales' | 'quimicos' | 'operativas'
 type Format = 'A4' | 'A5' | 'A6' | 'sticker' | 'hoja'
@@ -85,29 +76,30 @@ function Pictogram({ family, icon }: { family: SignFamily; icon: string }) {
   )
 }
 
-/** Señal completa: pictograma + panel de texto + QR opcional. viewBox 200 × (260 | 290). */
+/** Señal completa: pictograma + panel de texto a todo el ancho + franja de QR con leyenda (opcional). */
 function SignSvg({ sign, qr, svgRef }: { sign: SafetySign; qr: boolean; svgRef?: React.Ref<SVGSVGElement> }) {
   const info = FAMILY_INFO[sign.family]
   const panelBg = sign.family === 'prohibicion' ? '#fff' : info.bg
   const panelFg = sign.family === 'prohibicion' ? info.bg : info.fg
-  const height = qr ? 300 : 262
-  const words = sign.text.split(' ')
   const lines: string[] = []
-  const maxChars = qr ? 15 : 20
-  for (const word of words) {
+  for (const word of sign.text.split(' ')) {
     const last = lines[lines.length - 1]
-    if (last && (last + ' ' + word).length <= maxChars) lines[lines.length - 1] = `${last} ${word}`
+    if (last && `${last} ${word}`.length <= 20) lines[lines.length - 1] = `${last} ${word}`
     else lines.push(word)
   }
-  const fontSize = lines.length > 3 ? 11 : 14
+  const fontSize = lines.length > 3 ? 11.5 : lines.length > 2 ? 13 : 15
+  const panelH = Math.max(56, lines.length * fontSize * 1.2 + 18)
+  const panelY = 202
+  const qrY = panelY + panelH + 6
+  const height = qr ? qrY + 72 : panelY + panelH + 6
   return (
     <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 200 ${height}`} className="sign-svg" role="img" aria-label={sign.text}>
       <rect width="200" height={height} fill="#fff" />
       <Pictogram family={sign.family} icon={sign.icon} />
-      <rect x="6" y="202" width="188" height={height - 208} rx="8" fill={panelBg} stroke={info.bg} strokeWidth="3" />
+      <rect x="6" y={panelY} width="188" height={panelH} rx="8" fill={panelBg} stroke={info.bg} strokeWidth="3" />
       <text
-        x={qr ? 72 : 100}
-        y={202 + (height - 208) / 2 - ((lines.length - 1) * fontSize * 1.15) / 2 + fontSize * 0.35}
+        x="100"
+        y={panelY + panelH / 2 - ((lines.length - 1) * fontSize * 1.2) / 2 + fontSize * 0.36}
         textAnchor="middle"
         fontFamily="Arial, Helvetica, sans-serif"
         fontWeight="700"
@@ -115,10 +107,19 @@ function SignSvg({ sign, qr, svgRef }: { sign: SafetySign; qr: boolean; svgRef?:
         fill={panelFg}
       >
         {lines.map((line, index) => (
-          <tspan key={index} x={qr ? 72 : 100} dy={index === 0 ? 0 : fontSize * 1.15}>{line}</tspan>
+          <tspan key={index} x="100" dy={index === 0 ? 0 : fontSize * 1.2}>{line}</tspan>
         ))}
       </text>
-      {qr && <QrPath text={fichaUrl(`s=${sign.id}`)} x={128} y={212} size={78} />}
+      {qr && (
+        <g>
+          <rect x="6" y={qrY} width="188" height="66" rx="8" fill="#fff" stroke="#c9ced6" strokeWidth="1.5" />
+          <QrPath text={fichaUrl(`s=${sign.id}`)} x={10} y={qrY + 3} size={60} />
+          <text x="76" y={qrY + 22} fontFamily="Arial" fontWeight="700" fontSize="9.5" fill="#111">ESCANEE PARA VER</text>
+          <text x="76" y={qrY + 35} fontFamily="Arial" fontSize="8.5" fill="#333">peligro, controles,</text>
+          <text x="76" y={qrY + 46} fontFamily="Arial" fontSize="8.5" fill="#333">EPP y norma</text>
+          <text x="76" y={qrY + 58} fontFamily="Arial" fontSize="7.5" fill="#666">{sign.iso ? `Ref. ISO 7010 ${sign.iso}` : 'NTP 399.010-1'}</text>
+        </g>
+      )}
     </svg>
   )
 }
@@ -258,6 +259,13 @@ const OPS = {
   epp: { title: 'CONTROL DE EPP', color: '#0B5CAD', fields: ['Trabajador', 'EPP entregado', 'Fecha de entrega', 'Próxima revisión', 'Firma'], months: false },
   mantenimiento: { title: 'MANTENIMIENTO DE EQUIPO', color: '#E07B00', fields: ['Equipo / código', 'Último mantenimiento', 'Próximo mantenimiento', 'Técnico', 'Estado'], months: false },
   acceso: { title: 'ACCESO AUTORIZADO', color: '#0E7A3E', fields: ['Nombre', 'Área autorizada', 'Válido hasta', 'Autoriza'], months: false },
+  loto: { title: 'PELIGRO · NO OPERAR (LOTO)', color: '#B71C1C', fields: ['Bloqueado por', 'Área / equipo', 'Energía aislada', 'Fecha y hora', 'Teléfono'], months: false },
+  andamioOk: { title: 'ANDAMIO APTO PARA USO', color: '#1B7F3B', fields: ['Andamio / ubicación', 'Carga máxima', 'Inspeccionado por', 'Fecha', 'Válido hasta'], months: false },
+  andamioPrec: { title: 'PRECAUCIÓN · USO RESTRINGIDO', color: '#C99700', fields: ['Andamio / ubicación', 'Restricción', 'EPP requerido', 'Inspeccionado por', 'Fecha'], months: false },
+  andamioNo: { title: 'NO USAR · FUERA DE SERVICIO', color: '#B71C1C', fields: ['Equipo / ubicación', 'Motivo', 'Reportado por', 'Fecha'], months: false },
+  arnes: { title: 'INSPECCIÓN DE ARNÉS Y LÍNEA DE VIDA', color: '#E07B00', fields: ['Código del arnés', 'Usuario', 'Fecha de fabricación', 'Inspeccionado por'], months: true },
+  herramienta: { title: 'HERRAMIENTA INSPECCIONADA', color: '#0B5CAD', fields: ['Herramienta / código', 'Trimestre (color)', 'Inspector', 'Fecha'], months: false },
+  botiquin: { title: 'CONTROL DE BOTIQUÍN', color: '#0E7A3E', fields: ['Ubicación', 'Responsable', 'Última reposición', 'Productos vencidos'], months: true },
 } as const
 type OpKind = keyof typeof OPS
 
@@ -382,15 +390,17 @@ export default function SignageView() {
   }, [tab, rows])
 
   const sign = SIGNS.find((item) => item.id === signId) ?? SIGNS[0]
-  const visibleSigns = SIGNS.filter((item) => family === 'todas' || item.family === family)
+  const [signQuery, setSignQuery] = useState('')
+  const sq = signQuery.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const visibleSigns = SIGNS.filter((item) => (family === 'todas' || item.family === family) && (!sq || `${item.text} ${item.description} ${item.risks.join(' ')}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(sq)))
   const size = minSignArea(distance)
 
   const results = useMemo(() => {
     if (!rows) return []
-    const term = query.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    const term = query.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     if (term.length < 2) return []
     return rows
-      .filter((row) => `${row.n} ${row.es ?? ''} ${row.cas ?? ''}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(term))
+      .filter((row) => `${row.n} ${row.es ?? ''} ${row.cas ?? ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term))
       .slice(0, 12)
   }, [rows, query])
 
@@ -421,6 +431,10 @@ export default function SignageView() {
                 <button type="button" key={key} className={family === key ? 'active' : ''} onClick={() => setFamily(key)}>{FAMILY_INFO[key].label}</button>
               ))}
             </div>
+            <label className="ssoma-search small">
+              <Search size={16} aria-hidden="true" />
+              <input value={signQuery} onChange={(event) => setSignQuery(event.target.value)} placeholder={`Buscar entre ${SIGNS.length} señales: extintor, arnés, corrosivo…`} />
+            </label>
             <div className="sign-picker">
               {visibleSigns.map((item) => (
                 <button type="button" key={item.id} className={item.id === signId ? 'active' : ''} onClick={() => setSignId(item.id)} title={item.text}>
