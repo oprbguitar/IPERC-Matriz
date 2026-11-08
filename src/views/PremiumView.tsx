@@ -11,17 +11,17 @@ import {
   Mail,
   ShieldCheck,
   Sparkles,
-  Trash2,
   UserPlus,
-  Users,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AdminAccess } from '../components/AdminAccess'
 import { DocReader } from '../components/DocReader'
+import { AccountPanel, ConsentGate, ForcedPassword } from '../components/PremiumAccount'
+import { solveGuard } from '../lib/guard'
 import { PREMIUM_ITEM_COUNT, PREMIUM_PLAN } from '../data/premiumPlan'
 import {
   api,
   ApiError,
-  type AccessRequest,
   type ApiUser,
   type PremiumGuideSummary,
   type ProgressStatus,
@@ -39,12 +39,12 @@ const STATUS_CYCLE: Record<ProgressStatus, ProgressStatus> = { pendiente: 'en-cu
 const STATUS_LABEL: Record<ProgressStatus, string> = { pendiente: 'Pendiente', 'en-curso': 'En curso', hecho: 'Hecho' }
 
 const LOCKED_PREVIEW = [
-  'Cómo aplicar inteligencia artificial en SST y SSOMA',
-  'Diseña un sistema de agentes de IA para tu área SST',
-  'Herramientas open source y de pago para gestionar SST',
-  'Seguimiento constante: indicadores, alertas y tableros',
-  'Biblioteca de prompts listos para SST',
-  'Gobernanza, datos personales y uso responsable de IA',
+  'Diagnóstico por foto con IA: peligros, nivel de riesgo y normas',
+  'Generador de informes: inspección, investigación, ATS, PETS, actas',
+  'Alertas normativas diarias: MTPE, SUNAFIL, MINAM, MINSA y EU-OSHA',
+  'Probabilidades calibradas con Jev: riesgo grave y observación SUNAFIL',
+  'Guías premium: agentes de IA, prompts y gobernanza de datos',
+  'Plan de implementación con % de avance guardado en la nube',
 ]
 
 export function computePercent(statuses: Record<string, ProgressStatus>): number {
@@ -56,9 +56,33 @@ export function PremiumView({ user, authReady, offline, onUserChange, onPercentC
   if (!authReady) return <div className="view-page"><p className="empty-note">Conectando con el Observatorio…</p></div>
   return (
     <div className="view-page premium">
-      {user ? <PremiumDashboard user={user} onUserChange={onUserChange} onPercentChange={onPercentChange} /> : <PremiumGate offline={offline} onUserChange={onUserChange} />}
+      {user ? <PremiumHome user={user} onUserChange={onUserChange} onPercentChange={onPercentChange} /> : <PremiumGate offline={offline} onUserChange={onUserChange} />}
     </div>
   )
+}
+
+/** Orden de validación tras el ingreso: clave personal → consentimiento → panel. */
+function PremiumHome({ user, onUserChange, onPercentChange }: { user: ApiUser; onUserChange: (user: ApiUser | null) => void; onPercentChange?: (percent: number) => void }) {
+  const refresh = useCallback(() => {
+    api.me().then(({ user: current }) => onUserChange(current)).catch(() => undefined)
+  }, [onUserChange])
+  const logout = () => api.logout().catch(() => undefined).then(() => onUserChange(null))
+  if (user.mustChange || !user.consentOk) {
+    return (
+      <>
+        <header className="premium-head">
+          <div>
+            <span className="eyebrow"><ShieldCheck size={15} aria-hidden="true" /> Validación de cuenta</span>
+            <h1>Bienvenido, {user.name ?? user.email.split('@')[0]}</h1>
+            <p>{user.mustChange ? 'Paso 1 de 2: cree su clave personal.' : 'Paso 2 de 2: acepte los términos y el tratamiento de datos.'}</p>
+          </div>
+          <button type="button" className="btn-secondary small" onClick={logout}><LogOut size={15} aria-hidden="true" /> Salir</button>
+        </header>
+        {user.mustChange ? <ForcedPassword onDone={refresh} /> : <ConsentGate onAccepted={refresh} />}
+      </>
+    )
+  }
+  return <PremiumDashboard user={user} onUserChange={onUserChange} onPercentChange={onPercentChange} onRefresh={refresh} />
 }
 
 function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange: (user: ApiUser) => void }) {
@@ -66,19 +90,24 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [request, setRequest] = useState({ name: '', email: '', organization: '', message: '', website: '' })
+  const [website, setWebsite] = useState('')
+  const [startedAt] = useState(() => Date.now())
+  const [request, setRequest] = useState({ name: '', email: '', dni: '', phone: '', organization: '', message: '', website: '' })
+  const [requestConsent, setRequestConsent] = useState(false)
   const [requestState, setRequestState] = useState<'idle' | 'sent' | 'error'>('idle')
   const [requestMsg, setRequestMsg] = useState('')
+  const [forgot, setForgot] = useState({ open: false, email: '', dni: '', msg: '' })
 
   async function submitLogin(event: React.FormEvent) {
     event.preventDefault()
     setBusy(true)
     setError('')
     try {
-      const { user } = await api.login(email, password)
+      const guard = await solveGuard(startedAt)
+      const { user } = await api.login(email, password, guard, website)
       onUserChange(user)
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'No se pudo iniciar sesión.')
+      setError(caught instanceof Error ? caught.message : 'No se pudo iniciar sesión.')
     } finally {
       setBusy(false)
     }
@@ -86,13 +115,30 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
 
   async function submitRequest(event: React.FormEvent) {
     event.preventDefault()
+    if (!requestConsent) {
+      setRequestState('error')
+      setRequestMsg('Debe autorizar el tratamiento de sus datos para registrar la solicitud.')
+      return
+    }
     try {
-      await api.requestAccess(request)
+      const guard = await solveGuard(startedAt)
+      await api.requestAccess({ ...request, guard })
       setRequestState('sent')
-      setRequestMsg('Solicitud registrada. El administrador le enviará sus credenciales.')
+      setRequestMsg('Solicitud registrada. Tras validar su DNI, el administrador le enviará por correo su acceso de prueba.')
     } catch (caught) {
       setRequestState('error')
-      setRequestMsg(caught instanceof ApiError ? caught.message : 'No se pudo enviar la solicitud.')
+      setRequestMsg(caught instanceof Error ? caught.message : 'No se pudo enviar la solicitud.')
+    }
+  }
+
+  async function submitForgot(event: React.FormEvent) {
+    event.preventDefault()
+    try {
+      const guard = await solveGuard(startedAt)
+      await api.resetRequest({ email: forgot.email, dni: forgot.dni, guard, website })
+      setForgot({ ...forgot, msg: 'Si los datos coinciden con una cuenta, el administrador le enviará una clave temporal a su correo.' })
+    } catch (caught) {
+      setForgot({ ...forgot, msg: caught instanceof Error ? caught.message : 'No se pudo enviar el pedido.' })
     }
   }
 
@@ -107,9 +153,9 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
             elegir herramientas open source o de pago y medir tu avance con un porcentaje visible en la plataforma.
           </p>
           <ul className="premium-perks">
-            <li><Bot size={16} aria-hidden="true" /> 6 guías premium descargables</li>
-            <li><BadgeCheck size={16} aria-hidden="true" /> Plan de {PREMIUM_ITEM_COUNT} hitos con % de avance guardado en la nube</li>
-            <li><ShieldCheck size={16} aria-hidden="true" /> Acceso personal con correo y clave</li>
+            <li><Bot size={16} aria-hidden="true" /> IA: diagnóstico por foto, informes automáticos y alertas normativas</li>
+            <li><BadgeCheck size={16} aria-hidden="true" /> Prueba gratuita de 7 a 15 días tras validar su DNI</li>
+            <li><ShieldCheck size={16} aria-hidden="true" /> Acceso personal protegido contra bots, con consentimiento (Ley 29733)</li>
           </ul>
         </div>
         <form className="login-card" onSubmit={submitLogin}>
@@ -127,10 +173,13 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
             <span>Clave</span>
             <input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
           </label>
+          <input className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(event) => setWebsite(event.target.value)} />
           {error && <p className="form-note error" role="alert">{error}</p>}
           <button type="submit" className="btn-primary" disabled={busy || offline}>
-            {busy ? 'Ingresando…' : 'Ingresar'}
+            {busy ? 'Verificando…' : 'Ingresar'}
           </button>
+          <button type="button" className="link-btn" onClick={() => setForgot({ ...forgot, open: !forgot.open })}>¿Olvidó su clave?</button>
+          <p className="form-note">Protegido con verificación anti-bots y límite de intentos.</p>
         </form>
       </header>
 
@@ -143,17 +192,37 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
         ))}
       </section>
 
+      {forgot.open && (
+        <section className="panel request-panel" aria-labelledby="forgot-title">
+          <h2 id="forgot-title"><Lock size={18} aria-hidden="true" /> Recuperar acceso</h2>
+          {forgot.msg ? <p className="form-note ok">{forgot.msg}</p> : (
+            <form className="request-form" onSubmit={submitForgot}>
+              <input type="email" placeholder="Correo de su cuenta" required value={forgot.email} onChange={(event) => setForgot({ ...forgot, email: event.target.value })} />
+              <input placeholder="DNI registrado" inputMode="numeric" required pattern="[0-9A-Za-z]{8,12}" value={forgot.dni} onChange={(event) => setForgot({ ...forgot, dni: event.target.value })} />
+              <button type="submit" className="btn-secondary" disabled={offline}>Pedir clave temporal</button>
+            </form>
+          )}
+        </section>
+      )}
+
       <section className="panel request-panel" aria-labelledby="request-title">
-        <h2 id="request-title"><UserPlus size={18} aria-hidden="true" /> Solicitar acceso para su equipo</h2>
+        <h2 id="request-title"><UserPlus size={18} aria-hidden="true" /> Solicitar prueba gratuita de IA</h2>
+        <p className="ssoma-count">Indique su DNI para validar su identidad. Si se aprueba, recibirá en su correo una clave temporal y un periodo de prueba de 7 a 15 días.</p>
         {requestState === 'sent' ? (
           <p className="form-note ok">{requestMsg}</p>
         ) : (
           <form className="request-form" onSubmit={submitRequest}>
             <input placeholder="Nombre" required value={request.name} onChange={(event) => setRequest({ ...request, name: event.target.value })} />
             <input type="email" placeholder="Correo" required value={request.email} onChange={(event) => setRequest({ ...request, email: event.target.value })} />
+            <input placeholder="DNI (8 dígitos) o documento" inputMode="numeric" required pattern="[0-9A-Za-z]{8,12}" value={request.dni} onChange={(event) => setRequest({ ...request, dni: event.target.value })} />
+            <input type="tel" placeholder="Celular (opcional)" value={request.phone} onChange={(event) => setRequest({ ...request, phone: event.target.value })} />
             <input placeholder="Empresa o institución" value={request.organization} onChange={(event) => setRequest({ ...request, organization: event.target.value })} />
             <input placeholder="¿Para qué lo usará?" value={request.message} onChange={(event) => setRequest({ ...request, message: event.target.value })} />
             <input className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" value={request.website} onChange={(event) => setRequest({ ...request, website: event.target.value })} />
+            <label className="sign-check consent-inline">
+              <input type="checkbox" checked={requestConsent} onChange={(event) => setRequestConsent(event.target.checked)} />
+              Autorizo el tratamiento de mis datos (nombre, correo, DNI) para evaluar mi solicitud, conforme a la Ley 29733.
+            </label>
             <button type="submit" className="btn-secondary" disabled={offline}>Enviar solicitud</button>
             {requestState === 'error' && <p className="form-note error">{requestMsg}</p>}
           </form>
@@ -167,10 +236,12 @@ function PremiumDashboard({
   user,
   onUserChange,
   onPercentChange,
+  onRefresh,
 }: {
   user: ApiUser
   onUserChange: (user: ApiUser | null) => void
   onPercentChange?: (percent: number) => void
+  onRefresh: () => void
 }) {
   const [statuses, setStatuses] = useState<Record<string, ProgressStatus>>({})
   // Copia sincronica del estado: los clics rapidos no deben leer un valor viejo.
@@ -244,6 +315,8 @@ function PremiumDashboard({
 
       {message && <p className="form-note warn" role="status">{message}</p>}
 
+      <AccountPanel user={user} onRefresh={onRefresh} />
+
       <section className="progress-hub">
         <div className="big-ring" style={{ '--p': percent } as React.CSSProperties} role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Avance total del plan">
           <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -310,7 +383,7 @@ function PremiumDashboard({
       </section>
 
       <PasswordPanel />
-      {user.role === 'admin' && <AdminPanel currentUserId={user.id} />}
+      {user.role === 'admin' && <AdminAccess currentUserId={user.id} />}
 
       {reader && <DocReader id={reader.id} title={reader.title} subtitle="Guía premium" markdown={reader.markdown} onClose={() => setReader(null)} />}
     </>
@@ -339,99 +412,11 @@ function PasswordPanel() {
       <summary><KeyRound size={17} aria-hidden="true" /> Cambiar mi clave</summary>
       <form className="inline-form" onSubmit={submit}>
         <input type="password" placeholder="Clave actual" autoComplete="current-password" required value={current} onChange={(event) => setCurrent(event.target.value)} />
-        <input type="password" placeholder="Nueva clave (mín. 10)" autoComplete="new-password" minLength={10} required value={next} onChange={(event) => setNext(event.target.value)} />
+        <input type="password" placeholder="Nueva clave (mín. 10, letras y números)" autoComplete="new-password" minLength={10} required value={next} onChange={(event) => setNext(event.target.value)} />
         <button type="submit" className="btn-secondary small">Actualizar</button>
       </form>
       {note && <p className={`form-note ${note.tone}`}>{note.text}</p>}
     </details>
-  )
-}
-
-function AdminPanel({ currentUserId }: { currentUserId: string }) {
-  const [users, setUsers] = useState<ApiUser[]>([])
-  const [requests, setRequests] = useState<AccessRequest[]>([])
-  const [form, setForm] = useState({ email: '', name: '', organization: '' })
-  const [created, setCreated] = useState<{ email: string; password: string } | null>(null)
-  const [error, setError] = useState('')
-
-  const reload = useCallback(() => {
-    api.adminUsers().then(({ users: list }) => setUsers(list)).catch(() => undefined)
-    api.adminRequests().then(({ requests: list }) => setRequests(list)).catch(() => undefined)
-  }, [])
-
-  useEffect(reload, [reload])
-
-  const pending = useMemo(() => requests.filter((item) => item.status === 'pendiente'), [requests])
-
-  async function createUser(payload: { email: string; name?: string; organization?: string }, requestId?: number) {
-    setError('')
-    try {
-      const result = await api.adminCreateUser(payload)
-      setCreated({ email: result.email, password: result.password })
-      if (requestId) await api.adminSetRequest(requestId, 'aprobada')
-      setForm({ email: '', name: '', organization: '' })
-      reload()
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'No se pudo crear el usuario.')
-    }
-  }
-
-  return (
-    <section className="panel admin-panel" aria-labelledby="admin-title">
-      <h2 id="admin-title"><Users size={18} aria-hidden="true" /> Administración de accesos</h2>
-      {created && (
-        <p className="form-note ok">
-          Usuario creado: <b>{created.email}</b> · clave inicial <code>{created.password}</code> — entréguela por un canal seguro; se muestra una sola vez.
-        </p>
-      )}
-      {error && <p className="form-note error">{error}</p>}
-
-      <form
-        className="inline-form"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void createUser(form)
-        }}
-      >
-        <input type="email" placeholder="Correo" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-        <input placeholder="Nombre" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-        <input placeholder="Organización" value={form.organization} onChange={(event) => setForm({ ...form, organization: event.target.value })} />
-        <button type="submit" className="btn-primary small"><UserPlus size={15} aria-hidden="true" /> Crear acceso</button>
-      </form>
-
-      <h3>Solicitudes pendientes ({pending.length})</h3>
-      {pending.length === 0 && <p className="empty-note">Sin solicitudes pendientes.</p>}
-      <ul className="admin-list">
-        {pending.map((item) => (
-          <li key={item.id}>
-            <span><b>{item.name}</b> · {item.email}<small>{item.organization} {item.message ? `— ${item.message}` : ''}</small></span>
-            <button type="button" className="btn-primary small" onClick={() => createUser({ email: item.email, name: item.name, organization: item.organization ?? undefined }, item.id)}>Aprobar</button>
-            <button type="button" className="btn-secondary small" onClick={() => api.adminSetRequest(item.id, 'rechazada').then(reload)}>Rechazar</button>
-          </li>
-        ))}
-      </ul>
-
-      <h3>Usuarios ({users.length})</h3>
-      <ul className="admin-list">
-        {users.map((item) => (
-          <li key={item.id}>
-            <span><b>{item.email}</b> {item.role === 'admin' && <em className="role-chip">admin</em>}<small>{item.name ?? ''} · último ingreso: {item.last_login ?? 'nunca'}</small></span>
-            {item.id !== currentUserId && (
-              <button
-                type="button"
-                className="icon-btn danger"
-                aria-label={`Eliminar ${item.email}`}
-                onClick={() => {
-                  if (window.confirm(`¿Eliminar el acceso de ${item.email}?`)) void api.adminDeleteUser(item.id).then(reload)
-                }}
-              >
-                <Trash2 size={15} />
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </section>
   )
 }
 

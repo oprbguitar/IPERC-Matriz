@@ -8,8 +8,34 @@
  * - solicitudes de acceso y administracion basica de usuarios
  * - contador publico de descargas
  */
-import { handleAi } from './ai'
+import {
+  accountRoutes,
+  accountView,
+  adminAudit,
+  adminCodes,
+  adminCreateUser,
+  adminListUsers,
+  adminResetPassword,
+  adminUpdateUser,
+  audit,
+  bump,
+  checkGuard,
+  ensureAccountSchema,
+  ipHash,
+  issueChallenge,
+  noteFailure,
+  passwordProblem,
+  premiumState,
+  resetRequest,
+  validDni,
+  type AccountRow,
+  type Guard,
+} from './accounts'
+import { handleAi, handlePremiumAi } from './ai'
+import { collectAlerts, listAlerts } from './alerts'
+import { pingIndexNow, seoResponse, withSecurityHeaders } from './seo'
 import { handleCatalog } from './catalogApi'
+import { hashPassword, randomToken, sha256, verifyPassword } from './crypto'
 import { PREMIUM_GUIDES } from './premiumGuides'
 
 interface Env {
@@ -19,7 +45,7 @@ interface Env {
   AI_KEY_SECRET?: string
 }
 
-interface UserRow {
+interface UserRow extends AccountRow {
   id: string
   email: string
   name: string | null
@@ -31,11 +57,10 @@ interface UserRow {
   last_login: string | null
 }
 
-type PublicUser = Pick<UserRow, 'id' | 'email' | 'name' | 'organization' | 'role' | 'created_at' | 'last_login'>
+type PublicUser = Pick<UserRow, 'id' | 'email' | 'name' | 'organization' | 'role' | 'created_at' | 'last_login'> & ReturnType<typeof accountView>
 
 const SESSION_COOKIE = 'obs_session'
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
-const PBKDF2_ITERATIONS = 100_000
 const MAX_FAILED_LOGINS = 6
 const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000
 const PROGRESS_STATUSES = new Set(['pendiente', 'en-curso', 'hecho'])
@@ -43,13 +68,26 @@ const PROGRESS_STATUSES = new Set(['pendiente', 'en-curso', 'hecho'])
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
+    if (!url.pathname.startsWith('/api/')) {
+      const seo = await seoResponse(request, env, url)
+      return withSecurityHeaders(seo ?? (await env.ASSETS.fetch(request)))
+    }
     try {
       return await route(request, env, url)
     } catch (error) {
       console.error('api error', error)
       return json({ error: 'Error interno del servidor.' }, 500)
     }
+  },
+  // Cron diario (ver wrangler.jsonc): alertas normativas y aviso semanal a buscadores (IndexNow).
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(
+      (async () => {
+        const report = await collectAlerts(env)
+        console.log('alertas', JSON.stringify(report))
+        if (new Date(controller.scheduledTime).getUTCDay() === 1) await pingIndexNow()
+      })(),
+    )
   },
 } satisfies ExportedHandler<Env>
 
@@ -64,6 +102,8 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
     return json({ error: 'Origen no permitido.' }, 403)
   }
 
+  await ensureAccountSchema(env)
+
   if (pathname === '/api/health') return json({ ok: true, service: 'observatorio-sst', time: new Date().toISOString() })
 
   if (pathname === '/api/stats' && method === 'GET') return getStats(env)
@@ -71,6 +111,8 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
     return countDownload(env, decodeURIComponent(pathname.slice('/api/downloads/'.length)))
   }
 
+  if (pathname === '/api/auth/challenge' && method === 'GET') return issueChallenge(request, env)
+  if (pathname === '/api/auth/reset-request' && method === 'POST') return resetRequest(request, env)
   if (pathname === '/api/auth/login' && method === 'POST') return login(request, env)
   if (pathname === '/api/auth/logout' && method === 'POST') return logout(request, env)
   if (pathname === '/api/auth/me' && method === 'GET') {
@@ -84,6 +126,18 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   if (!user) return json({ error: 'Inicie sesión para continuar.' }, 401)
 
   if (pathname === '/api/auth/password' && method === 'POST') return changePassword(request, env, user)
+  if (pathname.startsWith('/api/account/')) return accountRoutes(request, env, pathname.slice('/api/account'.length), user)
+
+  // --- IA premium: prueba o suscripción vigente + consentimiento aceptado ---
+  if (pathname.startsWith('/api/ai/')) {
+    const state = premiumState(user)
+    if (!state.active) {
+      return json({ error: state.reason === 'vencido' ? 'Su periodo premium venció. Active un código de extensión.' : 'Su cuenta no tiene acceso premium a la IA.' }, 402)
+    }
+    if (!accountView(user).consentOk) return json({ error: 'Acepte los términos y el tratamiento de datos para usar la IA.' }, 428)
+    if (pathname === '/api/ai/alerts' && method === 'GET') return listAlerts(env, url)
+    return handlePremiumAi(request, env, pathname, user.id, user.role === 'admin')
+  }
 
   if (pathname === '/api/premium/guides' && method === 'GET') {
     return json({
@@ -124,14 +178,23 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   if (pathname.startsWith('/api/admin/')) {
     if (user.role !== 'admin') return json({ error: 'Solo administradores.' }, 403)
     if (pathname.startsWith('/api/admin/ai/')) return handleAi(request, env, pathname, user.id)
-    if (pathname === '/api/admin/users' && method === 'GET') return listUsers(env)
-    if (pathname === '/api/admin/users' && method === 'POST') return createUser(request, env)
-    if (pathname.startsWith('/api/admin/users/') && method === 'DELETE') {
-      const id = pathname.slice('/api/admin/users/'.length)
+    if (pathname === '/api/admin/users' && method === 'GET') return adminListUsers(env)
+    if (pathname === '/api/admin/users' && method === 'POST') return adminCreateUser(request, env, user.id)
+    const userAction = pathname.match(/^\/api\/admin\/users\/([\w-]+)(\/reset)?$/)
+    if (userAction && method === 'PATCH') return adminUpdateUser(request, env, user.id, userAction[1])
+    if (userAction?.[2] && method === 'POST') return adminResetPassword(env, user.id, userAction[1])
+    if (userAction && !userAction[2] && method === 'DELETE') {
+      const id = userAction[1]
       if (id === user.id) return json({ error: 'No puede eliminar su propia cuenta.' }, 400)
       await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run()
+      await audit(env, user.id, 'eliminar-usuario', id, '', null)
       return json({ ok: true })
     }
+    if (pathname === '/api/admin/codes' || pathname.startsWith('/api/admin/codes/')) {
+      return adminCodes(request, env, user.id, pathname.slice('/api/admin/codes/'.length))
+    }
+    if (pathname === '/api/admin/audit' && method === 'GET') return adminAudit(env)
+    if (pathname === '/api/admin/alerts/refresh' && method === 'POST') return json({ report: await collectAlerts(env) })
     if (pathname === '/api/admin/requests' && method === 'GET') {
       const { results } = await env.DB.prepare('SELECT * FROM access_requests ORDER BY created_at DESC LIMIT 200').all()
       return json({ requests: results })
@@ -143,6 +206,7 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
         return json({ error: 'Estado inválido.' }, 400)
       }
       await env.DB.prepare('UPDATE access_requests SET status = ? WHERE id = ?').bind(body.status, id).run()
+      await audit(env, user.id, 'solicitud', String(id), body.status, null)
       return json({ ok: true })
     }
   }
@@ -155,10 +219,16 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
 // ---------------------------------------------------------------------------
 
 async function login(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<{ email?: string; password?: string }>(request)
+  const body = await readJson<{ email?: string; password?: string; guard?: Guard; website?: string }>(request)
   const email = normalizeEmail(body?.email)
   const password = body?.password ?? ''
   if (!email || !password) return json({ error: 'Ingrese correo y clave.' }, 400)
+  const ip = await ipHash(request, env)
+  if (!(await bump(env, `login:${ip}`, 30, FAILED_LOGIN_WINDOW_MS))) {
+    return json({ error: 'Demasiados intentos desde esta conexión. Espere 15 minutos.' }, 429)
+  }
+  const guardError = await checkGuard(env, body?.guard, body?.website)
+  if (guardError) return json({ error: guardError }, 400)
 
   const now = Date.now()
   const attempt = await env.DB.prepare('SELECT count, window_start FROM login_attempts WHERE email = ?')
@@ -179,7 +249,13 @@ async function login(request: Request, env: Env): Promise<Response> {
     )
       .bind(email, now, fresh ? 1 : 0)
       .run()
+    await noteFailure(request, env)
+    await audit(env, null, 'login-fallido', email, '', ip)
     return json({ error: 'Correo o clave incorrectos.' }, 401)
+  }
+  if (user.suspended) {
+    await audit(env, user.id, 'login-suspendida', email, '', ip)
+    return json({ error: 'Su cuenta está suspendida. Comuníquese con el administrador.' }, 403)
   }
 
   const token = randomToken()
@@ -190,6 +266,7 @@ async function login(request: Request, env: Env): Promise<Response> {
     env.DB.prepare('DELETE FROM login_attempts WHERE email = ?').bind(email),
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(Math.floor(now / 1000)),
   ])
+  await audit(env, user.id, 'login', email, '', ip)
 
   return json({ user: toPublic(user) }, 200, {
     'Set-Cookie': `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`,
@@ -207,7 +284,7 @@ async function currentUser(request: Request, env: Env): Promise<UserRow | null> 
   if (!token) return null
   return env.DB.prepare(
     `SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-     WHERE s.token_hash = ? AND s.expires_at > ?`,
+     WHERE s.token_hash = ? AND s.expires_at > ? AND COALESCE(u.suspended, 0) = 0`,
   )
     .bind(await sha256(token), Math.floor(Date.now() / 1000))
     .first<UserRow>()
@@ -216,17 +293,20 @@ async function currentUser(request: Request, env: Env): Promise<UserRow | null> 
 async function changePassword(request: Request, env: Env, user: UserRow): Promise<Response> {
   const body = await readJson<{ current?: string; next?: string }>(request)
   if (!body?.current || !body.next) return json({ error: 'Complete ambas claves.' }, 400)
-  if (body.next.length < 10) return json({ error: 'La nueva clave debe tener al menos 10 caracteres.' }, 400)
+  const problem = passwordProblem(body.next, user.email)
+  if (problem) return json({ error: problem }, 400)
+  if (body.next === body.current) return json({ error: 'La nueva clave debe ser distinta de la actual.' }, 400)
   if (!(await verifyPassword(body.current, user.pass_salt, user.pass_hash))) {
     return json({ error: 'La clave actual no es correcta.' }, 401)
   }
   const { hash, salt } = await hashPassword(body.next)
   const token = readCookie(request, SESSION_COOKIE) ?? ''
   await env.DB.batch([
-    env.DB.prepare('UPDATE users SET pass_hash = ?, pass_salt = ? WHERE id = ?').bind(hash, salt, user.id),
+    env.DB.prepare('UPDATE users SET pass_hash = ?, pass_salt = ?, must_change = 0 WHERE id = ?').bind(hash, salt, user.id),
     // Cierra las otras sesiones abiertas con la clave anterior.
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?').bind(user.id, await sha256(token)),
   ])
+  await audit(env, user.id, 'cambio-clave', user.email, '', await ipHash(request, env))
   return json({ ok: true })
 }
 
@@ -286,49 +366,29 @@ async function countDownload(env: Env, itemId: string): Promise<Response> {
 }
 
 async function createAccessRequest(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<{ name?: string; email?: string; organization?: string; message?: string; website?: string }>(request)
-  // Campo trampa: los bots suelen rellenarlo.
+  const body = await readJson<{ name?: string; email?: string; organization?: string; message?: string; website?: string; dni?: string; phone?: string; guard?: Guard }>(request)
+  // Campo trampa: los bots suelen rellenarlo; se responde como si todo saliera bien.
   if (body?.website) return json({ ok: true })
+  const ip = await ipHash(request, env)
+  if (!(await bump(env, `req:${ip}`, 5, 60 * 60 * 1000))) return json({ error: 'Demasiadas solicitudes desde esta conexión.' }, 429)
+  const guardError = await checkGuard(env, body?.guard)
+  if (guardError) return json({ error: guardError }, 400)
   const email = normalizeEmail(body?.email)
   const name = (body?.name ?? '').trim()
+  const dni = validDni(body?.dni)
   if (!email || name.length < 2) return json({ error: 'Indique nombre y un correo válido.' }, 400)
+  if (!dni) return json({ error: 'Indique su DNI (8 dígitos) o documento de identidad.' }, 400)
   const recent = await env.DB.prepare(
     "SELECT COUNT(*) AS total FROM access_requests WHERE email = ? AND created_at > datetime('now', '-1 day')",
   )
     .bind(email)
     .first<{ total: number }>()
   if ((recent?.total ?? 0) >= 3) return json({ error: 'Ya registramos su solicitud. Le responderemos pronto.' }, 429)
-  await env.DB.prepare('INSERT INTO access_requests (name, email, organization, message) VALUES (?, ?, ?, ?)')
-    .bind(name.slice(0, 120), email, (body?.organization ?? '').slice(0, 160), (body?.message ?? '').slice(0, 1000))
+  await env.DB.prepare("INSERT INTO access_requests (name, email, organization, message, dni, phone, kind) VALUES (?, ?, ?, ?, ?, ?, 'acceso')")
+    .bind(name.slice(0, 120), email, (body?.organization ?? '').slice(0, 160), (body?.message ?? '').slice(0, 1000), dni, (body?.phone ?? '').replace(/[^\d+ ]/g, '').slice(0, 20))
     .run()
+  await audit(env, null, 'solicitud-acceso', email, '', ip)
   return json({ ok: true }, 201)
-}
-
-async function listUsers(env: Env): Promise<Response> {
-  const { results } = await env.DB.prepare(
-    'SELECT id, email, name, organization, role, created_at, last_login FROM users ORDER BY created_at DESC',
-  ).all()
-  return json({ users: results })
-}
-
-async function createUser(request: Request, env: Env): Promise<Response> {
-  const body = await readJson<{ email?: string; name?: string; organization?: string; role?: string; password?: string }>(request)
-  const email = normalizeEmail(body?.email)
-  if (!email) return json({ error: 'Correo inválido.' }, 400)
-  const password = body?.password && body.password.length >= 10 ? body.password : generatePassword()
-  const role = body?.role === 'admin' ? 'admin' : 'member'
-  const { hash, salt } = await hashPassword(password)
-  try {
-    await env.DB.prepare(
-      'INSERT INTO users (id, email, name, organization, role, pass_hash, pass_salt) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    )
-      .bind(crypto.randomUUID(), email, body?.name ?? null, body?.organization ?? null, role, hash, salt)
-      .run()
-  } catch {
-    return json({ error: 'Ya existe un usuario con ese correo.' }, 409)
-  }
-  // La clave inicial se devuelve una sola vez para que el administrador la entregue.
-  return json({ ok: true, email, password }, 201)
 }
 
 // ---------------------------------------------------------------------------
@@ -372,49 +432,5 @@ function readCookie(request: Request, name: string): string | null {
 
 function toPublic(user: UserRow): PublicUser {
   const { id, email, name, organization, role, created_at, last_login } = user
-  return { id, email, name, organization, role, created_at, last_login }
-}
-
-function toBase64(bytes: ArrayBuffer | Uint8Array): string {
-  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)
-  let binary = ''
-  for (const byte of view) binary += String.fromCharCode(byte)
-  return btoa(binary)
-}
-
-function fromBase64(value: string): Uint8Array {
-  return Uint8Array.from(atob(value), (char) => char.charCodeAt(0))
-}
-
-function randomToken(): string {
-  return toBase64(crypto.getRandomValues(new Uint8Array(32))).replace(/[+/=]/g, (c) => ({ '+': '-', '/': '_', '=': '' })[c] ?? '')
-}
-
-function generatePassword(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
-  const bytes = crypto.getRandomValues(new Uint8Array(14))
-  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
-}
-
-async function sha256(value: string): Promise<string> {
-  return toBase64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))
-}
-
-async function pbkdf2(password: string, salt: Uint8Array): Promise<string> {
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits'])
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERATIONS }, key, 256)
-  return toBase64(bits)
-}
-
-async function hashPassword(password: string): Promise<{ hash: string; salt: string }> {
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  return { hash: await pbkdf2(password, salt), salt: toBase64(salt) }
-}
-
-async function verifyPassword(password: string, salt: string, expected: string): Promise<boolean> {
-  const actual = await pbkdf2(password, fromBase64(salt))
-  if (actual.length !== expected.length) return false
-  let diff = 0
-  for (let index = 0; index < actual.length; index += 1) diff |= actual.charCodeAt(index) ^ expected.charCodeAt(index)
-  return diff === 0
+  return { id, email, name, organization, role, created_at, last_login, ...accountView(user) }
 }

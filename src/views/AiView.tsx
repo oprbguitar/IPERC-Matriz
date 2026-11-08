@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Camera, CheckCircle2, Download, KeyRound, Loader2, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Bell, Camera, CheckCircle2, Download, ExternalLink, FileText, KeyRound, Loader2, RefreshCw, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
+import { DocReader } from '../components/DocReader'
+import { AccountPanel, ConsentGate, ForcedPassword } from '../components/PremiumAccount'
 import { SSOMA_NORMS, SSOMA_RISKS } from '../data/ssoma'
-import type { ApiUser } from '../lib/api'
+import { api, type ApiUser } from '../lib/api'
 import '../styles/ai.css'
 
 interface ModelInfo { id: string; label: string; vision: boolean; cost: string }
@@ -17,8 +19,10 @@ interface Diagnosis {
   ms: number
 }
 
+/** Rutas de administrador (/api/admin/ai) o de usuario premium (/api/ai, prefijo «~»). */
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`/api/admin/ai${path}`, { credentials: 'same-origin', ...init, headers: init.body ? { 'Content-Type': 'application/json' } : undefined })
+  const url = path.startsWith('~') ? `/api/ai${path.slice(1)}` : `/api/admin/ai${path}`
+  const response = await fetch(url, { credentials: 'same-origin', ...init, headers: init.body ? { 'Content-Type': 'application/json' } : undefined })
   const data = (await response.json().catch(() => ({}))) as T & { error?: string }
   if (!response.ok) throw new Error(data.error ?? `Error ${response.status}`)
   return data
@@ -45,10 +49,15 @@ function shrink(file: File): Promise<string> {
 const LEVEL = (score: number) => (score >= 9 ? 'Intolerable' : score >= 6 ? 'Importante' : score >= 4 ? 'Moderado' : score >= 2 ? 'Tolerable' : 'Trivial')
 const normCode = (id: string) => SSOMA_NORMS.find((norm) => norm.id === id)?.code ?? id
 
-type Tab = 'diagnostico' | 'llaves' | 'modelos' | 'historial'
+type Tab = 'diagnostico' | 'informes' | 'alertas' | 'historial' | 'llaves' | 'modelos'
 
-export default function AiView({ user }: { user: ApiUser | null }) {
+export default function AiView({ user: initialUser }: { user: ApiUser | null }) {
+  const [user, setUser] = useState(initialUser)
+  useEffect(() => setUser(initialUser), [initialUser])
+  const refresh = useCallback(() => { api.me().then(({ user: current }) => setUser(current)).catch(() => undefined) }, [])
   const [tab, setTab] = useState<Tab>('diagnostico')
+  const [lastDiagnosis, setLastDiagnosis] = useState('')
+  const [quota, setQuota] = useState<{ quota: number | null; used: number } | null>(null)
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [status, setStatus] = useState<{ secretReady: boolean; workersAi: boolean } | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
@@ -63,39 +72,61 @@ export default function AiView({ user }: { user: ApiUser | null }) {
       .catch((error: Error) => setMessage(error.message))
     call<{ settings: Settings }>('/settings').then((data) => setSettings(data.settings)).catch(() => undefined)
   }
+  const isAdmin = user?.role === 'admin'
+  const ready = Boolean(user?.premium?.active && user.consentOk && !user.mustChange)
   useEffect(() => {
-    if (user?.role === 'admin') reload()
-  }, [user])
+    if (isAdmin) reload()
+  }, [isAdmin])
+  useEffect(() => {
+    if (ready) call<{ quota: number | null; used: number }>('~/catalog').then(setQuota).catch(() => undefined)
+  }, [ready, tab])
 
-  if (!user) return <div className="view-page"><p className="notice-block">Inicie sesión en <b>Premium</b> con una cuenta de administrador para usar el sistema de IA.</p></div>
-  if (user.role !== 'admin') return <div className="view-page"><p className="notice-block">El sistema de IA está reservado a administradores.</p></div>
+  if (!user) return <div className="view-page"><p className="notice-block">Inicie sesión en <b>Premium</b> para usar la IA.</p></div>
+  if (user.mustChange) return <div className="view-page ai-view"><ForcedPassword onDone={refresh} /></div>
+  if (!user.consentOk) return <div className="view-page ai-view"><ConsentGate onAccepted={refresh} /></div>
+  if (!user.premium?.active) {
+    return (
+      <div className="view-page ai-view">
+        <header className="page-head"><div><h1>IA premium</h1><p>Su cuenta no tiene acceso vigente a la IA. Active un código o solicite una extensión.</p></div></header>
+        <AccountPanel user={user} onRefresh={refresh} />
+      </div>
+    )
+  }
+  const tabs: Array<[Tab, string]> = [['diagnostico', 'Diagnóstico por foto'], ['informes', 'Informes con IA'], ['alertas', 'Alertas normativas'], ['historial', 'Mi historial']]
+  if (isAdmin) tabs.push(['llaves', 'Llaves de API'], ['modelos', 'Modelos por tarea'])
 
   return (
     <div className="view-page ai-view">
       <header className="page-head">
         <div>
-          <h1>IA: diagnóstico y agentes</h1>
-          <p>Tome una foto del área de trabajo y obtenga un diagnóstico preliminar: peligros, nivel de riesgo, normas y probabilidades. Usted elige proveedor y modelo.</p>
+          <h1>IA premium</h1>
+          <p>Diagnóstico por foto, informes y formatos redactados por IA, y alertas normativas diarias de fuentes oficiales.</p>
         </div>
+        <p className="ssoma-count">
+          {isAdmin ? 'Administrador · sin tope' : `Vigente ${user.premium.daysLeft} día(s)`}
+          {quota && quota.quota !== null ? ` · ${quota.used}/${quota.quota} consultas en 24 h` : ''}
+        </p>
       </header>
       {status && !status.secretReady && <p className="notice-block">Falta el secreto <code>AI_KEY_SECRET</code> en el Worker: no se pueden guardar llaves (Cloudflare Workers AI funciona igual).</p>}
       {message && <p className="form-note error">{message}</p>}
 
       <div className="tab-switch" role="tablist">
-        {([['diagnostico', 'Diagnóstico por foto'], ['llaves', 'Llaves de API'], ['modelos', 'Modelos por tarea'], ['historial', 'Historial']] as Array<[Tab, string]>).map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>{label}</button>
         ))}
       </div>
 
-      {tab === 'diagnostico' && <DiagnosisPanel settings={settings} providers={providers} />}
-      {tab === 'llaves' && <KeysPanel providers={providers} onChange={reload} />}
-      {tab === 'modelos' && settings && <ModelsPanel providers={providers} settings={settings} onSaved={setSettings} />}
+      {tab === 'diagnostico' && <DiagnosisPanel settings={settings} providers={providers} onReport={(text) => { setLastDiagnosis(text); setTab('informes') }} />}
+      {tab === 'informes' && <ReportsPanel diagnosis={lastDiagnosis} />}
+      {tab === 'alertas' && <AlertsPanel isAdmin={isAdmin} />}
+      {tab === 'llaves' && isAdmin && <KeysPanel providers={providers} onChange={reload} />}
+      {tab === 'modelos' && isAdmin && settings && <ModelsPanel providers={providers} settings={settings} onSaved={setSettings} />}
       {tab === 'historial' && <RunsPanel />}
     </div>
   )
 }
 
-function DiagnosisPanel({ settings, providers }: { settings: Settings | null; providers: ProviderInfo[] }) {
+function DiagnosisPanel({ settings, providers, onReport }: { settings: Settings | null; providers: ProviderInfo[]; onReport: (text: string) => void }) {
   const [image, setImage] = useState<string | null>(null)
   const [area, setArea] = useState('')
   const [note, setNote] = useState('')
@@ -104,7 +135,7 @@ function DiagnosisPanel({ settings, providers }: { settings: Settings | null; pr
   const [result, setResult] = useState<Diagnosis | null>(null)
   const modelLabel = useMemo(() => {
     const provider = providers.find((item) => item.id === settings?.vision.provider)
-    return provider ? `${provider.name} · ${provider.models.find((model) => model.id === settings?.vision.model)?.label ?? settings?.vision.model}` : '…'
+    return provider ? `${provider.name} · ${provider.models.find((model) => model.id === settings?.vision.model)?.label ?? settings?.vision.model}` : 'elegido por el administrador'
   }, [providers, settings])
 
   const run = async () => {
@@ -113,7 +144,7 @@ function DiagnosisPanel({ settings, providers }: { settings: Settings | null; pr
     setError('')
     setResult(null)
     try {
-      setResult(await call<Diagnosis>('/diagnose', { method: 'POST', body: JSON.stringify({ image, area, note }) }))
+      setResult(await call<Diagnosis>('~/diagnose', { method: 'POST', body: JSON.stringify({ image, area, note }) }))
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Error')
     } finally {
@@ -121,9 +152,9 @@ function DiagnosisPanel({ settings, providers }: { settings: Settings | null; pr
     }
   }
 
-  const report = () => {
-    if (!result) return
-    const lines = [
+  const lines = () => {
+    if (!result) return []
+    return [
       `# Diagnóstico preliminar SSOMA`, '', `Fecha: ${new Date().toLocaleString('es-PE')}`, `Área: ${area || '—'}`, `Modelo: ${result.model.provider} / ${result.model.model}`, '',
       `## Escena`, result.vision.scene, '', `## Peligros`,
       ...result.vision.hazards.flatMap((hazard, index) => [
@@ -137,8 +168,11 @@ function DiagnosisPanel({ settings, providers }: { settings: Settings | null; pr
       `Observación probable de SUNAFIL: ${Math.round((result.probabilities.observacionSunafil?.noul ?? 0) * 100)} %`, '',
       `Limitaciones: ${result.vision.limitations ?? '—'}`, '', '_Diagnóstico preliminar generado con IA: debe validarlo un profesional en campo._',
     ]
+  }
+  const report = () => {
+    if (!result) return
     const link = document.createElement('a')
-    link.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/markdown' }))
+    link.href = URL.createObjectURL(new Blob([lines().join('\n')], { type: 'text/markdown' }))
     link.download = `diagnostico-ssoma-${Date.now()}.md`
     link.click()
   }
@@ -163,7 +197,10 @@ function DiagnosisPanel({ settings, providers }: { settings: Settings | null; pr
         <div className="ai-card ai-result">
           <div className="ai-result-head">
             <h2>{result.vision.scene}</h2>
-            <button type="button" className="btn-ghost small" onClick={report}><Download size={15} /> Informe</button>
+            <span className="issued-actions">
+              <button type="button" className="btn-ghost small" onClick={report}><Download size={15} /> .md</button>
+              <button type="button" className="btn-primary small" onClick={() => onReport(lines().join('\n'))}><FileText size={15} /> Redactar informe con IA</button>
+            </span>
           </div>
           <div className="ai-probs">
             <div><b>{result.probabilities.nivel?.choice ?? '—'}</b><span>nivel global</span></div>
@@ -273,16 +310,151 @@ function ModelsPanel({ providers, settings, onSaved }: { providers: ProviderInfo
 }
 
 function RunsPanel() {
-  const [runs, setRuns] = useState<Array<{ provider: string; model: string; ok: number; ms: number; summary: string; created_at: string }>>([])
-  useEffect(() => { call<{ runs: typeof runs }>('/runs').then((data) => setRuns(data.runs)).catch(() => undefined) }, [])
+  const [runs, setRuns] = useState<Array<{ task?: string; provider: string; model: string; ok: number; ms: number; summary: string; created_at: string }>>([])
+  useEffect(() => { call<{ runs: typeof runs }>('~/runs').then((data) => setRuns(data.runs)).catch(() => undefined) }, [])
   return (
     <section className="ai-card">
-      {runs.length === 0 && <p className="empty-note">Aún no hay diagnósticos.</p>}
+      {runs.length === 0 && <p className="empty-note">Aún no hay consultas.</p>}
       <ul className="ai-runs">
         {runs.map((run) => (
-          <li key={run.created_at}>{run.ok ? '✓' : '✗'} <b>{new Date(run.created_at).toLocaleString('es-PE')}</b> · {run.provider}/{run.model} · {(run.ms / 1000).toFixed(1)} s<br /><small>{run.summary}</small></li>
+          <li key={run.created_at}>{run.ok ? '✓' : '✗'} {run.task ? `[${run.task}] ` : ''}<b>{new Date(run.created_at).toLocaleString('es-PE')}</b> · {run.provider}/{run.model} · {(run.ms / 1000).toFixed(1)} s<br /><small>{run.summary}</small></li>
         ))}
       </ul>
+    </section>
+  )
+}
+
+interface ReportType { id: string; label: string }
+
+function ReportsPanel({ diagnosis }: { diagnosis: string }) {
+  const [types, setTypes] = useState<ReportType[]>([])
+  const [type, setType] = useState(diagnosis ? 'informe-inspeccion' : '')
+  const [company, setCompany] = useState('')
+  const [area, setArea] = useState('')
+  const [context, setContext] = useState(diagnosis ? 'Inspección realizada a partir de la foto analizada. Complete con fecha, inspector y observaciones adicionales.' : '')
+  const [useDiagnosis, setUseDiagnosis] = useState(Boolean(diagnosis))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [doc, setDoc] = useState<{ title: string; markdown: string } | null>(null)
+  useEffect(() => {
+    call<{ reportTypes: ReportType[] }>('~/catalog').then((data) => { setTypes(data.reportTypes); setType((prev) => prev || data.reportTypes[0]?.id || '') }).catch(() => undefined)
+  }, [])
+
+  const generate = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      const data = await call<{ markdown: string }>('~/report', { method: 'POST', body: JSON.stringify({ type, company, area, context, diagnosis: useDiagnosis ? diagnosis : undefined }) })
+      setDoc({ title: types.find((item) => item.id === type)?.label ?? 'Documento', markdown: data.markdown })
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="ai-grid">
+      <form className="ai-card" onSubmit={generate}>
+        <h2><FileText size={18} aria-hidden="true" /> Creador automático de formatos e informes</h2>
+        <p className="ssoma-count">La IA redacta el documento con la estructura de la norma; los datos que falten quedan como [completar]. Revíselo antes de firmar.</p>
+        <label className="sign-field"><span>Tipo de documento</span>
+          <select value={type} onChange={(event) => setType(event.target.value)}>{types.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+        </label>
+        <label className="sign-field"><span>Empresa (opcional)</span><input value={company} onChange={(event) => setCompany(event.target.value)} maxLength={160} /></label>
+        <label className="sign-field"><span>Área o actividad</span><input value={area} onChange={(event) => setArea(event.target.value)} maxLength={200} placeholder="Ej.: almacén, mantenimiento eléctrico, obra" /></label>
+        <label className="sign-field"><span>Describa el caso</span>
+          <textarea rows={6} value={context} onChange={(event) => setContext(event.target.value)} maxLength={3000} required placeholder="Qué pasó o qué se hará, quiénes participan, equipos, fechas, hallazgos…" />
+        </label>
+        {diagnosis && <label className="sign-check"><input type="checkbox" checked={useDiagnosis} onChange={(event) => setUseDiagnosis(event.target.checked)} /> Usar el último diagnóstico por foto como evidencia</label>}
+        <button type="submit" className="btn-primary" disabled={busy || !type}>{busy ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />} {busy ? 'Redactando…' : 'Generar documento'}</button>
+        {error && <p className="form-note error">{error}</p>}
+      </form>
+      <div className="ai-card">
+        <h2>Formatos disponibles</h2>
+        <ul className="ai-runs">{types.map((item) => <li key={item.id}>{item.label}</li>)}</ul>
+        <p className="ssoma-count">El documento se abre en el lector: puede descargarlo, imprimirlo como PDF o copiarlo a Word.</p>
+      </div>
+      {doc && <DocReader id={`ia-${type}`} title={doc.title} subtitle="Borrador generado con IA" markdown={doc.markdown} onClose={() => setDoc(null)} />}
+    </section>
+  )
+}
+
+interface Alert { id: number; url: string; source: string; scope: string; title: string; summary: string | null; published: string | null; tags: string | null; ai_summary: string | null }
+interface AlertRun { source: string; ok: number; found: number; kept: number; error: string | null; ran_at: string }
+
+function AlertsPanel({ isAdmin }: { isAdmin: boolean }) {
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [runs, setRuns] = useState<AlertRun[]>([])
+  const [tags, setTags] = useState<string[]>([])
+  const [scope, setScope] = useState('')
+  const [tag, setTag] = useState('')
+  const [q, setQ] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [summaries, setSummaries] = useState<Record<number, string>>({})
+
+  const load = useCallback(() => {
+    const params = new URLSearchParams()
+    if (scope) params.set('scope', scope)
+    if (tag) params.set('tag', tag)
+    if (q.trim()) params.set('q', q.trim())
+    call<{ alerts: Alert[]; runs: AlertRun[]; tags: string[] }>(`~/alerts?${params}`).then((data) => { setAlerts(data.alerts); setRuns(data.runs); setTags(data.tags) }).catch(() => undefined)
+  }, [scope, tag, q])
+  useEffect(() => { const timer = setTimeout(load, 250); return () => clearTimeout(timer) }, [load])
+
+  const summarize = async (id: number) => {
+    setSummaries((prev) => ({ ...prev, [id]: 'Resumiendo…' }))
+    try {
+      const data = await call<{ summary: string }>(`~/alerts/${id}/summary`, { method: 'POST' })
+      setSummaries((prev) => ({ ...prev, [id]: data.summary }))
+    } catch (failure) {
+      setSummaries((prev) => ({ ...prev, [id]: failure instanceof Error ? failure.message : 'Error' }))
+    }
+  }
+
+  return (
+    <section className="ai-alerts">
+      <div className="ai-card alert-filters">
+        <div className="tab-switch">
+          {[['', 'Todas'], ['peru', 'Perú'], ['internacional', 'Internacional']].map(([id, label]) => (
+            <button key={id} type="button" className={scope === id ? 'active' : ''} onClick={() => setScope(id)}>{label}</button>
+          ))}
+        </div>
+        <select value={tag} onChange={(event) => setTag(event.target.value)} aria-label="Tema"><option value="">Todos los temas</option>{tags.map((item) => <option key={item}>{item}</option>)}</select>
+        <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Buscar en alertas" />
+        {isAdmin && (
+          <button type="button" className="btn-secondary small" disabled={busy} onClick={async () => { setBusy(true); await api.adminRefreshAlerts().catch(() => undefined); setBusy(false); load() }}>
+            <RefreshCw size={14} className={busy ? 'spin' : ''} /> Actualizar ahora
+          </button>
+        )}
+      </div>
+      <p className="ssoma-count"><Bell size={14} aria-hidden="true" /> Se revisan cada día (06:00 h) MTPE, SUNAFIL, MINAM, MINSA, MINEM, OEFA, PRODUCE (gob.pe) y EU-OSHA. Solo se guardan normas y noticias con temas SSOMA; el texto oficial está en el enlace.</p>
+      {alerts.length === 0 && <p className="empty-note">Aún no hay alertas con este filtro. {isAdmin ? 'Pulse «Actualizar ahora» para la primera recolección.' : 'La recolección diaria las irá agregando.'}</p>}
+      <div className="alert-list">
+        {alerts.map((alert) => (
+          <article key={alert.id} className={`ai-card alert-card scope-${alert.scope}`}>
+            <header>
+              <span className="role-chip">{alert.source}</span>
+              <time>{alert.published ? new Date(alert.published).toLocaleDateString('es-PE') : ''}</time>
+            </header>
+            <h3>{alert.title}</h3>
+            {alert.summary && <p>{alert.summary.length > 280 ? `${alert.summary.slice(0, 280)}…` : alert.summary}</p>}
+            <div className="guide-norms">{(alert.tags ?? '').split(',').filter(Boolean).map((item) => <span key={item}>{item}</span>)}</div>
+            {(summaries[alert.id] ?? alert.ai_summary) && <div className="alert-ai">{summaries[alert.id] ?? alert.ai_summary}</div>}
+            <footer className="issued-actions">
+              <a className="btn-ghost small" href={alert.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> Fuente oficial</a>
+              {!alert.ai_summary && !summaries[alert.id] && <button type="button" className="btn-ghost small" onClick={() => summarize(alert.id)}><Sparkles size={14} /> Resumir con IA</button>}
+            </footer>
+          </article>
+        ))}
+      </div>
+      {runs.length > 0 && (
+        <details className="collapsible">
+          <summary>Estado de las fuentes</summary>
+          <ul className="ai-runs">{runs.map((run) => <li key={run.source}>{run.ok ? '✓' : '✗'} {run.source}: {run.kept} de {run.found} · {new Date(run.ran_at).toLocaleString('es-PE')} {run.error ?? ''}</li>)}</ul>
+        </details>
+      )}
     </section>
   )
 }

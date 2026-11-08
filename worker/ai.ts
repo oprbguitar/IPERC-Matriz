@@ -1,5 +1,5 @@
 /**
- * Sistema de IA del Observatorio (solo administradores).
+ * Sistema de IA del Observatorio: llaves y modelos para administradores; diagnóstico, informes y alertas para premium.
  *
  * - Llaves de proveedores cifradas con AES-GCM (secreto AI_KEY_SECRET del Worker); nunca se devuelven al navegador.
  * - Catálogo de proveedores: Cloudflare Workers AI (gratis con cuota), OpenAI, Anthropic, OpenRouter, DeepSeek,
@@ -290,9 +290,9 @@ async function diagnose(env: AiEnv, userId: string, body: { image?: string; note
   return json({ vision, norms, probabilities, model: settings.vision, ms: Date.now() - started })
 }
 
-async function logRun(env: AiEnv, userId: string, target: { provider: string; model: string }, ok: boolean, ms: number, summary: string) {
+async function logRun(env: AiEnv, userId: string, target: { provider: string; model: string }, ok: boolean, ms: number, summary: string, task = 'diagnostico-foto') {
   await env.DB.prepare('INSERT INTO ai_runs (id, user_id, task, provider, model, ok, ms, summary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(crypto.randomUUID(), userId, 'diagnostico-foto', target.provider, target.model, ok ? 1 : 0, ms, summary.slice(0, 300), new Date().toISOString())
+    .bind(crypto.randomUUID(), userId, task, target.provider, target.model, ok ? 1 : 0, ms, summary.slice(0, 300), new Date().toISOString())
     .run()
 }
 
@@ -386,6 +386,115 @@ export async function handleAi(request: Request, env: AiEnv, pathname: string, u
     const rows = await env.DB.prepare('SELECT provider, model, ok, ms, summary, created_at FROM ai_runs ORDER BY created_at DESC LIMIT 30').all()
     return json({ runs: rows.results })
   }
+
+  return json({ error: 'Ruta de IA no encontrada.' }, 404)
+}
+
+/* ---------- Generador de informes y formatos (premium) ---------- */
+
+export const REPORT_TYPES: Array<{ id: string; label: string; outline: string; norms: string }> = [
+  { id: 'informe-inspeccion', label: 'Informe de inspección de seguridad', outline: 'Datos generales; Objetivo y alcance; Metodología; Hallazgos (tabla: N.°, hallazgo, evidencia, riesgo, nivel P×S, norma); Acciones correctivas (tabla: acción, responsable, plazo, jerarquía de control); Conclusiones; Firmas', norms: 'Ley 29783 art. 49; D.S. 005-2012-TR; R.M. 050-2013-TR (registro de inspecciones internas)' },
+  { id: 'investigacion-incidente', label: 'Investigación de accidente o incidente', outline: 'Datos del evento; Descripción de hechos; Causas inmediatas (actos y condiciones); Causas básicas (factores personales y del trabajo); Análisis (árbol de causas o 5 porqués); Medidas correctivas con responsables y plazos; Lecciones aprendidas; Notificación (plazos MTPE)', norms: 'Ley 29783 arts. 82 y 88; D.S. 005-2012-TR arts. 110-111; R.M. 050-2013-TR (registro de accidentes e incidentes)' },
+  { id: 'ats', label: 'Análisis de Trabajo Seguro (ATS/AST)', outline: 'Datos de la tarea; EPP requerido; Tabla: paso de la tarea, peligro, riesgo, medida de control; Permisos requeridos; Firmas del equipo', norms: 'D.S. 005-2012-TR; G.050 (si es construcción); D.S. 024-2016-EM (si es minería)' },
+  { id: 'pets', label: 'Procedimiento Escrito de Trabajo Seguro (PETS)', outline: 'Objetivo; Alcance; Referencias; Definiciones; Responsabilidades; Personal, EPP, equipos y materiales; Procedimiento paso a paso; Restricciones; Registros', norms: 'D.S. 005-2012-TR; D.S. 024-2016-EM anexo (estructura PETS)' },
+  { id: 'charla-5min', label: 'Charla de 5 minutos', outline: 'Tema; Por qué importa (dato o caso); 3 a 5 mensajes clave; Pregunta al grupo; Compromiso; Registro de asistencia', norms: 'Ley 29783 art. 35 (capacitación); R.M. 050-2013-TR (registro de capacitación)' },
+  { id: 'acta-comite', label: 'Acta del Comité de SST', outline: 'Datos de la sesión; Asistentes y quórum; Agenda; Desarrollo; Acuerdos (tabla: acuerdo, responsable, plazo); Firmas', norms: 'Ley 29783 arts. 29-31; D.S. 005-2012-TR arts. 38-73' },
+  { id: 'plan-accion', label: 'Plan de acción correctivo', outline: 'Origen (hallazgo, auditoría, inspección SUNAFIL); Tabla: N.°, hallazgo, causa, acción, tipo (eliminación/sustitución/ingeniería/administrativo/EPP), responsable, fecha, indicador de cierre; Seguimiento', norms: 'Ley 29783 art. 50; D.S. 005-2012-TR art. 88' },
+  { id: 'programa-capacitacion', label: 'Programa anual de capacitación SST', outline: 'Objetivo; Público objetivo; Tabla mensual: tema, dirigido a, horas, responsable, mes; Mínimo cuatro capacitaciones al año; Indicadores; Presupuesto', norms: 'Ley 29783 art. 35; D.S. 005-2012-TR art. 27' },
+  { id: 'informe-ambiental', label: 'Informe de gestión de residuos sólidos', outline: 'Datos del generador; Caracterización (tabla: residuo, tipo, cantidad, almacenamiento, disposición); Cumplimiento de colores NTP 900.058; Manifiestos y EO-RS; Oportunidades de minimización', norms: 'D.Leg. 1278; D.S. 014-2017-MINAM; NTP 900.058:2019' },
+]
+
+const REPORT_SYSTEM = `Eres un especialista peruano en SSOMA que redacta documentos de gestión listos para usar.
+Reglas:
+- Escribe en español formal, en Markdown, con títulos ## y tablas Markdown donde la estructura lo pida.
+- Usa solo las normas que te indiquen o normas peruanas muy conocidas (Ley 29783, D.S. 005-2012-TR, R.M. 050-2013-TR). Si no estás seguro de un artículo, no lo cites.
+- Si falta un dato, deja el marcador [completar] en lugar de inventarlo.
+- Termina con una línea: "Documento preliminar generado con IA; revíselo un profesional SST antes de firmarlo."`
+
+async function generateReport(env: AiEnv, userId: string, body: { type?: string; context?: string; company?: string; area?: string; diagnosis?: string }) {
+  const type = REPORT_TYPES.find((item) => item.id === body.type)
+  if (!type) return json({ error: 'Tipo de documento no válido.' }, 400)
+  const context = (body.context ?? '').trim()
+  if (context.length < 15) return json({ error: 'Describa el caso con al menos una o dos frases.' }, 400)
+  const settings = await readSettings(env)
+  const started = Date.now()
+  const prompt = [
+    `Documento: ${type.label}.`,
+    `Estructura obligatoria: ${type.outline}.`,
+    `Normas de referencia: ${type.norms}.`,
+    body.company ? `Empresa: ${body.company.slice(0, 160)}.` : '',
+    body.area ? `Área o actividad: ${body.area.slice(0, 200)}.` : '',
+    `Caso descrito por el usuario: ${context.slice(0, 3000)}`,
+    body.diagnosis ? `Resultado del diagnóstico por foto previo (úsalo como evidencia): ${body.diagnosis.slice(0, 3000)}` : '',
+  ].filter(Boolean).join('\n')
+  try {
+    const markdown = await chat(env, settings.text.provider, settings.text.model, { system: REPORT_SYSTEM, text: prompt, maxTokens: 2200 })
+    await logRun(env, userId, settings.text, true, Date.now() - started, type.label, 'informe')
+    return json({ markdown, model: settings.text, ms: Date.now() - started })
+  } catch (error) {
+    await logRun(env, userId, settings.text, false, Date.now() - started, String(error), 'informe')
+    return json({ error: `El agente redactor no respondió: ${error instanceof Error ? error.message : 'error'}` }, 502)
+  }
+}
+
+async function summarizeAlert(env: AiEnv, userId: string, id: number) {
+  const row = await env.DB.prepare('SELECT id, title, summary, source, ai_summary FROM norm_alerts WHERE id = ?').bind(id).first<{ id: number; title: string; summary: string; source: string; ai_summary: string | null }>()
+  if (!row) return json({ error: 'Alerta no encontrada.' }, 404)
+  if (row.ai_summary) return json({ summary: row.ai_summary, cached: true })
+  const settings = await readSettings(env)
+  const started = Date.now()
+  try {
+    const text = await chat(env, settings.text.provider, settings.text.model, {
+      system: 'Eres un analista normativo SSOMA peruano. Responde en español con tres viñetas Markdown: **Qué establece**, **A quién aplica**, **Acción recomendada**. Si el texto no basta, dilo. Máximo 90 palabras.',
+      text: `Fuente: ${row.source}\nTítulo: ${row.title}\nExtracto: ${row.summary.slice(0, 1500)}`,
+      maxTokens: 300,
+    })
+    await env.DB.prepare('UPDATE norm_alerts SET ai_summary = ? WHERE id = ?').bind(text.slice(0, 1500), id).run()
+    await logRun(env, userId, settings.text, true, Date.now() - started, row.title, 'alerta')
+    return json({ summary: text })
+  } catch (error) {
+    return json({ error: `No se pudo resumir: ${error instanceof Error ? error.message : 'error'}` }, 502)
+  }
+}
+
+/** Cuota diaria por usuario premium (los administradores no tienen tope). */
+export const DAILY_AI_QUOTA = 25
+
+async function usedToday(env: AiEnv, userId: string): Promise<number> {
+  const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM ai_runs WHERE user_id = ? AND created_at >= ?")
+    .bind(userId, new Date(Date.now() - 86_400_000).toISOString())
+    .first<{ n: number }>()
+  return row?.n ?? 0
+}
+
+/** Rutas /api/ai/* para usuarios premium con consentimiento vigente. */
+export async function handlePremiumAi(request: Request, env: AiEnv, pathname: string, userId: string, isAdmin: boolean): Promise<Response> {
+  await ensureSchema(env)
+  const method = request.method
+  const sub = pathname.slice('/api/ai'.length)
+
+  if (sub === '/catalog' && method === 'GET') {
+    return json({ reportTypes: REPORT_TYPES.map(({ id, label }) => ({ id, label })), quota: isAdmin ? null : DAILY_AI_QUOTA, used: await usedToday(env, userId) })
+  }
+  if (sub === '/runs' && method === 'GET') {
+    const rows = await env.DB.prepare('SELECT task, provider, model, ok, ms, summary, created_at FROM ai_runs WHERE user_id = ? ORDER BY created_at DESC LIMIT 30').bind(userId).all()
+    return json({ runs: rows.results })
+  }
+
+  const costly = (sub === '/diagnose' || sub === '/report' || /^\/alerts\/\d+\/summary$/.test(sub)) && method === 'POST'
+  if (costly && !isAdmin && (await usedToday(env, userId)) >= DAILY_AI_QUOTA) {
+    return json({ error: `Alcanzó su cuota de ${DAILY_AI_QUOTA} consultas de IA en 24 horas. Intente más tarde.` }, 429)
+  }
+  if (sub === '/diagnose' && method === 'POST') {
+    const body = (await request.json().catch(() => null)) as { image?: string; note?: string; area?: string } | null
+    return diagnose(env, userId, body ?? {})
+  }
+  if (sub === '/report' && method === 'POST') {
+    const body = (await request.json().catch(() => null)) as Parameters<typeof generateReport>[2] | null
+    return generateReport(env, userId, body ?? {})
+  }
+  const summary = sub.match(/^\/alerts\/(\d+)\/summary$/)
+  if (summary && method === 'POST') return summarizeAlert(env, userId, Number(summary[1]))
 
   return json({ error: 'Ruta de IA no encontrada.' }, 404)
 }
