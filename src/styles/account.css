@@ -200,3 +200,55 @@ body.premium-mode .site-header { box-shadow: inset 0 -3px 0 var(--gold); }
 .site-footer p { margin: 0; }
 .site-footer .made-by a { color: var(--text-soft); font-weight: 700; text-decoration: none; border-bottom: 1px dotted var(--text-muted); }
 .site-footer .made-by a:hover { color: var(--blue-dark); }
+
+/* ---------- Portada en una sola pantalla ---------- */
+.home-v2 { display: flex; flex-direction: column; gap: 12px; }
+.hv-hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; overflow: hidden; }
+.hv-hero-copy h1 { margin: 0 0 6px; font-size: clamp(1.35rem, 2.2vw, 2rem); line-height: 1.15; }
+.hv-hero-copy p { margin: 0 0 12px; color: var(--text-soft); font-size: 15px; }
+.hv-hero-copy .hero-actions { margin: 0; }
+.hv-hero-art img { display: block; width: 100%; height: clamp(120px, 20vh, 190px); object-fit: cover; border-radius: var(--radius); }
+.hv-quick { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 8px; }
+.hv-quick .home-quick-btn { padding: 4px 2px; gap: 5px; }
+.hv-quick .home-quick-btn > span { width: 48px; height: 48px; }
+.hv-quick .home-quick-btn b { font-size: 12px; font-weight: 700; }
+.home-quick-btn.tone-gold > span { background: linear-gradient(135deg, #ffd76a, #c8930f); }
+.hv-panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-height: 0; }
+.hv-panel { display: flex; flex-direction: column; min-height: 0; padding: 12px 14px; }
+.hv-panel .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hv-panel h2 { margin: 0; font-size: 15px; display: flex; gap: 6px; align-items: center; }
+.hv-list { list-style: none; margin: 0; padding: 0 2px 0 0; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+.hv-list a, .hv-list button { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 7px 8px; border-radius: var(--radius); border: 1px solid transparent; background: none; color: var(--text); text-decoration: none; cursor: pointer; font: inherit; }
+.hv-list a:hover, .hv-list button:hover { background: var(--surface-soft); border-color: var(--border); }
+.hv-list b { display: block; font-size: 13.5px; line-height: 1.25; }
+.hv-list small { display: block; font-size: 12px; color: var(--text-muted); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hv-list svg:last-child { color: var(--text-muted); }
+.hv-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: var(--blue-dark); }
+.hv-icon.green { background: #079455; }
+.hv-icon.amber { background: #dc6803; }
+.hv-icon.teal { background: #0e9384; }
+.hv-icon.violet { background: #6938ef; }
+.hv-icon.sky { background: #0086c9; }
+.hv-disclaimer { margin: 0; font-size: 12px; }
+
+/* Escritorio: todo cabe en la ventana; los paneles se desplazan por dentro. */
+@media (min-width: 1100px) and (min-height: 680px) {
+  .home.home-v2 { flex: none; height: calc(100dvh - 172px); min-height: 540px; }
+  .hv-disclaimer { display: none; }
+  body:has(.home-v2) .site-footer { margin-top: 8px; padding-top: 10px; padding-bottom: 10px; }
+  .hv-panels { flex: 1; }
+  .hv-hero, .hv-quick { flex: none; }
+}
+@media (max-width: 1100px) {
+  .hv-quick { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .hv-panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hv-panels .hv-panel:last-child { grid-column: 1 / -1; }
+  .hv-list { max-height: 320px; }
+}
+@media (max-width: 680px) {
+  .hv-hero { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .hv-hero-art { display: none; }
+  .hv-quick { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .hv-panels { grid-template-columns: minmax(0, 1fr); }
+  .hv-list { max-height: 280px; }
+}
