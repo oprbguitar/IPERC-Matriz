@@ -16,6 +16,7 @@ import {
 } from '../data/ssoma'
 import { assetUrl } from '../lib/assets'
 import '../styles/ssoma.css'
+import { hashParam } from '../lib/hashParams'
 
 type Section = 'que-es' | 'flujo' | 'normas' | 'riesgos' | 'cuadros' | 'linea' | 'quimicos'
 
@@ -363,8 +364,11 @@ function ClpSearch() {
 }
 
 export default function SsomaVisorView({ onOpenNorm, onNavigate }: { onOpenNorm?: (normId: string) => void; onNavigate?: (view: 'simulador' | 'senales') => void }) {
-  const [section, setSection] = useState<Section>('que-es')
-  const [query, setQuery] = useState('')
+  const [section, setSection] = useState<Section>(() => {
+    const sec = hashParam('sec')
+    return sec && ['que-es', 'flujo', 'normas', 'riesgos', 'cuadros', 'linea', 'quimicos'].includes(sec) ? (sec as Section) : hashParam('q') ? 'normas' : 'que-es'
+  })
+  const [query, setQuery] = useState(() => hashParam('q') ?? '')
   const [branch, setBranch] = useState<SsomaBranch | 'todas'>('todas')
   const [openNorm, setOpenNorm] = useState<string | null>(null)
   const [riskCat, setRiskCat] = useState<SsomaRisk['category'] | 'todas'>('todas')

@@ -1,13 +1,16 @@
 import { Component, lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { ArrowRight, BookOpen, Layers, Pause, Play, Search, SlidersHorizontal } from 'lucide-react'
+import { BookOpen, Pause, Play, Search } from 'lucide-react'
 import { PREVENTION_FAMILIES, PREVENTION_PROFILES, PREVENTION_SECTORS, PREVENTION_TOPICS } from '../data/prevention'
 import { PREVENTION_SCENES } from '../data/preventionScenes'
+import { SECTOR_CONTEXT } from '../data/preventionSectors'
+import { findNorm } from '../data/legalDatabase'
 import type { SiteViewId } from '../data/platformContent'
-import { filterPreventionTopics } from '../lib/prevention'
+import { filterPreventionTopics, prioritizeForSector } from '../lib/prevention'
 import PreventionTopicDetail from '../components/PreventionTopicDetail'
 import PreventionTools from '../components/PreventionTools'
 import PreventionPractice from '../components/PreventionPractice'
 import PreventionEquipment from '../components/PreventionEquipment'
+import PreventionSceneInfo from '../components/PreventionSceneInfo'
 
 const PreventionScene = lazy(() => import('../components/PreventionScene'))
 
@@ -30,10 +33,14 @@ export default function PreventionView({ onOpenNorm, onNavigate, focusTopicId, o
   const [sceneId, setSceneId] = useState('oficina')
   const [controlled, setControlled] = useState(false)
   const [paused, setPaused] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const results = useMemo(() => filterPreventionTopics(query, sector, family), [query, sector, family])
+  const results = useMemo(() => prioritizeForSector(filterPreventionTopics(query, sector, family), sector), [query, sector, family])
   const topic = results.find(t => t.id === topicId) ?? results[0]
   const profile = PREVENTION_PROFILES.find(p => p.id === profileId) ?? PREVENTION_PROFILES[0]
   const scene = PREVENTION_SCENES.find(s => s.id === sceneId) ?? PREVENTION_SCENES[0]
+  const spot = scene.hotspots.find(p => p.topicId === topic?.id)
+  const sectorLabel = PREVENTION_SECTORS.find(s => s.id === sector)?.label ?? ''
+  const sectorCtx = SECTOR_CONTEXT[sector]
+  const sectorNote = topic && sectorCtx ? sectorCtx.notes[topic.id] ?? (sectorCtx.priority.includes(topic.id) ? `ficha prioritaria. ${sectorCtx.focus}` : undefined) : undefined
   const domestic = sector === 'domestic' || (mode === 'ambientes' && Boolean(scene.domestic))
 
   useEffect(() => {
@@ -64,9 +71,9 @@ export default function PreventionView({ onOpenNorm, onNavigate, focusTopicId, o
   }, [topic, domestic])
 
   function selectHotspot(id: string) {
-    const spot = scene.hotspots.find(p => p.id === id)
-    if (!spot) return
-    setQuery(''); setSector(scene.domestic ? 'domestic' : ''); setFamily(''); setTopicId(spot.topicId)
+    const target = scene.hotspots.find(p => p.id === id)
+    if (!target) return
+    setQuery(''); setSector(scene.domestic ? 'domestic' : ''); setFamily(''); setTopicId(target.topicId)
   }
 
   function changeMode(next: Mode) {
@@ -78,18 +85,30 @@ export default function PreventionView({ onOpenNorm, onNavigate, focusTopicId, o
   }
 
   const tabs: { id: Mode; label: string }[] = [{ id: 'fichas', label: 'Fichas por riesgo' }, { id: 'ambientes', label: 'Visor de ambientes' }, { id: 'equipos', label: 'EPP e instrumentos' }, { id: 'practica', label: 'Práctica IPERC' }, { id: 'herramientas', label: 'Ruido e índice UV' }]
+  const detail = topic
+    ? <PreventionTopicDetail key={`${topic.id}-${domestic}-${sector}`} topic={topic} domestic={domestic} profileHint={domestic ? 'Revise condiciones domésticas sin intervenir equipos peligrosos. Busque asistencia competente cuando corresponda.' : profile.hint} sectorNote={mode === 'fichas' && sectorLabel ? `${sectorLabel}. ${sectorNote ?? sectorCtx?.focus ?? ''}` : undefined} onOpenNorm={onOpenNorm} onTrack={() => onNavigate('verificar')} />
+    : <div className="pr-empty"><BookOpen size={28} aria-hidden="true" /><h2>No encontramos esa combinación.</h2><p>Pruebe un término más general o restablezca las facetas.</p><button type="button" onClick={() => { setQuery(''); setSector(''); setFamily('') }}>Restablecer búsqueda</button></div>
 
   return <div className={`pr-explorer ${paused ? 'pr-paused' : ''}`}>
-    <header className="pr-heading"><div><span className="pr-kicker"><Layers size={16} aria-hidden="true" /> Conocimiento que se convierte en prevención</span><h1>Explorador de Riesgos y Controles</h1><p>Elija una industria o un peligro. Comprenda la exposición, compare controles y sepa qué evidencia revisar.</p></div><div className="pr-heading-side"><span>CONSULTA PÚBLICA</span><b>Identificar. Comprender.<br />Actuar y verificar.</b><button type="button" className="pr-text-btn" aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? <Play size={15} /> : <Pause size={15} />}{paused ? 'Activar animaciones' : 'Pausar animaciones'}</button></div></header>
-    <nav className="pr-tabs" aria-label="Formas de explorar">{tabs.map(tab => <button key={tab.id} type="button" aria-pressed={mode === tab.id} onClick={() => changeMode(tab.id)}>{tab.label}<ArrowRight size={15} aria-hidden="true" /></button>)}</nav>
+    <header className="pr-heading"><h1>Riesgos y controles</h1><p>Elija un sector o un peligro: qué controlar, medir y verificar.</p><button type="button" className="pr-text-btn" aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? <Play size={14} /> : <Pause size={14} />}{paused ? 'Activar animaciones' : 'Pausar animaciones'}</button></header>
+    <nav className="pr-tabs" aria-label="Formas de explorar">{tabs.map(tab => <button key={tab.id} type="button" aria-pressed={mode === tab.id} onClick={() => changeMode(tab.id)}>{tab.label}</button>)}</nav>
     {mode === 'herramientas' ? <PreventionTools onOpenNorm={onOpenNorm} /> : mode === 'equipos' ? <PreventionEquipment /> : mode === 'practica' ? <PreventionPractice onNavigate={onNavigate} onOpenNorm={onOpenNorm} /> : <>
-      {mode === 'fichas' && <section className="pr-filters" aria-label="Filtrar fichas preventivas"><label className="pr-search"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar peligro, equipo o control</span><input type="search" placeholder="¿Qué necesita prevenir? Ej.: ruido, casco, piel…" value={query} onChange={e => { setQuery(e.target.value); setTopicId('') }} /></label><div className="pr-facets"><label><SlidersHorizontal size={15} aria-hidden="true" /> Sector<select value={sector} onChange={e => { setSector(e.target.value); setTopicId('') }}><option value="">Todos los sectores</option>{PREVENTION_SECTORS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label><label>Familia de peligros<select value={family} onChange={e => { setFamily(e.target.value); setTopicId('') }}><option value="">Todas las familias</option>{PREVENTION_FAMILIES.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></label><label>Mi perfil<select value={profileId} onChange={e => setProfileId(e.target.value)}>{PREVENTION_PROFILES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label></div></section>}
-      {mode === 'ambientes' && <section className="pr-viewer" aria-labelledby="pr-viewer-title"><div className="pr-section-head"><span className="pr-kicker">Reconozca los peligros en su contexto</span><h2 id="pr-viewer-title">Entre al ambiente. Elija un punto.</h2><p>Escenas ilustrativas de prevención; no representan una inspección ni una exposición medida.</p></div><div className="pr-scene-nav" aria-label="Ambientes">{PREVENTION_SCENES.map(s => <button key={s.id} type="button" aria-pressed={sceneId === s.id} onClick={() => { setSceneId(s.id); setControlled(false); setQuery(''); setFamily(''); setSector(s.domestic ? 'domestic' : ''); setTopicId(s.hotspots[0].topicId) }}>{s.label}</button>)}</div><div className="pr-viewer-toolbar"><span><b>{scene.label}</b> · {controlled ? 'Controles ilustrados' : 'Peligros por identificar'}</span><button type="button" aria-pressed={controlled} onClick={() => setControlled(c => !c)}>{controlled ? 'Ver sin controles' : 'Comparar con controles'}</button></div><SceneBoundary><Suspense fallback={<p className="pr-notice" role="status">Cargando ilustración… Puede usar la lista de puntos.</p>}><PreventionScene sceneId={sceneId} controlled={controlled} paused={paused} selectedId={scene.hotspots.find(p => p.topicId === topic?.id)?.id ?? ''} onSelect={selectHotspot} /></Suspense></SceneBoundary><div className="pr-point-list" aria-label="Puntos de inspección">{scene.hotspots.map((spot, i) => <button key={spot.id} type="button" aria-pressed={spot.topicId === topic?.id} onClick={() => selectHotspot(spot.id)}><span>{i + 1}</span>{spot.label}</button>)}</div></section>}
-      <div className={`pr-workspace ${mode === 'ambientes' ? 'pr-workspace-scene' : ''}`}>
-        {mode === 'fichas' && <aside className="pr-master" aria-label="Resultados del explorador"><p className="pr-result-count" role="status">{results.length} fichas · {PREVENTION_TOPICS.length} en el catálogo inicial</p>{results.map(t => <button key={t.id} className="pr-result" type="button" aria-pressed={topic?.id === t.id} onClick={() => setTopicId(t.id)}><small>{PREVENTION_FAMILIES.find(f => f.id === t.family)?.label}</small><b>{t.title}</b><span>{t.summary}</span><ArrowRight size={16} aria-hidden="true" /></button>)}</aside>}
-        {topic ? <PreventionTopicDetail key={`${topic.id}-${domestic}`} topic={topic} domestic={domestic} profileHint={domestic ? 'Revise condiciones domésticas sin intervenir equipos peligrosos. Busque asistencia competente cuando corresponda.' : profile.hint} onOpenNorm={onOpenNorm} onTrack={() => onNavigate('verificar')} /> : <div className="pr-empty"><BookOpen size={32} aria-hidden="true" /><h2>No encontramos esa combinación.</h2><p>Pruebe un término más general o restablezca las facetas.</p><button type="button" onClick={() => { setQuery(''); setSector(''); setFamily('') }}>Restablecer búsqueda</button></div>}
-      </div>
+      {mode === 'fichas' && <section className="pr-filters" aria-label="Filtrar fichas preventivas"><label className="pr-search"><Search size={18} aria-hidden="true" /><span className="sr-only">Buscar peligro, equipo o control</span><input type="search" placeholder="¿Qué necesita prevenir? Ej.: ruido, casco, piel…" value={query} onChange={e => { setQuery(e.target.value); setTopicId('') }} /></label><div className="pr-facets"><label>Sector<select value={sector} onChange={e => { setSector(e.target.value); setTopicId('') }}><option value="">Todos los sectores</option>{PREVENTION_SECTORS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label><label>Familia de peligros<select value={family} onChange={e => { setFamily(e.target.value); setTopicId('') }}><option value="">Todas las familias</option>{PREVENTION_FAMILIES.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></label><label>Mi perfil<select value={profileId} onChange={e => setProfileId(e.target.value)}>{PREVENTION_PROFILES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></label></div></section>}
+      {mode === 'fichas' && sectorCtx && <section className="pr-sector" aria-label={`Contexto del sector: ${sectorLabel}`}><h2>{sectorLabel}</h2><p>{sectorCtx.focus}</p><div className="pr-chips"><span>Prioridad</span>{sectorCtx.priority.filter(id => results.some(t => t.id === id)).map(id => <button key={id} type="button" aria-pressed={topic?.id === id} onClick={() => setTopicId(id)}>{PREVENTION_TOPICS.find(t => t.id === id)?.title.split(',')[0]}</button>)}</div><div className="pr-chips"><span>Marco</span>{sectorCtx.normIds.map(id => { const norm = findNorm(id); return norm ? <button key={id} type="button" onClick={() => onOpenNorm(id)}>{norm.shortName}</button> : null })}</div></section>}
+      {mode === 'ambientes' && <section className="pr-viewer" aria-labelledby="pr-viewer-title">
+        <div className="pr-section-head"><h2 id="pr-viewer-title">Visor de ambientes</h2><p>Elija un ambiente y un punto numerado. Escena ilustrativa: no representa una inspección ni una exposición medida.</p></div>
+        <div className="pr-scene-nav" aria-label="Ambientes">{PREVENTION_SCENES.map(s => <button key={s.id} type="button" aria-pressed={sceneId === s.id} onClick={() => { setSceneId(s.id); setControlled(false); setQuery(''); setFamily(''); setSector(s.domestic ? 'domestic' : ''); setTopicId(s.hotspots[0].topicId) }}>{s.label}</button>)}</div>
+        <div className="pr-viewer-toolbar"><span><b>{scene.label}</b> · {controlled ? 'con controles' : 'peligros por identificar'}</span><button type="button" aria-pressed={controlled} onClick={() => setControlled(c => !c)}>{controlled ? 'Ver sin controles' : 'Comparar con controles'}</button></div>
+        <SceneBoundary><Suspense fallback={<p className="pr-notice" role="status">Cargando ilustración… Puede usar la lista de puntos.</p>}><PreventionScene sceneId={sceneId} controlled={controlled} paused={paused} selectedId={spot?.id ?? ''} onSelect={selectHotspot} /></Suspense></SceneBoundary>
+        <div className="pr-point-list" aria-label="Puntos de inspección">{scene.hotspots.map((s, i) => <button key={s.id} type="button" aria-pressed={s.topicId === topic?.id} onClick={() => selectHotspot(s.id)}><span>{i + 1}</span>{s.label}</button>)}</div>
+        {spot && <PreventionSceneInfo scene={scene} spot={spot} controlled={controlled} />}
+        <details className="pr-disclosure"><summary>Ficha completa: {topic?.title}</summary>{detail}</details>
+      </section>}
+      {mode === 'fichas' && <div className="pr-workspace">
+        <aside className="pr-master" aria-label="Resultados del explorador"><p className="pr-result-count" role="status">{results.length} de {PREVENTION_TOPICS.length} fichas</p>{results.map(t => <button key={t.id} className="pr-result" type="button" aria-pressed={topic?.id === t.id} onClick={() => setTopicId(t.id)}><small>{PREVENTION_FAMILIES.find(f => f.id === t.family)?.label}</small><b>{t.title}</b></button>)}</aside>
+        {detail}
+      </div>}
     </>}
-    <footer className="pr-footer"><p>Primero el control colectivo; después, la protección personal. Las fichas orientan la consulta: la evaluación y su verificación corresponden a cada situación real.</p><button type="button" className="pr-text-btn" onClick={() => onNavigate('simulador')}>Abrir simulador IPERC existente →</button><button type="button" className="pr-text-btn" onClick={() => onNavigate('visor')}>Consultar visor SSOMA →</button></footer>
+    <footer className="pr-footer"><p>Primero el control colectivo; después, la protección personal. La evaluación y su verificación corresponden a cada situación real.</p><button type="button" className="pr-text-btn" onClick={() => onNavigate('simulador')}>Simulador IPERC →</button><button type="button" className="pr-text-btn" onClick={() => onNavigate('visor')}>Visor SSOMA →</button></footer>
   </div>
 }

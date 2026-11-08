@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import { Download, Printer, Search, TriangleAlert } from 'lucide-react'
 import { SIGN_ICONS as ICONS } from '../lib/signIcons'
 import { FAMILY_INFO, minSignArea, SIGN_NORMS, SIGNS, type SafetySign, type SignFamily } from '../data/signs'
 import { H_TABLE_ROWS } from '../data/ssoma/quimicos'
+import { OPS, OP_GROUPS, QUARTERS, type OpField, type OpKind, type OpSpec } from '../data/signsOps'
 import { assetUrl } from '../lib/assets'
 import '../styles/signage.css'
 
@@ -16,6 +18,14 @@ const FORMATS: Record<Format, { label: string; page: string; widthMm: number; co
   sticker: { label: 'Sticker 10 × 10 cm', page: '100mm 130mm', widthMm: 90, copies: 1 },
   hoja: { label: 'Hoja A4 de 6 stickers', page: 'A4', widthMm: 88, copies: 6 },
 }
+
+const FAMILIES = Object.keys(FAMILY_INFO) as SignFamily[]
+/** Señales mostradas por familia antes de pulsar «Ver más». */
+const PER_FAMILY = 6
+const normalize = (value: string) => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+/** Texto indexado para la búsqueda: nombre, descripción, riesgos, código ISO y lugares de uso. */
+const SIGN_INDEX = new Map(SIGNS.map((item) => [item.id, normalize(`${item.text} ${item.description} ${item.risks.join(' ')} ${item.iso ?? ''} ${item.where.join(' ')} ${FAMILY_INFO[item.family].label}`)]))
+const FAMILY_COUNT = Object.fromEntries(FAMILIES.map((key) => [key, SIGNS.filter((item) => item.family === key).length])) as Record<SignFamily, number>
 
 const H_TEXT = new Map(H_TABLE_ROWS.map((row) => [row[0], row[1]]))
 
@@ -254,49 +264,169 @@ function ChemicalLabel({ row, supplier, fdsUrl, svgRef }: { row: ClpRow; supplie
 
 /* ---------------- Etiqueta operativa ---------------- */
 
-const OPS = {
-  extintor: { title: 'TARJETA DE INSPECCIÓN DE EXTINTOR', color: '#C1121C', fields: ['Código / ubicación', 'Tipo y capacidad', 'Última recarga', 'Próxima recarga', 'Responsable'], months: true },
-  epp: { title: 'CONTROL DE EPP', color: '#0B5CAD', fields: ['Trabajador', 'EPP entregado', 'Fecha de entrega', 'Próxima revisión', 'Firma'], months: false },
-  mantenimiento: { title: 'MANTENIMIENTO DE EQUIPO', color: '#E07B00', fields: ['Equipo / código', 'Último mantenimiento', 'Próximo mantenimiento', 'Técnico', 'Estado'], months: false },
-  acceso: { title: 'ACCESO AUTORIZADO', color: '#0E7A3E', fields: ['Nombre', 'Área autorizada', 'Válido hasta', 'Autoriza'], months: false },
-  loto: { title: 'PELIGRO · NO OPERAR (LOTO)', color: '#B71C1C', fields: ['Bloqueado por', 'Área / equipo', 'Energía aislada', 'Fecha y hora', 'Teléfono'], months: false },
-  andamioOk: { title: 'ANDAMIO APTO PARA USO', color: '#1B7F3B', fields: ['Andamio / ubicación', 'Carga máxima', 'Inspeccionado por', 'Fecha', 'Válido hasta'], months: false },
-  andamioPrec: { title: 'PRECAUCIÓN · USO RESTRINGIDO', color: '#C99700', fields: ['Andamio / ubicación', 'Restricción', 'EPP requerido', 'Inspeccionado por', 'Fecha'], months: false },
-  andamioNo: { title: 'NO USAR · FUERA DE SERVICIO', color: '#B71C1C', fields: ['Equipo / ubicación', 'Motivo', 'Reportado por', 'Fecha'], months: false },
-  arnes: { title: 'INSPECCIÓN DE ARNÉS Y LÍNEA DE VIDA', color: '#E07B00', fields: ['Código del arnés', 'Usuario', 'Fecha de fabricación', 'Inspeccionado por'], months: true },
-  herramienta: { title: 'HERRAMIENTA INSPECCIONADA', color: '#0B5CAD', fields: ['Herramienta / código', 'Trimestre (color)', 'Inspector', 'Fecha'], months: false },
-  botiquin: { title: 'CONTROL DE BOTIQUÍN', color: '#0E7A3E', fields: ['Ubicación', 'Responsable', 'Última reposición', 'Productos vencidos'], months: true },
-} as const
-type OpKind = keyof typeof OPS
+const MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DIC']
+const fit = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
+const fmtDate = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value.split('-').reverse().join('/') : value)
+const wrapText = (value: string, max: number) => {
+  const out: string[] = []
+  for (const word of value.split(' ')) {
+    const last = out[out.length - 1]
+    if (last !== undefined && `${last} ${word}`.length <= max) out[out.length - 1] = `${last} ${word}`
+    else out.push(word)
+  }
+  return out
+}
 
-function OpsLabel({ kind, values, qrText, svgRef }: { kind: OpKind; values: string[]; qrText: string; svgRef: React.Ref<SVGSVGElement> }) {
-  const spec = OPS[kind]
-  const months = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
-  const height = 70 + spec.fields.length * 30 + (spec.months ? 56 : 0) + 20
+function OpsLabel({ kind, values, qrText, svgRef, className = 'ops-svg' }: { kind: OpKind; values: Record<string, string>; qrText: string; svgRef?: React.Ref<SVGSVGElement>; className?: string }) {
+  const spec: OpSpec = OPS[kind]
+  const Icon = ICONS[spec.icon] ?? TriangleAlert
+  const color = spec.color
+  const fg = spec.statusFg ?? '#fff'
+  const ROW = 38
+
+  // Campos: dos columnas; los "wide" ocupan toda la fila.
+  const cells: { field: OpField; x: number; y: number; w: number }[] = []
+  let y = 108
+  let pending = false
+  for (const field of spec.fields) {
+    if (field.wide) {
+      if (pending) { y += ROW; pending = false }
+      cells.push({ field, x: 16, y, w: 368 })
+      y += ROW
+    } else if (!pending) {
+      cells.push({ field, x: 16, y, w: 176 })
+      pending = true
+    } else {
+      cells.push({ field, x: 208, y, w: 176 })
+      y += ROW
+      pending = false
+    }
+  }
+  if (pending) y += ROW
+  y += 4
+
+  const quarterY = y
+  if (spec.quarters) y += 48
+  const checksY = y
+  const checks = spec.checks ?? []
+  if (checks.length) y += 16 + checks.length * 17 + 8
+  const monthsY = y
+  if (spec.months) y += 52
+  const footY = y
+  const colW = qrText ? 256 : 368
+  const sigH = 46
+  const leftH = (spec.due ? 44 : 0) + sigH
+  y += Math.max(leftH, qrText ? 106 : 0) + 8
+  const noteLines = wrapText(spec.note, 96)
+  const noteY = y
+  y += noteLines.length * 10 + 16
+  const height = y
+
+  const statusSize = Math.min(24, 306 / (spec.status.length * 0.7))
+  const titleSize = Math.min(14, 368 / (spec.title.length * 0.7))
+  const subSize = Math.min(9, 368 / (spec.subtitle.length * 0.52))
+  const quarterSel = QUARTERS.findIndex((q) => q.label === values.trimestre)
+  const dueValue = fmtDate(values.__due ?? '')
+
   return (
-    <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 300 ${height}`} className="sign-svg label-svg" role="img" aria-label={spec.title}>
-      <rect x="2" y="2" width="296" height={height - 4} rx="8" fill="#fff" stroke={spec.color} strokeWidth="3" />
-      <rect x="2" y="2" width="296" height="40" rx="8" fill={spec.color} />
-      <text x="150" y="27" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="700" fontSize="13">{spec.title}</text>
-      {spec.fields.map((field, index) => (
-        <g key={field} transform={`translate(14 ${62 + index * 30})`}>
-          <text fontFamily="Arial" fontSize="9" fill="#555">{field}</text>
-          <text y="15" fontFamily="Arial" fontSize="12" fontWeight="700">{values[index] ?? ''}</text>
-          <line x1="0" x2={qrText && index < 3 ? 190 : 272} y1="19" y2="19" stroke="#bbb" />
-        </g>
-      ))}
-      {spec.months && (
-        <g transform={`translate(14 ${62 + spec.fields.length * 30})`}>
-          <text fontFamily="Arial" fontSize="9" fill="#555">Inspección mensual (marque ✓)</text>
-          {months.map((month, index) => (
-            <g key={index} transform={`translate(${index * 22.6} 8)`}>
-              <rect width="20" height="30" fill="#fff" stroke="#999" />
-              <text x="10" y="11" textAnchor="middle" fontSize="8" fontFamily="Arial">{month}</text>
+    <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 400 ${height}`} className={`sign-svg label-svg ${className}`} role="img" aria-label={spec.title}>
+      <rect x="2" y="2" width="396" height={height - 4} rx="12" fill="#fff" stroke={color} strokeWidth="4" />
+      <path d="M2 56 V14 a12 12 0 0 1 12 -12 H386 a12 12 0 0 1 12 12 V56 Z" fill={color} />
+      {spec.hole && <circle cx="200" cy="12" r="5" fill="#fff" stroke="#00000055" strokeWidth="1.2" />}
+      <circle cx="38" cy="31" r="19" fill="#fff" />
+      <Icon x={26} y={19} size={24} color={color} strokeWidth={2} />
+      <text x="66" y={31 + statusSize * 0.36} fontFamily="Arial, Helvetica, sans-serif" fontWeight="900" fontSize={statusSize} fill={fg}>{spec.status}</text>
+      <text x="16" y="78" fontFamily="Arial, Helvetica, sans-serif" fontWeight="700" fontSize={titleSize} fill="#111">{spec.title}</text>
+      <text x="16" y="92" fontFamily="Arial, Helvetica, sans-serif" fontSize={subSize} fill="#555">{spec.subtitle}</text>
+      <line x1="16" x2="384" y1="99" y2="99" stroke={color} strokeWidth="1.5" />
+
+      {cells.map(({ field, x, y: cy, w }) => {
+        const raw = values[field.key] ?? ''
+        const shown = field.type === 'date' ? fmtDate(raw) : raw
+        return (
+          <g key={field.key} transform={`translate(${x} ${cy})`}>
+            <text y="9" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fill="#555">{field.label.toUpperCase()}</text>
+            <text y="24" fontFamily="Arial, Helvetica, sans-serif" fontSize="12" fontWeight="700" fill="#111">{fit(shown, Math.floor(w / 6.6))}</text>
+            <line x1="0" x2={w - 6} y1="28" y2="28" stroke="#9aa0a8" strokeWidth="0.8" />
+          </g>
+        )
+      })}
+
+      {spec.quarters && (
+        <g transform={`translate(16 ${quarterY})`}>
+          <text y="9" fontFamily="Arial" fontSize="8.5" fill="#555">CÓDIGO DE COLOR DEL TRIMESTRE (CINTA)</text>
+          {QUARTERS.map((quarter, index) => (
+            <g key={quarter.label} transform={`translate(${index * 93} 14)`} opacity={quarterSel >= 0 && quarterSel !== index ? 0.35 : 1}>
+              <rect width="89" height="26" rx="4" fill={quarter.color} stroke="#111" strokeWidth={quarterSel === index ? 3 : 0.8} />
+              <text x="44.5" y="17" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="9" fill={quarter.fg}>{quarterSel === index ? '✔ ' : ''}{quarter.label}</text>
             </g>
           ))}
         </g>
       )}
-      {qrText && <QrPath text={qrText} x={214} y={52} size={72} />}
+
+      {checks.length > 0 && (
+        <g transform={`translate(16 ${checksY})`}>
+          <rect width="368" height="16" fill={color} opacity="0.14" />
+          <text x="6" y="11.5" fontFamily="Arial" fontWeight="700" fontSize="8.5" fill="#111">LISTA DE VERIFICACIÓN</text>
+          {['OK', 'NO', 'N/A'].map((head, index) => (
+            <text key={head} x={302 + index * 24} y="11.5" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="7.5" fill="#111">{head}</text>
+          ))}
+          {checks.map((item, index) => (
+            <g key={item} transform={`translate(0 ${16 + index * 17})`}>
+              {index % 2 === 1 && <rect width="368" height="17" fill="#f2f4f7" />}
+              <text x="6" y="12" fontFamily="Arial" fontSize="9" fill="#111">{index + 1}. {fit(item, 54)}</text>
+              {[0, 1, 2].map((col) => <rect key={col} x={296 + col * 24} y="3" width="11" height="11" fill="#fff" stroke="#555" strokeWidth="0.9" />)}
+            </g>
+          ))}
+        </g>
+      )}
+
+      {spec.months && (
+        <g transform={`translate(16 ${monthsY})`}>
+          <text y="9" fontFamily="Arial" fontSize="8.5" fill="#555">CONTROL MENSUAL (INICIAL DEL INSPECTOR)</text>
+          {MONTHS.map((month, index) => (
+            <g key={month} transform={`translate(${index * 30.7} 13)`}>
+              <rect width="29" height="32" fill="#fff" stroke="#777" strokeWidth="0.9" />
+              <rect width="29" height="10" fill={color} opacity="0.18" />
+              <text x="14.5" y="8" textAnchor="middle" fontSize="7" fontWeight="700" fontFamily="Arial" fill="#111">{month}</text>
+            </g>
+          ))}
+        </g>
+      )}
+
+      <g transform={`translate(16 ${footY})`}>
+        {spec.due && (
+          <g>
+            <rect width={colW} height="36" rx="5" fill={color} opacity="0.1" />
+            <rect width={colW} height="36" rx="5" fill="none" stroke={color} strokeWidth="1.6" />
+            <text x="8" y="12" fontFamily="Arial" fontWeight="700" fontSize="8.5" fill="#111">{fit(spec.due.toUpperCase(), Math.floor(colW / 5.2))}</text>
+            {dueValue
+              ? <text x="8" y="29" fontFamily="Arial" fontWeight="900" fontSize="15" fill="#111">{dueValue}</text>
+              : <text x="8" y="29" fontFamily="Arial" fontSize="14" fill="#8a9099" xmlSpace="preserve">____ / ____ / ________</text>}
+          </g>
+        )}
+        {spec.signatures.map((label, index) => {
+          const w = (colW - (spec.signatures.length - 1) * 6) / spec.signatures.length
+          return (
+            <g key={label} transform={`translate(${index * (w + 6)} ${spec.due ? 44 : 0})`}>
+              <rect width={w} height={sigH} rx="4" fill="#fff" stroke="#777" strokeWidth="0.9" />
+              <line x1="8" x2={w - 8} y1={sigH - 14} y2={sigH - 14} stroke="#999" strokeWidth="0.8" />
+              <text x={w / 2} y={sigH - 5} textAnchor="middle" fontFamily="Arial" fontSize="7.5" fill="#555">{fit(label, Math.floor(w / 4.2))}</text>
+            </g>
+          )
+        })}
+        {qrText && (
+          <g>
+            <QrPath text={qrText} x={278} y={0} size={90} />
+            <text x={323} y={100} textAnchor="middle" fontFamily="Arial" fontSize="7.5" fill="#555">Escanee: registro / ficha</text>
+          </g>
+        )}
+      </g>
+
+      <text fontFamily="Arial" fontSize="7.5" fill="#666">
+        {noteLines.map((line, index) => <tspan key={index} x="16" y={noteY + 6 + index * 10}>{line}</tspan>)}
+      </text>
+      <text x="384" y={height - 9} textAnchor="end" fontFamily="Arial" fontSize="6.5" fill="#999">Observatorio Prevenir Perú · formato de control interno</text>
     </svg>
   )
 }
@@ -364,7 +494,9 @@ export default function SignageView() {
   const qrSign = SIGNS.find((sign) => sign.id === params.get('s'))
   const qrSubstance = params.get('sust')
 
-  const [tab, setTab] = useState<Tab>('senales')
+  const secParam = params.get('sec')
+  const qrOp = params.get('etiqueta')
+  const [tab, setTab] = useState<Tab>(secParam === 'etiquetas' || (qrOp && qrOp in OPS) ? 'operativas' : 'senales')
   const [family, setFamily] = useState<SignFamily | 'todas'>('todas')
   const [signId, setSignId] = useState(qrSign?.id ?? 'primeros-auxilios')
   const [withQr, setWithQr] = useState(true)
@@ -379,10 +511,45 @@ export default function SignageView() {
   const [fdsUrl, setFdsUrl] = useState('')
   const labelRef = useRef<SVGSVGElement>(null)
 
-  const [opKind, setOpKind] = useState<OpKind>('extintor')
-  const [opValues, setOpValues] = useState<string[]>([])
+  const [opKind, setOpKind] = useState<OpKind>(qrOp && qrOp in OPS ? (qrOp as OpKind) : 'extintor')
+  const [opValues, setOpValues] = useState<Record<string, string>>({})
   const [opQr, setOpQr] = useState('')
+  const [opWithQr, setOpWithQr] = useState(true)
+  const [opCopies, setOpCopies] = useState(4)
+  const [opWidth, setOpWidth] = useState(92)
   const opRef = useRef<SVGSVGElement>(null)
+  const [openFamilies, setOpenFamilies] = useState<Partial<Record<SignFamily, boolean>>>({})
+
+  // Enlaces de la portada (#/senales?sec=senales | etiquetas): abre la sección y se desplaza a ella.
+  useEffect(() => {
+    const go = (id: string) => window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)
+    const initial = readHashParams().get('sec')
+    if (initial === 'etiquetas') go('etiquetas-operativas')
+    else if (initial === 'senales') go('senales-catalogo')
+    const onHash = () => {
+      const sec = readHashParams().get('sec')
+      if (sec === 'etiquetas') { setTab('operativas'); go('etiquetas-operativas') }
+      else if (sec === 'senales') { setTab('senales'); go('senales-catalogo') }
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  useEffect(() => () => document.body.classList.remove('print-ops'), [])
+
+  function printOps() {
+    const style = document.createElement('style')
+    style.textContent = '@page { size: A4; margin: 8mm; }'
+    document.head.appendChild(style)
+    document.body.classList.add('print-ops')
+    const done = () => {
+      document.body.classList.remove('print-ops')
+      style.remove()
+      window.removeEventListener('afterprint', done)
+    }
+    window.addEventListener('afterprint', done)
+    window.setTimeout(() => window.print(), 80)
+  }
 
   useEffect(() => {
     if (tab !== 'quimicos' || rows) return
@@ -390,9 +557,13 @@ export default function SignageView() {
   }, [tab, rows])
 
   const sign = SIGNS.find((item) => item.id === signId) ?? SIGNS[0]
+  const opQrText = opWithQr ? (opQr.trim() || fichaUrl(`etiqueta=${opKind}`)) : ''
   const [signQuery, setSignQuery] = useState('')
   const sq = signQuery.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const visibleSigns = SIGNS.filter((item) => (family === 'todas' || item.family === family) && (!sq || `${item.text} ${item.description} ${item.risks.join(' ')}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(sq)))
+  const visibleSigns = SIGNS.filter((item) => (family === 'todas' || item.family === family) && (!sq || (SIGN_INDEX.get(item.id) ?? '').includes(sq)))
+  const groups = FAMILIES.filter((key) => family === 'todas' || key === family)
+    .map((key) => ({ key, items: visibleSigns.filter((item) => item.family === key) }))
+    .filter((group) => group.items.length > 0)
   const size = minSignArea(distance)
 
   const results = useMemo(() => {
@@ -423,26 +594,46 @@ export default function SignageView() {
       </div>
 
       {tab === 'senales' && (
-        <div className="sign-layout">
+        <div className="sign-layout" id="senales-catalogo">
           <div className="sign-config">
             <div className="ssoma-filter">
-              <button type="button" className={family === 'todas' ? 'active' : ''} onClick={() => setFamily('todas')}>Todas</button>
-              {(Object.keys(FAMILY_INFO) as SignFamily[]).map((key) => (
-                <button type="button" key={key} className={family === key ? 'active' : ''} onClick={() => setFamily(key)}>{FAMILY_INFO[key].label}</button>
+              <button type="button" className={family === 'todas' ? 'active' : ''} onClick={() => setFamily('todas')}>Todas ({SIGNS.length})</button>
+              {FAMILIES.map((key) => (
+                <button type="button" key={key} className={family === key ? 'active' : ''} onClick={() => setFamily(key)}>{FAMILY_INFO[key].label} ({FAMILY_COUNT[key]})</button>
               ))}
             </div>
             <label className="ssoma-search small">
               <Search size={16} aria-hidden="true" />
-              <input value={signQuery} onChange={(event) => setSignQuery(event.target.value)} placeholder={`Buscar entre ${SIGNS.length} señales: extintor, arnés, corrosivo…`} />
+              <input value={signQuery} onChange={(event) => setSignQuery(event.target.value)} placeholder={`Buscar entre ${SIGNS.length} señales: extintor, arnés, P002, ruido…`} />
             </label>
-            <div className="sign-picker">
-              {visibleSigns.map((item) => (
-                <button type="button" key={item.id} className={item.id === signId ? 'active' : ''} onClick={() => setSignId(item.id)} title={item.text}>
-                  <SignSvg sign={item} qr={false} />
-                  <span>{item.text}</span>
-                </button>
-              ))}
-            </div>
+            {groups.length === 0 && <p className="empty-note">No hay señales que coincidan con la búsqueda.</p>}
+            {groups.map((group) => {
+              const info = FAMILY_INFO[group.key]
+              const open = Boolean(openFamilies[group.key])
+              const shown = open ? group.items : group.items.slice(0, PER_FAMILY)
+              const hidden = group.items.length - PER_FAMILY
+              return (
+                <section key={group.key} className="sign-group" aria-label={info.label}>
+                  <h3 className="sign-group-head">
+                    <span className="sign-family" style={{ background: info.bg, color: info.fg }}>{info.label}</span>
+                    <small>{group.items.length} {group.items.length === 1 ? 'señal' : 'señales'}{sq ? ' encontradas' : ''}</small>
+                  </h3>
+                  <div className="sign-picker">
+                    {shown.map((item) => (
+                      <button type="button" key={item.id} className={item.id === signId ? 'active' : ''} onClick={() => setSignId(item.id)} title={item.text}>
+                        <SignSvg sign={item} qr={false} />
+                        <span>{item.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {hidden > 0 && (
+                    <button type="button" className="btn-ghost sign-more" aria-expanded={open} onClick={() => setOpenFamilies((prev) => ({ ...prev, [group.key]: !open }))}>
+                      {open ? 'Ver menos' : `Ver más (${hidden})`}
+                    </button>
+                  )}
+                </section>
+              )
+            })}
             <label className="sign-check"><input type="checkbox" checked={withQr} onChange={(event) => setWithQr(event.target.checked)} /> Agregar QR informativo (abre la ficha con peligro, controles, EPP y norma)</label>
             <details className="ssoma-fold">
               <summary><span>Tamaño mínimo según la distancia de observación</span></summary>
@@ -512,26 +703,83 @@ export default function SignageView() {
       )}
 
       {tab === 'operativas' && (
-        <div className="sign-layout">
+        <div className="sign-layout" id="etiquetas-operativas">
           <div className="sign-config">
-            <div className="ssoma-filter">
-              {(Object.keys(OPS) as OpKind[]).map((key) => (
-                <button type="button" key={key} className={opKind === key ? 'active' : ''} onClick={() => { setOpKind(key); setOpValues([]) }}>{OPS[key].title.toLowerCase()}</button>
-              ))}
-            </div>
-            {OPS[opKind].fields.map((field, index) => (
-              <label className="sign-field" key={field}>
-                <span>{field}</span>
-                <input value={opValues[index] ?? ''} onChange={(event) => setOpValues((prev) => { const next = [...prev]; next[index] = event.target.value; return next })} />
-              </label>
+            {OP_GROUPS.map((group) => (
+              <div key={group} className="ops-group">
+                <h3>{group}</h3>
+                <div className="ops-picker">
+                  {(Object.keys(OPS) as OpKind[]).filter((key) => OPS[key].group === group).map((key) => (
+                    <button type="button" key={key} className={opKind === key ? 'active' : ''} style={{ '--ops-color': OPS[key].color } as CSSProperties} onClick={() => { setOpKind(key); setOpValues({}) }}>
+                      {OPS[key].short}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
-            <label className="sign-field"><span>Contenido del QR (enlace al registro, procedimiento o código)</span><input value={opQr} onChange={(event) => setOpQr(event.target.value)} placeholder="https://… o código del equipo" /></label>
-            <p className="site-disclaimer">Las etiquetas operativas controlan inspecciones y activos: no sustituyen las señales normativas de seguridad.</p>
+            <h2 className="ops-form-title">{OPS[opKind].title}</h2>
+            <div className="ops-form">
+              {(OPS[opKind].fields as OpField[]).map((field) => (
+                <label className={`sign-field${field.wide ? ' wide' : ''}`} key={field.key}>
+                  <span>{field.label}</span>
+                  {field.type === 'select' ? (
+                    <select value={opValues[field.key] ?? ''} onChange={(event) => setOpValues((prev) => ({ ...prev, [field.key]: event.target.value }))}>
+                      <option value="">—</option>
+                      {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  ) : (
+                    <input type={field.type === 'date' ? 'date' : 'text'} value={opValues[field.key] ?? ''} onChange={(event) => setOpValues((prev) => ({ ...prev, [field.key]: event.target.value }))} />
+                  )}
+                </label>
+              ))}
+              {OPS[opKind].due && (
+                <label className="sign-field wide">
+                  <span>{OPS[opKind].due}</span>
+                  <input type="date" value={opValues.__due ?? ''} onChange={(event) => setOpValues((prev) => ({ ...prev, __due: event.target.value }))} />
+                </label>
+              )}
+            </div>
+            <p className="ssoma-count">Deje los campos vacíos para imprimir la tarjeta en blanco y llenarla a mano.</p>
+            <label className="sign-check"><input type="checkbox" checked={opWithQr} onChange={(event) => setOpWithQr(event.target.checked)} /> Incluir código QR</label>
+            {opWithQr && (
+              <label className="sign-field"><span>Contenido del QR (enlace al registro, procedimiento o código). Vacío: abre este formato.</span><input value={opQr} onChange={(event) => setOpQr(event.target.value)} placeholder="https://… o código del equipo" /></label>
+            )}
+            <p className="site-disclaimer">Las etiquetas operativas controlan inspecciones y activos: no sustituyen las señales normativas de seguridad ni los registros exigidos por la Ley 29783.</p>
           </div>
           <div className="sign-preview">
-            <OpsLabel kind={opKind} values={opValues} qrText={opQr} svgRef={opRef} />
-            <ExportBar svgRef={opRef} name={`etiqueta-${opKind}`} format={format} onFormat={setFormat} />
+            <OpsLabel kind={opKind} values={opValues} qrText={opQrText} svgRef={opRef} />
+            <div className="sign-export">
+              <div className="ops-print-options">
+                <label>
+                  <span>Ancho de impresión</span>
+                  <select value={opWidth} onChange={(event) => setOpWidth(Number(event.target.value))}>
+                    <option value={70}>Compacto (70 mm)</option>
+                    <option value={92}>Estándar (92 mm, 2 por fila en A4)</option>
+                    <option value={140}>Grande (140 mm)</option>
+                    <option value={190}>Ancho completo A4 (190 mm)</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Copias en la hoja</span>
+                  <select value={opCopies} onChange={(event) => setOpCopies(Number(event.target.value))}>
+                    {[1, 2, 4, 6, 8, 12].map((count) => <option key={count} value={count}>{count}</option>)}
+                  </select>
+                </label>
+              </div>
+              <div className="sign-export-buttons">
+                <button type="button" className="btn-primary" onClick={printOps}><Printer size={16} /> Imprimir tamaño real</button>
+                <button type="button" className="btn-ghost" onClick={() => exportSvg(opRef.current, `etiqueta-${opKind}`)}><Download size={16} /> SVG</button>
+                <button type="button" className="btn-ghost" onClick={() => exportPng(opRef.current, `etiqueta-${opKind}`)}><Download size={16} /> PNG</button>
+              </div>
+              <p className="ssoma-count">En el diálogo de impresión elija escala 100 % («tamaño real») y active los gráficos de fondo.</p>
+            </div>
           </div>
+          {typeof document !== 'undefined' && createPortal(
+            <div className="ops-print-sheet" style={{ '--ops-w': `${opWidth}mm` } as CSSProperties} aria-hidden="true">
+              {Array.from({ length: opCopies }, (_, index) => <OpsLabel key={index} kind={opKind} values={opValues} qrText={opQrText} className="ops-sheet-svg" />)}
+            </div>,
+            document.body,
+          )}
         </div>
       )}
     </div>

@@ -30,6 +30,7 @@ export interface AccountRow {
   consent_version?: string | null
   consent_at?: string | null
   suspended?: number | null
+  plan?: string | null
 }
 
 const json = (data: unknown, status = 200) =>
@@ -55,6 +56,7 @@ export async function ensureAccountSchema(env: AccEnv) {
     ['consent_version', 'TEXT'],
     ['consent_at', 'TEXT'],
     ['suspended', 'INTEGER NOT NULL DEFAULT 0'],
+    ['plan', "TEXT NOT NULL DEFAULT 'prueba'"],
   ]
   const reqCols = await columns('access_requests')
   const wantedReq: Array<[string, string]> = [['dni', 'TEXT'], ['kind', "TEXT NOT NULL DEFAULT 'acceso'"], ['phone', 'TEXT']]
@@ -87,6 +89,7 @@ export function premiumState(user: AccountRow) {
   const active = !suspended && (user.role === 'admin' || (enabled && msLeft > 0))
   return {
     active,
+    plan: user.role === 'admin' ? 'admin' : user.plan === 'pagado' ? 'pagado' : 'prueba',
     until,
     daysLeft: user.role === 'admin' ? null : msLeft > 0 ? Math.ceil(msLeft / 86_400_000) : 0,
     enabled,
@@ -254,7 +257,7 @@ export async function adminListUsers(env: AccEnv): Promise<Response> {
 
 export async function adminUpdateUser(request: Request, env: AccEnv, adminId: string, id: string): Promise<Response> {
   await ensureAccountSchema(env)
-  const body = (await request.json().catch(() => null)) as { premiumEnabled?: boolean; suspended?: boolean; addDays?: number; until?: string | null; dni?: string } | null
+  const body = (await request.json().catch(() => null)) as { premiumEnabled?: boolean; suspended?: boolean; addDays?: number; until?: string | null; dni?: string; plan?: string } | null
   const user = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(id).first<AccountRow>()
   if (!user) return json({ error: 'Usuario no encontrado.' }, 404)
   if (id === adminId && body?.suspended) return json({ error: 'No puede suspender su propia cuenta.' }, 400)
@@ -267,6 +270,7 @@ export async function adminUpdateUser(request: Request, env: AccEnv, adminId: st
     const days = clampDays(body.addDays, 0)
     if (days > 0) { sets.push('premium_until = ?'); binds.push(addDays(user.premium_until, days)); changes.push(`+${days} días`) }
   }
+  if (body?.plan === 'prueba' || body?.plan === 'pagado') { sets.push('plan = ?'); binds.push(body.plan); changes.push(`plan ${body.plan}`) }
   if (body?.until === null) { sets.push('premium_until = NULL'); changes.push('sin vigencia') }
   if (body?.dni !== undefined) {
     const dni = validDni(body.dni)
@@ -377,17 +381,21 @@ export async function accountRoutes(request: Request, env: AccEnv, sub: string, 
       .bind(user.id, new Date().toISOString(), row.id)
       .run()
     if (!claimed.meta.changes) return json({ error: 'Código ya utilizado.' }, 400)
-    await env.DB.prepare('UPDATE users SET premium_until = ?, premium_enabled = 1 WHERE id = ?').bind(until, user.id).run()
+    await env.DB.prepare("UPDATE users SET premium_until = ?, premium_enabled = 1, plan = 'pagado' WHERE id = ?").bind(until, user.id).run()
     await audit(env, user.id, 'codigo-canjeado', user.email, `+${row.days} días`, ip)
     return json({ ok: true, premiumUntil: until, days: row.days })
   }
 
   if (sub === '/extension' && request.method === 'POST') {
-    const body = (await request.json().catch(() => null)) as { message?: string; plan?: string } | null
-    if (!(await bump(env, `ext:${user.id}`, 3, 24 * 60 * 60 * 1000))) return json({ error: 'Ya registramos su pedido. El administrador le responderá.' }, 429)
-    await env.DB.prepare("INSERT INTO access_requests (name, email, organization, message, dni, kind) VALUES (?, ?, ?, ?, ?, 'extension')")
-      .bind(user.name ?? user.email, user.email, user.organization ?? '', `${body?.plan ? `[${body.plan.slice(0, 40)}] ` : ''}${(body?.message ?? '').slice(0, 600)}`, user.dni ?? null)
+    const body = (await request.json().catch(() => null)) as { message?: string; plan?: string; invoice?: string; ruc?: string; kind?: string } | null
+    if (!(await bump(env, `ext:${user.id}`, 3, 24 * 60 * 60 * 1000))) return json({ error: 'Ya registramos su pedido. El administrador le responderá a su correo.' }, 429)
+    const kind = body?.kind === 'plan' ? 'plan' : 'extension'
+    const invoice = body?.invoice === 'factura' ? `factura${body.ruc ? ` RUC ${body.ruc.replace(/\D/g, '').slice(0, 11)}` : ''}` : body?.invoice === 'boleta' ? 'boleta' : 'sin comprobante'
+    const message = `[${(body?.plan ?? 'Plan').slice(0, 40)}] [${invoice}] ${(body?.message ?? '').slice(0, 600)}`.trim()
+    await env.DB.prepare('INSERT INTO access_requests (name, email, organization, message, dni, kind) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(user.name ?? user.email, user.email, user.organization ?? '', message, user.dni ?? null, kind)
       .run()
+    await audit(env, user.id, kind === 'plan' ? 'pedido-cambio-plan' : 'pedido-extension', user.email, message, ip)
     return json({ ok: true })
   }
 
@@ -397,16 +405,18 @@ export async function accountRoutes(request: Request, env: AccEnv, sub: string, 
 /** Solicitud pública de restablecimiento: siempre responde lo mismo para no revelar cuentas. */
 export async function resetRequest(request: Request, env: AccEnv): Promise<Response> {
   await ensureAccountSchema(env)
-  const body = (await request.json().catch(() => null)) as { email?: string; dni?: string; guard?: Guard; website?: string } | null
+  const body = (await request.json().catch(() => null)) as { email?: string; guard?: Guard; website?: string } | null
   const ip = await ipHash(request, env)
   if (!(await bump(env, `reset:${ip}`, 4, 60 * 60 * 1000))) return json({ error: 'Demasiadas solicitudes. Intente en una hora.' }, 429)
   const guardError = await checkGuard(env, body?.guard, body?.website)
   if (guardError) return json({ error: guardError }, 400)
   const email = (body?.email ?? '').trim().toLowerCase()
-  const dni = validDni(body?.dni)
-  const user = email && dni ? await env.DB.prepare('SELECT id, name, dni FROM users WHERE email = ?').bind(email).first<{ id: string; name: string | null; dni: string | null }>() : null
-  if (user && user.dni === dni) {
-    await env.DB.prepare("INSERT INTO access_requests (name, email, message, dni, kind) VALUES (?, ?, 'Olvidó su clave', ?, 'clave')").bind(user.name ?? email, email, dni).run()
+  const user = email ? await env.DB.prepare('SELECT id, name FROM users WHERE email = ?').bind(email).first<{ id: string; name: string | null }>() : null
+  const already = user
+    ? await env.DB.prepare("SELECT COUNT(*) AS n FROM access_requests WHERE email = ? AND kind = 'clave' AND status = 'pendiente'").bind(email).first<{ n: number }>()
+    : null
+  if (user && !already?.n) {
+    await env.DB.prepare("INSERT INTO access_requests (name, email, message, kind) VALUES (?, ?, 'Olvidó su clave', 'clave')").bind(user.name ?? email, email).run()
     await audit(env, null, 'pedido-clave', email, '', ip)
   }
   return json({ ok: true })

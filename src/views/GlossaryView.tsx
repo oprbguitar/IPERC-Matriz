@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { Palette, Search, X } from 'lucide-react'
 import { COLOR_GROUPS, TERM_CATS, TERMS, type TermCat } from '../data/glossary'
 import '../styles/ssoma.css'
+import { hashParam } from '../lib/hashParams'
 
 const norm = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const KIND_LABEL = { norma: 'Norma', referencia: 'Referencia internacional', practica: 'Práctica común' } as const
 
 export default function GlossaryView() {
   const [tab, setTab] = useState<'terminos' | 'colores'>('terminos')
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(() => hashParam('q') ?? '')
   const [cat, setCat] = useState<TermCat | 'todas'>('todas')
   const [letter, setLetter] = useState<string | null>(null)
   const term = norm(query.trim())

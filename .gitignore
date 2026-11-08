@@ -36,3 +36,4 @@ output
 
 # Fuentes SSOMA: los PDF originales son muy pesados (uno supera 700 MB); se versionan los Markdown, imágenes y Excel
 data/**/*.pdf
+data/mtpe-cache/

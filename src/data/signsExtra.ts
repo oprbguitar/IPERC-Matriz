@@ -1,12 +1,12 @@
 import type { SafetySign, SignFamily } from './signs'
 
 /** Constructor compacto: id, familia, texto, icono, ref. ISO 7010, descripción, riesgos, controles, normas, EPP. */
-const s = (
+export const s = (
   id: string, family: SignFamily, text: string, icon: string, iso: string | undefined, description: string,
   risks: string[], controls: string[], norms: string[], epp?: string[], where: string[] = [],
 ): SafetySign => ({ id, family, text, icon, iso, description, risks, controls, norms, epp, where })
 
-const NTP = 'NTP 399.010-1:2016'
+export const NTP = 'NTP 399.010-1:2016'
 
 /** Señales adicionales (Perú y referencia internacional ISO 7010). Pictogramas ilustrativos. */
 export const EXTRA_SIGNS: SafetySign[] = [
@@ -24,7 +24,7 @@ export const EXTRA_SIGNS: SafetySign[] = [
   s('uso-careta', 'obligacion', 'USO OBLIGATORIO DE CARETA FACIAL', 'ScanLine', 'M013', 'Protección de cara completa.', ['Proyección de partículas', 'Radiación de soldadura'], ['Pantallas', 'Biombos'], [NTP], ['Careta o máscara de soldar']),
   s('uso-arnes', 'obligacion', 'USO OBLIGATORIO DE ARNÉS DE SEGURIDAD', 'PersonStanding', 'M018', 'Trabajos a más de 1,80 m de altura.', ['Caída de altura'], ['Barandas', 'Línea de vida', 'PETAR'], [NTP, 'D.S. 011-2019-TR'], ['Arnés de cuerpo entero con doble línea']),
   s('lavarse-manos', 'obligacion', 'LÁVESE LAS MANOS', 'Droplet', 'M011', 'Higiene obligatoria.', ['Contaminación biológica o química'], ['Lavaderos con jabón'], [NTP]),
-  s('desconectar', 'obligacion', 'DESCONECTE ANTES DE REALIZAR MANTENIMIENTO', 'PowerOff', 'M014', 'Aislar la energía antes de intervenir.', ['Electrocución', 'Arranque inesperado'], ['LOTO', 'Verificación de ausencia de tensión'], [NTP, 'R.M. 111-2013-MEM/DM']),
+  s('desconectar', 'obligacion', 'DESCONECTE ANTES DE REALIZAR MANTENIMIENTO', 'PowerOff', 'M021', 'Aislar la energía antes de intervenir.', ['Electrocución', 'Arranque inesperado'], ['LOTO', 'Verificación de ausencia de tensión'], [NTP, 'R.M. 111-2013-MEM/DM']),
   s('uso-ropa', 'obligacion', 'USO OBLIGATORIO DE ROPA DE PROTECCIÓN', 'Shirt', 'M010', 'Ropa adecuada al riesgo.', ['Contacto químico', 'Quemaduras'], ['Sustitución de productos'], [NTP], ['Mameluco, mandil o traje químico']),
   s('pasillo-peatonal', 'obligacion', 'USE EL PASILLO PEATONAL', 'Footprints', 'M024', 'Obliga a circular por la vía peatonal.', ['Atropello'], ['Separación física de vías'], [NTP]),
   s('consulte-manual', 'obligacion', 'CONSULTE EL MANUAL O PROCEDIMIENTO', 'Eye', 'M002', 'Leer instrucciones antes de operar.', ['Error de operación'], ['Capacitación', 'PETS'], [NTP]),
@@ -37,7 +37,7 @@ export const EXTRA_SIGNS: SafetySign[] = [
   s('superficie-caliente', 'advertencia', 'SUPERFICIE CALIENTE', 'ThermometerSun', 'W017', 'Riesgo de quemaduras por contacto.', ['Quemaduras'], ['Aislamiento térmico', 'Guardas'], [NTP], ['Guantes térmicos']),
   s('baja-temperatura', 'advertencia', 'BAJA TEMPERATURA', 'Snowflake', 'W010', 'Cámaras frigoríficas o criogenia.', ['Hipotermia', 'Quemaduras por frío'], ['Tiempo limitado', 'Apertura interior de puertas'], [NTP], ['Ropa térmica']),
   s('atrapamiento', 'advertencia', 'PELIGRO DE ATRAPAMIENTO', 'Wrench', 'W024', 'Partes móviles, rodillos o engranajes.', ['Atrapamiento', 'Amputación'], ['Guardas fijas', 'Parada de emergencia', 'LOTO'], [NTP]),
-  s('ruido', 'advertencia', 'NIVEL DE RUIDO ELEVADO', 'Volume2', undefined, 'Zona con más de 85 dB(A).', ['Hipoacusia'], ['Aislamiento', 'Rotación'], [NTP, 'R.M. 375-2008-TR'], ['Protección auditiva']),
+  s('ruido', 'advertencia', 'RUIDO ELEVADO: PROTECCIÓN AUDITIVA', 'Volume2', undefined, 'Zona con más de 85 dB(A).', ['Hipoacusia'], ['Aislamiento', 'Rotación'], [NTP, 'R.M. 375-2008-TR'], ['Protección auditiva']),
   s('arranque-automatico', 'advertencia', 'MAQUINARIA DE ARRANQUE AUTOMÁTICO', 'Fan', 'W018', 'El equipo puede arrancar sin aviso.', ['Golpes', 'Atrapamiento'], ['LOTO', 'Señal sonora previa'], [NTP]),
   s('comburente', 'advertencia', 'SUSTANCIAS COMBURENTES', 'Flame', 'W028', 'Oxidantes que avivan el fuego.', ['Incendio'], ['Separar de inflamables'], [NTP]),
   s('gas-presion', 'advertencia', 'GASES A PRESIÓN', 'Cylinder', 'W029', 'Cilindros y redes de gas.', ['Explosión', 'Proyección', 'Asfixia'], ['Cilindros sujetos con cadena', 'Capuchón'], [NTP]),

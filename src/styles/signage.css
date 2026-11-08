@@ -47,3 +47,41 @@
   .sign-ficha-head { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 860px) { .sign-preview > .sign-svg { max-width: 230px; } .sign-preview > .label-svg { max-width: 100%; } }
+
+/* ---- Catálogo por familias con «Ver más / Ver menos» ---- */
+.sign-group { display: flex; flex-direction: column; gap: 8px; }
+.sign-group-head { display: flex; align-items: center; gap: 10px; margin: 4px 0 0; font-size: 14px; }
+.sign-group-head small { color: var(--text-muted); font-weight: 400; }
+.sign-more { align-self: flex-start; min-height: 40px; }
+
+/* ---- Etiquetas operativas ---- */
+.ops-group h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.ops-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.ops-picker button { border: 1px solid var(--border-strong); border-left: 6px solid var(--ops-color, var(--blue)); background: var(--surface); color: var(--text); border-radius: var(--radius); padding: 8px 12px; min-height: 40px; font-size: 13px; cursor: pointer; }
+.ops-picker button.active { background: var(--blue-soft); border-color: var(--blue); border-left-color: var(--ops-color, var(--blue)); font-weight: 700; }
+.ops-form-title { margin: 6px 0 0; font-size: 16px; }
+.ops-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ops-form .sign-field.wide { grid-column: 1 / -1; }
+.ops-form .sign-field select, .sign-config .sign-field input { min-width: 0; }
+.ops-form .sign-field select { border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 9px 10px; font-size: 15px; background: var(--surface); color: var(--text); }
+.ops-print-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sign-preview > .ops-svg { max-width: 440px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.14)); }
+
+/* Hoja de impresión (se monta en <body>, solo visible al imprimir desde «Imprimir tamaño real») */
+.ops-print-sheet { display: none; }
+@media print {
+  body.print-ops > *:not(.ops-print-sheet) { display: none !important; }
+  body.print-ops { background: #fff !important; }
+  body.print-ops .ops-print-sheet {
+    display: grid; grid-template-columns: repeat(auto-fill, var(--ops-w)); gap: 4mm; justify-content: center; align-content: start;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .ops-print-sheet .ops-sheet-svg { width: var(--ops-w); height: auto; display: block; break-inside: avoid; filter: none; }
+}
+
+@media (max-width: 560px) {
+  .ops-form, .ops-print-options { grid-template-columns: minmax(0, 1fr); }
+  .sign-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .sign-picker button svg { width: 100%; max-width: 72px; }
+  .sign-more { width: 100%; justify-content: center; }
+}

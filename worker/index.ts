@@ -136,7 +136,7 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
     }
     if (!accountView(user).consentOk) return json({ error: 'Acepte los términos y el tratamiento de datos para usar la IA.' }, 428)
     if (pathname === '/api/ai/alerts' && method === 'GET') return listAlerts(env, url)
-    return handlePremiumAi(request, env, pathname, user.id, user.role === 'admin')
+    return handlePremiumAi(request, env, pathname, user.id, user.role === 'admin' ? 'admin' : user.plan === 'pagado' ? 'pagado' : 'prueba')
   }
 
   if (pathname === '/api/premium/guides' && method === 'GET') {
@@ -375,9 +375,9 @@ async function createAccessRequest(request: Request, env: Env): Promise<Response
   if (guardError) return json({ error: guardError }, 400)
   const email = normalizeEmail(body?.email)
   const name = (body?.name ?? '').trim()
-  const dni = validDni(body?.dni)
+  // El DNI es opcional: pedirlo ahuyenta a los interesados.
+  const dni = body?.dni ? validDni(body.dni) : null
   if (!email || name.length < 2) return json({ error: 'Indique nombre y un correo válido.' }, 400)
-  if (!dni) return json({ error: 'Indique su DNI (8 dígitos) o documento de identidad.' }, 400)
   const recent = await env.DB.prepare(
     "SELECT COUNT(*) AS total FROM access_requests WHERE email = ? AND created_at > datetime('now', '-1 day')",
   )
