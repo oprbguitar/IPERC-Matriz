@@ -63,7 +63,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'diagnostico', label: 'Obligaciones aplicables', description: 'Qué debo cumplir según mi organización' },
   { id: 'obligaciones', label: 'Por tamaño y rol', description: 'Qué corresponde según tamaño, sector y rol' },
   { id: 'visor', label: 'Visor SSOMA', description: 'Normas SST y ambientales en detalle, cuadros, riesgos y químicos' },
-  { id: 'ia', label: 'IA: diagnóstico y agentes', description: 'Diagnóstico por foto, llaves de API y modelos (solo administradores)' },
+  { id: 'ia', label: 'IA premium', description: 'Diagnóstico por foto, informes automáticos con IA y alertas normativas (premium)' },
   { id: 'diagramas', label: 'Diagramas de procesos', description: 'PHVA, IPERC, accidentes, residuos, SUNAFIL y emergencias en flujos interactivos' },
   { id: 'glosario', label: 'Glosario y colores', description: 'Términos, siglas, leyes y códigos de colores de la industria' },
   { id: 'senales', label: 'Señales y etiquetas', description: 'Señales de seguridad, stickers con QR y etiquetas SGA para imprimir' },
@@ -75,7 +75,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'fiscalizacion', label: 'Fiscalización', description: 'Contingencias, expediente y defensa documentada' },
   { id: 'plantillas', label: 'Biblioteca', description: 'Guías, informes y plantillas descargables' },
   { id: 'rutas', label: 'Rutas de especialista', description: 'Cómo formarse en SST, SOMA e IPERC paso a paso' },
-  { id: 'premium', label: 'Premium', description: 'Guías de IA, agentes y seguimiento de avance' },
+  { id: 'premium', label: 'Premium', description: 'Prueba gratuita de IA, mi acceso, guías y seguimiento de avance' },
 ]
 
 export type SpaceId = 'explorar' | 'diagnosticar' | 'implementar' | 'verificar' | 'aprender'
@@ -90,7 +90,7 @@ export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: Si
 ]
 
 /** Vistas que solo se muestran con sesión premium (Implementar se trabajará después). */
-export const PREMIUM_VIEWS: SiteViewId[] = ['herramientas', 'formatos', 'ia']
+export const PREMIUM_VIEWS: SiteViewId[] = ['ia']
 
 /** Recorrido guiado: orden en que se aprende y se avanza por la plataforma. */
 export const LEARNING_PATH: SiteViewId[] = [

@@ -7,7 +7,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/v/*", "/sitemap.xml"]
   },
   "d1_databases": [
     {
@@ -19,5 +19,6 @@
   ],
   "routes": [{ "pattern": "sst.andesnova.solutions", "custom_domain": true }],
   "ai": { "binding": "AI" },
+  "triggers": { "crons": ["0 11 * * *"] },
   "observability": { "enabled": true }
 }
