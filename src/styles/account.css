@@ -207,7 +207,7 @@ body.premium-mode .site-header { box-shadow: inset 0 -3px 0 var(--gold); }
 .hv-hero-copy h1 { margin: 0 0 6px; font-size: clamp(1.35rem, 2.2vw, 2rem); line-height: 1.15; }
 .hv-hero-copy p { margin: 0 0 12px; color: var(--text-soft); font-size: 15px; }
 .hv-hero-copy .hero-actions { margin: 0; }
-.hv-hero-art img { display: block; width: 100%; height: clamp(120px, 20vh, 190px); object-fit: cover; border-radius: var(--radius); }
+.hv-hero-art img { display: block; width: 100%; height: clamp(120px, 20vh, 190px); object-fit: cover; object-position: 50% 12%; border-radius: var(--radius); }
 .hv-quick { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 8px; }
 .hv-quick .home-quick-btn { padding: 4px 2px; gap: 5px; }
 .hv-quick .home-quick-btn > span { width: 48px; height: 48px; }
