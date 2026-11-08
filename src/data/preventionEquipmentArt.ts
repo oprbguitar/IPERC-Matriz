@@ -1,0 +1,23 @@
+/** Descripción accesible de la ilustración de cada categoría. */
+export const EQUIPMENT_ART_LABEL: Record<string, string> = {
+  cabeza: 'casco con arnés interior y barbiquejo',
+  auditiva: 'orejeras y tapón auditivo',
+  ocular: 'gafas cerradas y pantalla facial',
+  respiratoria: 'media máscara con dos cartuchos y filtro de partículas',
+  manos: 'guante con puño',
+  pies: 'bota de seguridad con puntera y suela antideslizante',
+  ropa: 'overol con bandas reflectantes',
+  caidas: 'arnés con línea de vida y absorbedor',
+  electrica: 'guante aislante con protector de cuero y símbolo de tensión',
+  biologica: 'mascarilla, guante y contenedor de punzocortantes',
+  sonometro: 'sonómetro portátil con micrófono',
+  dosimetro: 'dosímetro con micrófono en el hombro',
+  calibrador: 'calibrador acústico sobre un micrófono',
+  luxometro: 'luxómetro con sensor separado',
+  termohigrometro: 'termohigrómetro con termómetro y gota',
+  'detector-gases': 'detector multigás con sensores y alarma',
+  multimetro: 'multímetro con selector y puntas',
+  wbgt: 'trípode con bulbo húmedo, globo y bulbo seco',
+  vibraciones: 'acelerómetro sobre una herramienta manual',
+  bomba: 'bomba de muestreo con manguera y ciclón en la solapa',
+}

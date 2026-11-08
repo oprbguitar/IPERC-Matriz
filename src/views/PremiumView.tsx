@@ -1,68 +1,57 @@
 import {
+  ArrowRight,
   BadgeCheck,
+  Bell,
   Bot,
-  CheckCircle2,
-  Circle,
-  CircleDashed,
+  Camera,
   Clock,
+  Compass,
+  Crown,
+  FileText,
   KeyRound,
   Lock,
   LogOut,
   Mail,
+  MessagesSquare,
   ShieldCheck,
   Sparkles,
   UserPlus,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AdminAccess } from '../components/AdminAccess'
 import { DocReader } from '../components/DocReader'
+import { GuidedTour, tourSeen, type TourStep } from '../components/GuidedTour'
 import { AccountPanel, ConsentGate, ForcedPassword } from '../components/PremiumAccount'
+import { api, ApiError, type ApiUser, type PremiumGuideSummary } from '../lib/api'
 import { solveGuard } from '../lib/guard'
-import { PREMIUM_ITEM_COUNT, PREMIUM_PLAN } from '../data/premiumPlan'
-import {
-  api,
-  ApiError,
-  type ApiUser,
-  type PremiumGuideSummary,
-  type ProgressStatus,
-} from '../lib/api'
 
 interface PremiumViewProps {
   user: ApiUser | null
   authReady: boolean
   offline: boolean
   onUserChange: (user: ApiUser | null) => void
-  onPercentChange?: (percent: number) => void
 }
-
-const STATUS_CYCLE: Record<ProgressStatus, ProgressStatus> = { pendiente: 'en-curso', 'en-curso': 'hecho', hecho: 'pendiente' }
-const STATUS_LABEL: Record<ProgressStatus, string> = { pendiente: 'Pendiente', 'en-curso': 'En curso', hecho: 'Hecho' }
 
 const LOCKED_PREVIEW = [
   'Diagnóstico por foto con IA: peligros, nivel de riesgo y normas',
   'Generador de informes: inspección, investigación, ATS, PETS, actas',
   'Alertas normativas diarias: MTPE, SUNAFIL, MINAM, MINSA y EU-OSHA',
-  'Probabilidades calibradas con Jev: riesgo grave y observación SUNAFIL',
-  'Guías premium: agentes de IA, prompts y gobernanza de datos',
-  'Plan de implementación con % de avance guardado en la nube',
+  'Consultor SSOMA: respuestas con la norma y enlaces a las fichas',
+  'Probabilidad de riesgo grave y de observación de SUNAFIL',
+  'Guías premium aplicadas a su empresa',
 ]
 
-export function computePercent(statuses: Record<string, ProgressStatus>): number {
-  const score = Object.values(statuses).reduce((sum, status) => sum + (status === 'hecho' ? 1 : status === 'en-curso' ? 0.5 : 0), 0)
-  return Math.round((score / PREMIUM_ITEM_COUNT) * 100)
-}
-
-export function PremiumView({ user, authReady, offline, onUserChange, onPercentChange }: PremiumViewProps) {
+export function PremiumView({ user, authReady, offline, onUserChange }: PremiumViewProps) {
   if (!authReady) return <div className="view-page"><p className="empty-note">Conectando con el Observatorio…</p></div>
   return (
     <div className="view-page premium">
-      {user ? <PremiumHome user={user} onUserChange={onUserChange} onPercentChange={onPercentChange} /> : <PremiumGate offline={offline} onUserChange={onUserChange} />}
+      {user ? <PremiumHome user={user} onUserChange={onUserChange} /> : <PremiumGate offline={offline} onUserChange={onUserChange} />}
     </div>
   )
 }
 
 /** Orden de validación tras el ingreso: clave personal → consentimiento → panel. */
-function PremiumHome({ user, onUserChange, onPercentChange }: { user: ApiUser; onUserChange: (user: ApiUser | null) => void; onPercentChange?: (percent: number) => void }) {
+function PremiumHome({ user, onUserChange }: { user: ApiUser; onUserChange: (user: ApiUser | null) => void }) {
   const refresh = useCallback(() => {
     api.me().then(({ user: current }) => onUserChange(current)).catch(() => undefined)
   }, [onUserChange])
@@ -82,7 +71,7 @@ function PremiumHome({ user, onUserChange, onPercentChange }: { user: ApiUser; o
       </>
     )
   }
-  return <PremiumDashboard user={user} onUserChange={onUserChange} onPercentChange={onPercentChange} onRefresh={refresh} />
+  return <PremiumDashboard user={user} onUserChange={onUserChange} onRefresh={refresh} />
 }
 
 function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange: (user: ApiUser) => void }) {
@@ -92,11 +81,11 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
   const [busy, setBusy] = useState(false)
   const [website, setWebsite] = useState('')
   const [startedAt] = useState(() => Date.now())
-  const [request, setRequest] = useState({ name: '', email: '', dni: '', phone: '', organization: '', message: '', website: '' })
+  const [request, setRequest] = useState({ name: '', email: '', phone: '', organization: '', message: '', website: '' })
   const [requestConsent, setRequestConsent] = useState(false)
   const [requestState, setRequestState] = useState<'idle' | 'sent' | 'error'>('idle')
   const [requestMsg, setRequestMsg] = useState('')
-  const [forgot, setForgot] = useState({ open: false, email: '', dni: '', msg: '' })
+  const [forgot, setForgot] = useState({ open: false, email: '', msg: '' })
 
   async function submitLogin(event: React.FormEvent) {
     event.preventDefault()
@@ -124,7 +113,7 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
       const guard = await solveGuard(startedAt)
       await api.requestAccess({ ...request, guard })
       setRequestState('sent')
-      setRequestMsg('Solicitud registrada. Tras validar su DNI, el administrador le enviará por correo su acceso de prueba.')
+      setRequestMsg('¡Solicitud registrada! Le enviaremos a su correo el acceso de prueba gratuita.')
     } catch (caught) {
       setRequestState('error')
       setRequestMsg(caught instanceof Error ? caught.message : 'No se pudo enviar la solicitud.')
@@ -135,8 +124,8 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
     event.preventDefault()
     try {
       const guard = await solveGuard(startedAt)
-      await api.resetRequest({ email: forgot.email, dni: forgot.dni, guard, website })
-      setForgot({ ...forgot, msg: 'Si los datos coinciden con una cuenta, el administrador le enviará una clave temporal a su correo.' })
+      await api.resetRequest({ email: forgot.email, guard, website })
+      setForgot({ ...forgot, msg: 'Si el correo corresponde a una cuenta, le enviaremos una clave temporal.' })
     } catch (caught) {
       setForgot({ ...forgot, msg: caught instanceof Error ? caught.message : 'No se pudo enviar el pedido.' })
     }
@@ -147,14 +136,11 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
       <header className="premium-hero">
         <div>
           <span className="eyebrow light"><Sparkles size={15} aria-hidden="true" /> Observatorio Premium</span>
-          <h1>IA, agentes y seguimiento continuo para tu SGSST</h1>
-          <p>
-            Guías avanzadas para aplicar inteligencia artificial en SST, diseñar un sistema de agentes que atienda solicitudes,
-            elegir herramientas open source o de pago y medir tu avance con un porcentaje visible en la plataforma.
-          </p>
+          <h1>Inteligencia artificial para su gestión SSOMA</h1>
+          <p>Consultor especializado, diagnóstico por foto, informes listos para firmar y alertas normativas diarias, en una sola plataforma.</p>
           <ul className="premium-perks">
             <li><Bot size={16} aria-hidden="true" /> IA: diagnóstico por foto, informes automáticos y alertas normativas</li>
-            <li><BadgeCheck size={16} aria-hidden="true" /> Prueba gratuita de 7 a 15 días tras validar su DNI</li>
+            <li><BadgeCheck size={16} aria-hidden="true" /> Prueba gratuita de 7 días, sin tarjeta</li>
             <li><ShieldCheck size={16} aria-hidden="true" /> Acceso personal protegido contra bots, con consentimiento (Ley 29733)</li>
           </ul>
         </div>
@@ -198,7 +184,6 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
           {forgot.msg ? <p className="form-note ok">{forgot.msg}</p> : (
             <form className="request-form" onSubmit={submitForgot}>
               <input type="email" placeholder="Correo de su cuenta" required value={forgot.email} onChange={(event) => setForgot({ ...forgot, email: event.target.value })} />
-              <input placeholder="DNI registrado" inputMode="numeric" required pattern="[0-9A-Za-z]{8,12}" value={forgot.dni} onChange={(event) => setForgot({ ...forgot, dni: event.target.value })} />
               <button type="submit" className="btn-secondary" disabled={offline}>Pedir clave temporal</button>
             </form>
           )}
@@ -207,21 +192,20 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
 
       <section className="panel request-panel" aria-labelledby="request-title">
         <h2 id="request-title"><UserPlus size={18} aria-hidden="true" /> Solicitar prueba gratuita de IA</h2>
-        <p className="ssoma-count">Indique su DNI para validar su identidad. Si se aprueba, recibirá en su correo una clave temporal y un periodo de prueba de 7 a 15 días.</p>
+        <p className="ssoma-count">Déjenos su nombre y correo: le enviaremos una clave temporal para probar la IA gratis durante 7 días.</p>
         {requestState === 'sent' ? (
           <p className="form-note ok">{requestMsg}</p>
         ) : (
           <form className="request-form" onSubmit={submitRequest}>
             <input placeholder="Nombre" required value={request.name} onChange={(event) => setRequest({ ...request, name: event.target.value })} />
             <input type="email" placeholder="Correo" required value={request.email} onChange={(event) => setRequest({ ...request, email: event.target.value })} />
-            <input placeholder="DNI (8 dígitos) o documento" inputMode="numeric" required pattern="[0-9A-Za-z]{8,12}" value={request.dni} onChange={(event) => setRequest({ ...request, dni: event.target.value })} />
             <input type="tel" placeholder="Celular (opcional)" value={request.phone} onChange={(event) => setRequest({ ...request, phone: event.target.value })} />
             <input placeholder="Empresa o institución" value={request.organization} onChange={(event) => setRequest({ ...request, organization: event.target.value })} />
             <input placeholder="¿Para qué lo usará?" value={request.message} onChange={(event) => setRequest({ ...request, message: event.target.value })} />
             <input className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" value={request.website} onChange={(event) => setRequest({ ...request, website: event.target.value })} />
             <label className="sign-check consent-inline">
               <input type="checkbox" checked={requestConsent} onChange={(event) => setRequestConsent(event.target.checked)} />
-              Autorizo el tratamiento de mis datos (nombre, correo, DNI) para evaluar mi solicitud, conforme a la Ley 29733.
+              Autorizo el tratamiento de mis datos (nombre y correo) para atender mi solicitud, conforme a la Ley 29733.
             </label>
             <button type="submit" className="btn-secondary" disabled={offline}>Enviar solicitud</button>
             {requestState === 'error' && <p className="form-note error">{requestMsg}</p>}
@@ -232,57 +216,46 @@ function PremiumGate({ offline, onUserChange }: { offline: boolean; onUserChange
   )
 }
 
-function PremiumDashboard({
-  user,
-  onUserChange,
-  onPercentChange,
-  onRefresh,
-}: {
-  user: ApiUser
-  onUserChange: (user: ApiUser | null) => void
-  onPercentChange?: (percent: number) => void
-  onRefresh: () => void
-}) {
-  const [statuses, setStatuses] = useState<Record<string, ProgressStatus>>({})
-  // Copia sincronica del estado: los clics rapidos no deben leer un valor viejo.
-  const statusesRef = useRef(statuses)
+const FEATURES: Array<{ id: string; tab: string; icon: typeof Bot; title: string; text: string; badge?: string }> = [
+  { id: 'consultor', tab: 'consultor', icon: MessagesSquare, title: 'Consultor SSOMA', text: 'Pregunte como a un especialista: responde con la norma y le lleva a la ficha exacta del Observatorio.', badge: 'Nuevo' },
+  { id: 'diagnostico', tab: 'diagnostico', icon: Camera, title: 'Diagnóstico por foto', text: 'Tome una foto del área: peligros, nivel de riesgo, controles y normas en segundos.', badge: 'Mejor desde el celular' },
+  { id: 'informes', tab: 'informes', icon: FileText, title: 'Informes y formatos', text: 'Elija el formato, describa el caso en una línea y descargue el documento completo.', badge: 'Nuevo' },
+  { id: 'alertas', tab: 'alertas', icon: Bell, title: 'Alertas normativas', text: 'Normas y noticias nuevas de MTPE, SUNAFIL, MINAM, MINSA y EU-OSHA, explicadas en simple.' },
+]
+
+const PREMIUM_TOUR: TourStep[] = [
+  { target: '.ph-hero', title: 'Bienvenido a su plataforma Premium', body: 'Aquí ve su plan, los días que le quedan y cuántas consultas de IA puede hacer hoy.' },
+  { target: '.ph-tile-consultor', title: 'Consultor SSOMA', body: 'Escriba su duda (por ejemplo: «¿cada cuánto debo hacer el examen médico ocupacional?») y reciba la respuesta con la norma y enlaces a las fichas internas.' },
+  { target: '.ph-tile-diagnostico', title: 'Diagnóstico por foto', body: 'Ábralo desde su celular: la cámara se activa sola. Obtiene peligros, nivel de riesgo y controles.' },
+  { target: '.ph-tile-informes', title: 'Informes y formatos', body: 'Elija un formato (inspección, ATS, PETS, charla, acta…), describa el caso y la plantilla se completa sola para descargar en Word o PDF.' },
+  { target: '.ph-tile-alertas', title: 'Alertas normativas', body: 'Cada mañana revisamos las fuentes oficiales. Pulse «Explicar» para ver qué cambia y qué debe hacer su empresa.' },
+  { target: '.ph-news', title: 'Novedades de la semana', body: 'Las últimas alertas aparecen también aquí, para que no se le pase ninguna.' },
+  { target: '.account-panel', title: 'Su plan', body: 'Active códigos, pida una extensión o cambie de plan. Puede solicitar boleta o factura.' },
+]
+
+interface AlertLite { id: number; title: string; source: string; published: string | null; tags: string | null }
+
+function goIa(tab: string, extra = '') {
+  window.location.hash = `#/ia?tab=${tab}${extra}`
+}
+
+function PremiumDashboard({ user, onUserChange, onRefresh }: { user: ApiUser; onUserChange: (user: ApiUser | null) => void; onRefresh: () => void }) {
   const [guides, setGuides] = useState<PremiumGuideSummary[]>([])
   const [reader, setReader] = useState<{ id: string; title: string; markdown: string } | null>(null)
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [alerts, setAlerts] = useState<AlertLite[]>([])
+  const [usage, setUsage] = useState<{ quota: number | null; used: number; planLabel: string } | null>(null)
+  const [tour, setTour] = useState(false)
+  const premium = user.premium
+  const active = Boolean(premium?.active)
 
   useEffect(() => {
-    api.progress().then(({ items }) => setStatuses(Object.fromEntries(items.map((item) => [item.item_id, item.status])))).catch(() => undefined)
     api.guides().then(({ guides: list }) => setGuides(list)).catch(() => undefined)
-  }, [])
-
-  const percent = computePercent(statuses)
-
-  useEffect(() => {
-    statusesRef.current = statuses
-    onPercentChange?.(percent)
-  }, [statuses, percent, onPercentChange])
-  const phasePercent = useCallback(
-    (itemIds: string[]) =>
-      Math.round(
-        (itemIds.reduce((sum, id) => sum + (statuses[id] === 'hecho' ? 1 : statuses[id] === 'en-curso' ? 0.5 : 0), 0) / itemIds.length) * 100,
-      ),
-    [statuses],
-  )
-
-  async function toggle(itemId: string) {
-    const next = STATUS_CYCLE[statusesRef.current[itemId] ?? 'pendiente']
-    statusesRef.current = { ...statusesRef.current, [itemId]: next }
-    setStatuses(statusesRef.current)
-    setSaving(true)
-    try {
-      await api.saveProgress([{ item_id: itemId, status: next }])
-    } catch {
-      setMessage('No se pudo guardar el avance. Revise su conexión.')
-    } finally {
-      setSaving(false)
-    }
-  }
+    if (!active) return
+    fetch('/api/ai/alerts', { credentials: 'same-origin' }).then((response) => response.json()).then((data: { alerts?: AlertLite[] }) => setAlerts((data.alerts ?? []).slice(0, 4))).catch(() => undefined)
+    fetch('/api/ai/catalog', { credentials: 'same-origin' }).then((response) => response.json()).then((data) => setUsage(data)).catch(() => undefined)
+    if (!tourSeen('premium-v1')) window.setTimeout(() => setTour(true), 600)
+  }, [active])
 
   async function openGuide(id: string) {
     try {
@@ -298,72 +271,77 @@ function PremiumDashboard({
     onUserChange(null)
   }
 
+  const weekAgo = Date.now() - 7 * 86_400_000
+  const fresh = alerts.filter((alert) => alert.published && new Date(alert.published).getTime() > weekAgo).length
+  const planText = premium?.plan === 'admin' ? 'Administrador' : premium?.plan === 'pagado' ? 'Plan Profesional' : 'Periodo de prueba'
+
   return (
     <>
-      <header className="premium-head">
-        <div>
-          <span className="eyebrow"><Sparkles size={15} aria-hidden="true" /> Observatorio Premium</span>
+      <header className={`ph-hero ${active ? 'on' : 'off'}`}>
+        <div className="ph-hero-main">
+          <span className="ph-crown"><Crown size={18} aria-hidden="true" /> {active ? 'Premium activo' : 'Premium inactivo'}</span>
           <h1>Hola, {user.name ?? user.email.split('@')[0]}</h1>
-          <p>Marque cada hito: pendiente → en curso → hecho. Su avance se guarda en la nube y se refleja en el inicio.</p>
+          <p>{active ? 'Su plataforma de IA para seguridad, salud ocupacional y ambiente está lista.' : 'Su acceso a la IA no está vigente. Active un código o solicite su plan abajo.'}</p>
+          <div className="ph-chips">
+            <span className="ph-chip"><BadgeCheck size={14} aria-hidden="true" /> {planText}</span>
+            {premium?.daysLeft !== null && premium?.daysLeft !== undefined && <span className="ph-chip"><Clock size={14} aria-hidden="true" /> {premium.daysLeft} día(s) restantes</span>}
+            {usage && <span className="ph-chip"><Sparkles size={14} aria-hidden="true" /> {usage.quota === null ? 'Consultas ilimitadas' : `IA hoy: ${usage.used} de ${usage.quota}`}</span>}
+          </div>
         </div>
-        <div className="premium-user">
+        <div className="ph-hero-side">
           <span><Mail size={14} aria-hidden="true" /> {user.email}</span>
-          {user.role === 'admin' && <span className="role-chip">Administrador</span>}
-          <button type="button" className="btn-secondary small" onClick={logout}><LogOut size={15} aria-hidden="true" /> Salir</button>
+          <div className="issued-actions">
+            {active && <button type="button" className="btn-secondary small" onClick={() => setTour(true)}><Compass size={15} aria-hidden="true" /> Ver guía</button>}
+            <button type="button" className="btn-secondary small" onClick={logout}><LogOut size={15} aria-hidden="true" /> Salir</button>
+          </div>
         </div>
       </header>
 
       {message && <p className="form-note warn" role="status">{message}</p>}
 
-      <AccountPanel user={user} onRefresh={onRefresh} />
-
-      <section className="progress-hub">
-        <div className="big-ring" style={{ '--p': percent } as React.CSSProperties} role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Avance total del plan">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" r="52" className="ring-bg" />
-            <circle cx="60" cy="60" r="52" className="ring-fg" strokeDasharray={`${(percent / 100) * 326.7} 326.7`} />
-          </svg>
-          <span><b>{percent}%</b><small>{saving ? 'Guardando…' : 'avance total'}</small></span>
-        </div>
-        <div className="phase-bars">
-          {PREMIUM_PLAN.map((phase) => {
-            const value = phasePercent(phase.items.map((item) => item.id))
-            return (
-              <div key={phase.id} className="phase-bar" style={{ '--phase': phase.color } as React.CSSProperties}>
-                <span>{phase.title}</span>
-                <div><i style={{ width: `${value}%` }} /></div>
-                <b>{value}%</b>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="phase-grid" aria-label="Hitos del plan">
-        {PREMIUM_PLAN.map((phase) => (
-          <article key={phase.id} className="phase-card" style={{ '--phase': phase.color } as React.CSSProperties}>
-            <h3>{phase.title}</h3>
-            <ul>
-              {phase.items.map((item) => {
-                const status = statuses[item.id] ?? 'pendiente'
-                const Icon = status === 'hecho' ? CheckCircle2 : status === 'en-curso' ? CircleDashed : Circle
-                return (
-                  <li key={item.id}>
-                    <button type="button" className={`milestone ${status}`} onClick={() => toggle(item.id)} title={`Estado: ${STATUS_LABEL[status]}. Clic para cambiar.`}>
-                      <Icon size={18} aria-hidden="true" />
-                      <span><b>{item.label}</b><small>{item.hint}</small></span>
-                      <em>{STATUS_LABEL[status]}</em>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </article>
+      <section className="ph-tiles" aria-label="Herramientas premium">
+        {FEATURES.map(({ id, tab, icon: Icon, title, text, badge }) => (
+          <button key={id} type="button" className={`ph-tile ph-tile-${id} ${active ? 'pulse' : 'locked'}`} disabled={!active} onClick={() => goIa(tab)}>
+            <span className="ph-tile-icon"><Icon size={22} aria-hidden="true" /></span>
+            <span className="ph-tile-body">
+              <b>{title}</b>
+              <small>{text}</small>
+            </span>
+            {id === 'alertas' && fresh > 0 ? <em className="ph-badge blink">{fresh} nuevas</em> : badge ? <em className="ph-badge">{badge}</em> : null}
+            {active ? <ArrowRight size={18} className="ph-go" aria-hidden="true" /> : <Lock size={16} className="ph-go" aria-hidden="true" />}
+          </button>
         ))}
       </section>
 
+      {active && (
+        <section className="panel ph-news" aria-labelledby="news-title">
+          <div className="ph-news-head">
+            <h2 id="news-title"><Bell size={18} aria-hidden="true" /> Novedades normativas</h2>
+            <button type="button" className="btn-ghost small" onClick={() => goIa('alertas')}>Ver todas <ArrowRight size={14} aria-hidden="true" /></button>
+          </div>
+          {alerts.length === 0 ? (
+            <p className="empty-note">La revisión diaria de fuentes oficiales irá llenando esta lista.</p>
+          ) : (
+            <ul className="ph-news-list">
+              {alerts.map((alert) => (
+                <li key={alert.id}>
+                  <button type="button" onClick={() => goIa('alertas', `&id=${alert.id}`)}>
+                    <span className="role-chip">{alert.source}</span>
+                    <b>{alert.title}</b>
+                    <small>{alert.published ? new Date(alert.published).toLocaleDateString('es-PE') : ''} {(alert.tags ?? '').split(',').filter(Boolean).slice(0, 2).join(' · ')}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <AccountPanel user={user} onRefresh={onRefresh} />
+
       <section className="premium-guides" aria-labelledby="pg-title">
-        <h2 id="pg-title"><Bot size={20} aria-hidden="true" /> Guías premium</h2>
+        <h2 id="pg-title"><Bot size={20} aria-hidden="true" /> Guías premium aplicadas</h2>
+        <p className="ssoma-count">Cada guía se puede llevar a la práctica: ábrala o pida al consultor que la aplique a su empresa.</p>
         <div className="guide-grid">
           {guides.map((guide, index) => (
             <article key={guide.id} className="guide-card premium-card" style={{ '--i': index } as React.CSSProperties}>
@@ -374,8 +352,13 @@ function PremiumDashboard({
               <h3>{guide.title}</h3>
               <p>{guide.summary}</p>
               <div className="guide-norms">{guide.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-              <footer>
-                <button type="button" className="btn-primary small" onClick={() => openGuide(guide.id)}>Abrir guía</button>
+              <footer className="issued-actions">
+                <button type="button" className="btn-secondary small" onClick={() => openGuide(guide.id)}>Abrir guía</button>
+                {active && (
+                  <button type="button" className="btn-primary small" onClick={() => goIa('consultor', `&q=${encodeURIComponent(`¿Cómo aplico en mi empresa: ${guide.title}?`)}`)}>
+                    <MessagesSquare size={14} aria-hidden="true" /> Aplicar con el consultor
+                  </button>
+                )}
               </footer>
             </article>
           ))}
@@ -386,6 +369,7 @@ function PremiumDashboard({
       {user.role === 'admin' && <AdminAccess currentUserId={user.id} />}
 
       {reader && <DocReader id={reader.id} title={reader.title} subtitle="Guía premium" markdown={reader.markdown} onClose={() => setReader(null)} />}
+      <GuidedTour id="premium-v1" steps={PREMIUM_TOUR} open={tour} onClose={() => setTour(false)} />
     </>
   )
 }

@@ -30,7 +30,8 @@ import { assetUrl } from './lib/assets'
 import { statusForAnswer, type DiagnosticAnswers } from './lib/diagnostic'
 import { api, type ApiUser } from './lib/api'
 import type { LibraryTab } from './views/LibraryView'
-import PremiumView, { computePercent } from './views/PremiumView'
+import PremiumView from './views/PremiumView'
+import './styles/account.css'
 import HomeView from './views/HomeView'
 import type { ComplianceTab } from './views/ComplianceView'
 import FormatsView, { FormEditor } from './views/FormatsView'
@@ -50,6 +51,7 @@ const CareerView = lazy(() => import('./views/CareerView'))
 const SsomaVisorView = lazy(() => import('./views/SsomaVisorView'))
 const AiView = lazy(() => import('./views/AiView'))
 const DiagramsView = lazy(() => import('./views/DiagramsView'))
+const StatsView = lazy(() => import('./views/StatsView'))
 const GlossaryView = lazy(() => import('./views/GlossaryView'))
 const SignageView = lazy(() => import('./views/SignageView'))
 const SimulatorView = lazy(() => import('./views/SimulatorView'))
@@ -101,7 +103,7 @@ function App() {
   const [user, setUser] = useState<ApiUser | null>(null)
   const [authReady, setAuthReady] = useState(false)
   const [offline, setOffline] = useState(false)
-  const [premiumPercent, setPremiumPercent] = useState<number | null>(null)
+  const premiumPercent: number | null = null
 
   // Sesion del Observatorio (Cloudflare). En GitHub Pages no hay API: modo sin servidor.
   useEffect(() => {
@@ -112,16 +114,10 @@ function App() {
       .finally(() => setAuthReady(true))
   }, [])
 
+  // Modo premium: cambia el acento visual de toda la plataforma mientras el acceso esté vigente.
   useEffect(() => {
-    if (!user) {
-      setPremiumPercent(null)
-      return
-    }
-    api
-      .progress()
-      .then(({ items }) => setPremiumPercent(computePercent(Object.fromEntries(items.map((item) => [item.item_id, item.status])))))
-      .catch(() => setPremiumPercent(null))
-  }, [user, view])
+    document.body.classList.toggle('premium-mode', Boolean(user?.premium?.active))
+  }, [user])
 
   useEffect(() => {
     try {
@@ -281,10 +277,11 @@ function App() {
         {view === 'senales' && <SignageView />}
         {view === 'glosario' && <GlossaryView />}
         {view === 'diagramas' && <DiagramsView />}
+        {view === 'estadisticas' && <StatsView user={user} onNavigate={navigate} />}
         {view === 'ia' && !locked && <AiView user={user} />}
         {view === 'simulador' && <SimulatorView onOpenVisor={() => navigate('visor')} />}
         {view === 'premium' && (
-          <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} onPercentChange={setPremiumPercent} />
+          <PremiumView user={user} authReady={authReady} offline={offline} onUserChange={setUser} />
         )}
         {view === 'ruta' && (
           <RouteView answers={answers} onAnswer={handleAnswer} onReset={resetAnswers} onNavigate={navigate} />
@@ -338,6 +335,10 @@ function App() {
         )}
         </Suspense>
       </main>
+      <footer className="site-footer">
+        <p>{PLATFORM_DISCLAIMER}</p>
+        <p className="made-by">Elaborado por <a href="https://andesnova.solutions" target="_blank" rel="noopener">AndesNova Solutions</a></p>
+      </footer>
       {overlays}
 
       <SideDrawer

@@ -127,12 +127,12 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
 
         <button
           type="button"
-          className={`premium-chip ${active === 'premium' ? 'active' : ''} ${user ? 'signed' : ''}`}
+          className={`premium-chip ${active === 'premium' ? 'active' : ''} ${user ? 'signed' : ''} ${user?.premium?.active ? 'is-premium' : ''}`}
           onClick={() => go('premium')}
           title={user ? `Sesión: ${user.email}` : 'Acceso premium'}
         >
-          {user ? <UserRound size={16} aria-hidden="true" /> : <Crown size={16} aria-hidden="true" />}
-          <span>{user ? (premiumPercent !== null ? `${premiumPercent}%` : 'Mi panel') : 'Premium'}</span>
+          {user && !user.premium?.active ? <UserRound size={16} aria-hidden="true" /> : <Crown size={16} aria-hidden="true" />}
+          <span>{user ? (user.premium?.active ? 'Premium' : 'Mi panel') : (premiumPercent ?? 'Premium')}</span>
         </button>
 
         <button

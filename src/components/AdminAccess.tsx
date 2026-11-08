@@ -4,7 +4,17 @@ import { api, ApiError, type AccessCode, type AccessRequest, type AdminUser } fr
 import { fmtDate } from '../lib/dates'
 
 const SITE = 'https://sst.andesnova.solutions'
-const KIND_LABEL: Record<string, string> = { acceso: 'Acceso nuevo', extension: 'Extensión / precio', clave: 'Olvidó su clave' }
+const KIND_LABEL: Record<string, string> = { acceso: 'Acceso nuevo', extension: 'Extensión / precio', clave: 'Olvidó su clave', plan: 'Cambio de plan' }
+const PAY_KEY = 'obs-admin-payment'
+const DEFAULT_PAYMENT = 'Precio: S/ [completar]\nPago por Yape/Plin al [número] a nombre de [titular], o transferencia a la cuenta [banco y número].\nEnvíenos la constancia respondiendo este correo.'
+const readPayment = () => { try { return localStorage.getItem(PAY_KEY) ?? DEFAULT_PAYMENT } catch { return DEFAULT_PAYMENT } }
+
+/** Correo con opciones de pago para una extensión o cambio de plan. */
+function paymentMail(item: AccessRequest, instructions: string): string {
+  const subject = 'Opciones de pago - Plan Premium Observatorio Prevenir Perú'
+  const body = `Hola ${item.name}:\n\nGracias por querer continuar con el Observatorio Premium. Recibimos su pedido: ${item.message ?? ''}\n\n${instructions}\n\nAl confirmar el pago le enviaremos su código de activación${/boleta|factura/.test(item.message ?? '') ? ' y su comprobante electrónico' : ''}. Para activarlo: ${SITE}/v/premium → «Mi plan» → «Activar código».\n\nSaludos,\nObservatorio Prevenir Perú`
+  return `mailto:${encodeURIComponent(item.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+}
 
 type Issued = { kind: 'cuenta' | 'clave' | 'codigo'; email: string; secret: string; name?: string; until?: string | null; days?: number; price?: string }
 
@@ -54,6 +64,7 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
   const [filter, setFilter] = useState('')
   const [audit, setAudit] = useState<Awaited<ReturnType<typeof api.adminAudit>>['events']>([])
   const [alertsNote, setAlertsNote] = useState('')
+  const [payment, setPayment] = useState(readPayment)
 
   const reload = useCallback(() => {
     api.adminUsers().then(({ users: list }) => setUsers(list)).catch(() => undefined)
@@ -123,7 +134,7 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
       if (target) await resetPassword(target)
       return
     }
-    if (item.kind === 'extension') {
+    if (item.kind === 'extension' || item.kind === 'plan') {
       setCodeForm((prev) => ({ ...prev, forEmail: item.email, note: item.message ?? '' }))
       await api.adminSetRequest(item.id, 'aprobada').catch(() => undefined)
       reload()
@@ -155,8 +166,11 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
               <em className="role-chip">{KIND_LABEL[item.kind ?? 'acceso']}</em> <b>{item.name}</b> · {item.email}
               <small>DNI {item.dni ?? '—'}{item.phone ? ` · ${item.phone}` : ''} · {item.organization ?? ''} {item.message ? `— ${item.message}` : ''} · {fmtDate(item.created_at)}</small>
             </span>
-            <button type="button" className="btn-primary small" onClick={() => handleRequest(item)}>
-              {item.kind === 'clave' ? 'Restablecer' : item.kind === 'extension' ? 'Preparar código' : `Aprobar (${trialDays} d)`}
+            {(item.kind === 'extension' || item.kind === 'plan') && (
+              <a className="btn-primary small" href={paymentMail(item, payment)}><Mail size={14} /> Enviar opciones de pago</a>
+            )}
+            <button type="button" className={item.kind === 'extension' || item.kind === 'plan' ? 'btn-secondary small' : 'btn-primary small'} onClick={() => handleRequest(item)}>
+              {item.kind === 'clave' ? 'Restablecer' : item.kind === 'extension' || item.kind === 'plan' ? 'Preparar código' : `Aprobar (${trialDays} d)`}
             </button>
             <button type="button" className="btn-secondary small" onClick={() => api.adminSetRequest(item.id, 'rechazada').then(reload)}>Rechazar</button>
           </li>
@@ -164,10 +178,16 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
       </ul>
 
       <details className="collapsible">
+        <summary><Mail size={16} aria-hidden="true" /> Instrucciones de pago para los correos</summary>
+        <textarea className="admin-filter" rows={4} value={payment} onChange={(event) => { setPayment(event.target.value); try { localStorage.setItem(PAY_KEY, event.target.value) } catch { /* sin almacenamiento */ } }} />
+        <p className="ssoma-count">Se guardan solo en este navegador y se insertan en el correo «Enviar opciones de pago».</p>
+      </details>
+
+      <details className="collapsible">
         <summary><UserPlus size={16} aria-hidden="true" /> Crear acceso manual</summary>
         <form className="inline-form" onSubmit={(event) => { event.preventDefault(); void createUser(form) }}>
           <input type="email" placeholder="Correo" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-          <input placeholder="DNI" inputMode="numeric" value={form.dni} onChange={(event) => setForm({ ...form, dni: event.target.value })} />
+          <input placeholder="DNI (opcional)" inputMode="numeric" value={form.dni} onChange={(event) => setForm({ ...form, dni: event.target.value })} />
           <input placeholder="Nombre" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
           <input placeholder="Organización" value={form.organization} onChange={(event) => setForm({ ...form, organization: event.target.value })} />
           <button type="submit" className="btn-primary small">Crear con {trialDays} días</button>
@@ -179,7 +199,8 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
       <ul className="admin-list users">
         {shownUsers.map((item) => {
           const p = item.premium
-          const state = item.suspended ? 'Suspendida' : p.reason === 'administrador' ? 'Admin' : p.active ? `IA activa · ${p.daysLeft} d` : p.reason === 'deshabilitado' ? 'IA deshabilitada' : p.reason === 'vencido' ? 'Vencida' : 'Sin prueba'
+          const planName = p.plan === 'pagado' ? 'Profesional' : 'Prueba'
+          const state = item.suspended ? 'Suspendida' : p.reason === 'administrador' ? 'Admin' : p.active ? `${planName} · ${p.daysLeft} d` : p.reason === 'deshabilitado' ? 'IA deshabilitada' : p.reason === 'vencido' ? `${planName} vencido` : 'Sin prueba'
           return (
             <li key={item.id} className={item.suspended ? 'is-off' : ''}>
               <span>
@@ -194,6 +215,7 @@ export function AdminAccess({ currentUserId }: { currentUserId: string }) {
                   <button type="button" className="btn-ghost small" title={item.premium_enabled ? 'Deshabilitar IA' : 'Habilitar IA'} onClick={() => update(item, { premiumEnabled: !item.premium_enabled })}>
                     <Power size={14} /> {item.premium_enabled ? 'Deshabilitar IA' : 'Habilitar IA'}
                   </button>
+                  <button type="button" className="btn-ghost small" onClick={() => update(item, { plan: p.plan === 'pagado' ? 'prueba' : 'pagado' })}>{p.plan === 'pagado' ? 'Pasar a prueba' : 'Pasar a Profesional'}</button>
                   {[7, 15, 30].map((days) => <button key={days} type="button" className="btn-ghost small" onClick={() => update(item, { addDays: days })}>+{days} d</button>)}
                   <button type="button" className="btn-ghost small" onClick={() => resetPassword(item)}><KeyRound size={14} /> Clave</button>
                   <button type="button" className="btn-ghost small" onClick={() => update(item, { suspended: !item.suspended })}><Ban size={14} /> {item.suspended ? 'Reactivar' : 'Suspender'}</button>

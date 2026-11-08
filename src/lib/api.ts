@@ -21,6 +21,7 @@ export interface ApiUser {
 
 export interface PremiumState {
   active: boolean
+  plan: 'admin' | 'pagado' | 'prueba'
   until: string | null
   daysLeft: number | null
   enabled: boolean
@@ -84,7 +85,7 @@ export interface AccessRequest {
   created_at: string
   dni?: string | null
   phone?: string | null
-  kind?: 'acceso' | 'extension' | 'clave'
+  kind?: 'acceso' | 'extension' | 'clave' | 'plan'
 }
 
 export class ApiError extends Error {
@@ -119,14 +120,14 @@ export const api = {
   me: () => request<{ user: ApiUser | null }>('/auth/me'),
   login: (email: string, password: string, guard: Guard, website = '') =>
     request<{ user: ApiUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password, guard, website }) }),
-  resetRequest: (payload: { email: string; dni: string; guard: Guard; website?: string }) =>
+  resetRequest: (payload: { email: string; guard: Guard; website?: string }) =>
     request<{ ok: true }>('/auth/reset-request', { method: 'POST', body: JSON.stringify(payload) }),
   consent: (version: string) =>
     request<{ ok: true; consentAt: string }>('/account/consent', { method: 'POST', body: JSON.stringify({ version, datos: true, terminos: true, ia: true }) }),
   redeem: (code: string, guard: Guard) =>
     request<{ ok: true; premiumUntil: string; days: number }>('/account/redeem', { method: 'POST', body: JSON.stringify({ code, guard }) }),
-  requestExtension: (plan: string, message: string) =>
-    request<{ ok: true }>('/account/extension', { method: 'POST', body: JSON.stringify({ plan, message }) }),
+  requestExtension: (payload: { plan: string; message?: string; invoice?: 'boleta' | 'factura' | 'ninguno'; ruc?: string; kind?: 'extension' | 'plan' }) =>
+    request<{ ok: true }>('/account/extension', { method: 'POST', body: JSON.stringify(payload) }),
   logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
   changePassword: (current: string, next: string) =>
     request<{ ok: true }>('/auth/password', { method: 'POST', body: JSON.stringify({ current, next }) }),
@@ -135,7 +136,7 @@ export const api = {
   progress: () => request<{ items: ProgressItem[] }>('/progress'),
   saveProgress: (items: Array<{ item_id: string; status: ProgressStatus; note?: string }>) =>
     request<{ items: ProgressItem[] }>('/progress', { method: 'PUT', body: JSON.stringify({ items }) }),
-  requestAccess: (payload: { name: string; email: string; dni: string; phone?: string; organization?: string; message?: string; website?: string; guard: Guard }) =>
+  requestAccess: (payload: { name: string; email: string; dni?: string; phone?: string; organization?: string; message?: string; website?: string; guard: Guard }) =>
     request<{ ok: true }>('/access-requests', { method: 'POST', body: JSON.stringify(payload) }),
   stats: () =>
     request<{ downloads: Array<{ item_id: string; count: number }>; totalDownloads: number; members: number; pendingRequests: number }>(
@@ -150,7 +151,7 @@ export const api = {
   adminUsers: () => request<{ users: AdminUser[] }>('/admin/users'),
   adminCreateUser: (payload: { email: string; name?: string; organization?: string; role?: 'admin' | 'member'; dni?: string; trialDays?: number; requestId?: number }) =>
     request<{ ok: true; email: string; password: string; premiumUntil: string | null; trialDays: number }>('/admin/users', { method: 'POST', body: JSON.stringify(payload) }),
-  adminUpdateUser: (id: string, payload: { premiumEnabled?: boolean; suspended?: boolean; addDays?: number; until?: null; dni?: string }) =>
+  adminUpdateUser: (id: string, payload: { premiumEnabled?: boolean; suspended?: boolean; addDays?: number; until?: null; dni?: string; plan?: 'prueba' | 'pagado' }) =>
     request<{ ok: true }>(`/admin/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(payload) }),
   adminResetPassword: (id: string) => request<{ ok: true; email: string; password: string }>(`/admin/users/${encodeURIComponent(id)}/reset`, { method: 'POST' }),
   adminCodes: () => request<{ codes: AccessCode[] }>('/admin/codes'),

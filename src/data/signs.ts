@@ -1,4 +1,5 @@
 import { EXTRA_SIGNS } from './signsExtra'
+import { WHERE_BACKFILL, WORLD_SIGNS } from './signsWorld'
 /**
  * Catálogo de señales de seguridad para el generador de señales y stickers.
  * Geometría y colores según NTP 399.010-1:2016 (concordante con ISO 3864-1). Los pictogramas son
@@ -73,7 +74,9 @@ const BASE_SIGNS: SafetySign[] = [
   { id: 'telefono-emergencia', family: 'incendios', text: 'TELÉFONO DE EMERGENCIA', icon: 'Phone', iso: 'F006', description: 'Ubica el teléfono para emergencias.', where: ['Garitas', 'Recepción'], risks: ['Demora en la respuesta'], controls: ['Directorio de emergencia visible (116 bomberos)'], norms: ['Norma A.130 del RNE'] },
 ]
 
-export const SIGNS: SafetySign[] = [...BASE_SIGNS, ...EXTRA_SIGNS]
+export const SIGNS: SafetySign[] = [...BASE_SIGNS, ...EXTRA_SIGNS, ...WORLD_SIGNS].map((sign) =>
+  sign.where.length === 0 && WHERE_BACKFILL[sign.id] ? { ...sign, where: WHERE_BACKFILL[sign.id] } : sign,
+)
 
 /** Tamaño mínimo de una señal según la distancia de observación (NTP 399.010-1 / ISO 3864-1): S ≥ L² / 2000, para L < 50 m. */
 export function minSignArea(distanceMeters: number): { areaM2: number; sideCm: number } {

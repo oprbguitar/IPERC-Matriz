@@ -1,16 +1,15 @@
-import { ArrowRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Crown, Download, FileSpreadsheet, FileText, FileType2, History, Radar, Scale, Users } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Boxes, ChevronLeft, ChevronRight, GraduationCap, Download, FileSpreadsheet, FileText, FileType2, History, Route, Scale, Tags, TriangleAlert, Users, Workflow } from 'lucide-react'
 import { useRef } from 'react'
 import PreventionPreview from '../components/PreventionPreview'
 import { LegalReference } from '../components/LegalReference'
 import { CAREER_PATHS } from '../data/careerPaths'
-import { COVERAGE_DOMAINS } from '../data/coverage'
 import { GUIDES } from '../data/guides'
-import { findNorm, legalNorms } from '../data/legalDatabase'
+import { findNorm } from '../data/legalDatabase'
 
 /** Normas que se listan en la portada (con desplazamiento interno). */
 const HOME_NORM_IDS = ['law-29783', 'ds-005-2012-tr', 'rm-050-2013-tr', 'law-30222', 'ds-002-2020-tr', 'law-32721', 'ds-003-2026-sa', 'rm-245-2021-tr', 'rm-375-2008-tr', 'rm-312-2011-minsa', 'ds-003-98-sa', 'ds-014-2013-tr', 'ds-019-2006-tr', 'law-31572', 'ds-011-2019-tr', 'ds-024-2016-em', 'dl-1278', 'law-28611']
 import { TIMELINE_ERAS, TIMELINE_EVENTS } from '../data/timeline'
-import { statusForAnswer, type DiagnosticAnswers } from '../lib/diagnostic'
+import type { DiagnosticAnswers } from '../lib/diagnostic'
 import {
   findTemplate,
   PLATFORM_DISCLAIMER,
@@ -22,6 +21,16 @@ import {
   type TemplateFormat,
 } from '../data/platformContent'
 import { assetUrl } from '../lib/assets'
+
+/** Accesos directos a secciones útiles que quedaban escondidas en el menú. */
+const QUICK_ACCESS: Array<{ view: string; label: string; hint: string; icon: typeof Route; tone: string }> = [
+  { view: 'senales?sec=senales', label: 'Señales de seguridad', hint: 'Catálogo NTP 399.010-1 e ISO 7010 para imprimir', icon: TriangleAlert, tone: 'amber' },
+  { view: 'senales?sec=etiquetas', label: 'Etiquetas operativas', hint: 'LOTO, andamios, extintores e inspecciones', icon: Tags, tone: 'red' },
+  { view: 'simulador', label: 'Simulador de ambientes', hint: 'Recorra áreas de trabajo y detecte peligros', icon: Boxes, tone: 'teal' },
+  { view: 'estadisticas', label: 'Accidentes en el Perú', hint: 'Estadística oficial del MTPE con lectura técnica', icon: BarChart3, tone: 'blue' },
+  { view: 'diagramas', label: 'Diagramas de procesos', hint: 'PHVA, IPERC, accidentes y emergencias', icon: Workflow, tone: 'violet' },
+  { view: 'ruta', label: 'Mi ruta', hint: 'Diagnóstico guiado de su empresa', icon: Route, tone: 'green' },
+]
 
 const FORMAT_ICON: Record<TemplateFormat, typeof FileSpreadsheet> = {
   xlsx: FileSpreadsheet,
@@ -61,9 +70,6 @@ export function HomeView({
   onOpenGuide,
   completedStepIds,
   progressPercent,
-  answers,
-  premiumPercent,
-  signedIn,
   onOpenCareer,
 }: HomeViewProps) {
   const railRef = useRef<HTMLDivElement>(null)
@@ -187,6 +193,15 @@ export function HomeView({
             </div>
             <b>{progressPercent}%</b>
           </div>
+          <nav className="home-quick" aria-label="Accesos directos">
+            {QUICK_ACCESS.map(({ view, label, hint, icon: Icon, tone }) => (
+              <button key={label} type="button" className={`home-quick-btn tone-${tone}`} onClick={() => (view.includes('?') ? (window.location.hash = `#/${view}`) : onNavigate(view as SiteViewId))} title={hint}>
+                <span aria-hidden="true"><Icon size={22} /></span>
+                <b>{label}</b>
+                <small>{hint}</small>
+              </button>
+            ))}
+          </nav>
           <div className="career-entry">
             <b><GraduationCap size={15} aria-hidden="true" /> Rutas de especialista</b>
             <div>
@@ -275,56 +290,6 @@ export function HomeView({
           </ul>
         </section>
       </div>
-
-      <details className="tracker" aria-labelledby="tracker-title">
-        <summary className="tracker-head">
-          <div>
-            <span className="eyebrow"><Radar size={15} aria-hidden="true" /> Sistema de seguimiento</span>
-            <h2 id="tracker-title">Cobertura SST, SSOMA y salud ocupacional</h2>
-            <p>{COVERAGE_DOMAINS.length} dominios · {legalNorms.length} normas oficiales enlazadas. El estado se alimenta de su diagnóstico en Mi Ruta.</p>
-          </div>
-          {signedIn ? (
-            <button type="button" className="premium-progress" onClick={() => onNavigate('premium')}>
-              <span style={{ '--p': premiumPercent ?? 0 } as React.CSSProperties} className="mini-ring" aria-hidden="true" />
-              <span><b>{premiumPercent ?? 0}%</b><small>Plan premium</small></span>
-            </button>
-          ) : (
-            <button type="button" className="premium-progress locked" onClick={() => onNavigate('premium')}>
-              <Crown size={18} aria-hidden="true" />
-              <span><b>Premium</b><small>IA y agentes</small></span>
-            </button>
-          )}
-          <span className="tracker-toggle" aria-hidden="true">Ver detalle <ChevronDown size={16} /></span>
-        </summary>
-        <ul className="tracker-grid">
-          {COVERAGE_DOMAINS.map((domain, index) => {
-            const Icon = domain.icon
-            const status = domain.diagnosticId ? statusForAnswer(domain.diagnosticId, answers[domain.diagnosticId]) : undefined
-            const label = status === 'cumple' ? 'Cumple' : status === 'pendiente' ? 'Pendiente' : status === 'no-aplica' ? 'No aplica' : status === 'verificar' ? 'Verificar' : domain.diagnosticId ? 'Sin evaluar' : 'Referencia'
-            const norms = domain.normIds.filter((id) => findNorm(id)).length
-            return (
-              <li key={domain.id} style={{ '--i': index } as React.CSSProperties}>
-                <button
-                  type="button"
-                  className={`tracker-tile ${domain.tone}`}
-                  onClick={() => (domain.guideId ? onOpenGuide(domain.guideId) : onNavigate(domain.view))}
-                  title={domain.description}
-                >
-                  <span className="tracker-icon" aria-hidden="true"><Icon size={18} /></span>
-                  <span className="tracker-text">
-                    <b>{domain.label}</b>
-                    <small>{domain.description}</small>
-                  </span>
-                  <span className="tracker-meta">
-                    <em className={`state ${status ?? 'none'}`}>{label}</em>
-                    <small>{norms} norma{norms === 1 ? '' : 's'}</small>
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      </details>
 
       <p className="site-disclaimer">
         {PLATFORM_DISCLAIMER} Marco base:{' '}

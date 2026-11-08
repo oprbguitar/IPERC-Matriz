@@ -1,4 +1,4 @@
-import { CalendarClock, CheckCircle2, FileSignature, KeyRound, Loader2, Send, ShieldCheck, Ticket } from 'lucide-react'
+import { CalendarClock, CheckCircle2, FileSignature, KeyRound, Loader2, Send, ShieldCheck, Sparkles, Ticket } from 'lucide-react'
 import { useState } from 'react'
 import { CONSENT_CLAUSES, CONSENT_VERSION } from '../data/consent'
 import { api, ApiError, type ApiUser } from '../lib/api'
@@ -80,7 +80,26 @@ export function ForcedPassword({ onDone }: { onDone: () => void }) {
   )
 }
 
-const PLANS = ['1 mes', '3 meses', '6 meses', '12 meses', 'Empresa (varios usuarios)']
+const PLANS = ['Plan Profesional · 1 mes', 'Plan Profesional · 3 meses', 'Plan Profesional · 6 meses', 'Plan Profesional · 12 meses', 'Empresa (varios usuarios)']
+
+/** Aviso cuando se agota la cuota diaria: un botón y listo, el administrador ve el pedido. */
+export function UpgradePrompt({ message }: { message: string }) {
+  const [sent, setSent] = useState('')
+  async function ask() {
+    try {
+      await api.requestExtension({ plan: 'Cambio de plan', kind: 'plan', message: 'Solicitado al agotar la cuota diaria de IA.' })
+      setSent('Listo: recibimos su pedido de cambio de plan. Le escribiremos a su correo.')
+    } catch (caught) {
+      setSent(caught instanceof ApiError ? caught.message : 'No se pudo enviar el pedido.')
+    }
+  }
+  return (
+    <div className="upgrade-box" role="alert">
+      <p>{message}</p>
+      {sent ? <p className="form-note ok">{sent}</p> : <button type="button" className="btn-primary small pulse-btn" onClick={ask}><Sparkles size={15} aria-hidden="true" /> Cambiar de plan</button>}
+    </div>
+  )
+}
 
 /** Estado del acceso premium, canje de código y pedido de extensión. */
 export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: () => void }) {
@@ -88,6 +107,8 @@ export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: ()
   const [code, setCode] = useState('')
   const [plan, setPlan] = useState(PLANS[0])
   const [message, setMessage] = useState('')
+  const [invoice, setInvoice] = useState<'ninguno' | 'boleta' | 'factura'>('boleta')
+  const [ruc, setRuc] = useState('')
   const [note, setNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [startedAt] = useState(() => Date.now())
@@ -111,8 +132,8 @@ export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: ()
 
   async function extension() {
     try {
-      await api.requestExtension(plan, message)
-      setNote({ tone: 'ok', text: 'Pedido enviado. El administrador le enviará el precio y su código de acceso.' })
+      await api.requestExtension({ plan, message, invoice, ruc: invoice === 'factura' ? ruc : undefined })
+      setNote({ tone: 'ok', text: 'Pedido enviado. Le escribiremos a su correo con el precio, las opciones de pago y su comprobante.' })
       setMessage('')
     } catch (caught) {
       setNote({ tone: 'error', text: caught instanceof ApiError ? caught.message : 'No se pudo enviar el pedido.' })
@@ -125,7 +146,7 @@ export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: ()
     : premium.reason === 'administrador'
       ? 'Administrador: acceso completo'
       : premium.active
-        ? `Premium vigente · ${premium.daysLeft} día(s) restantes (hasta el ${fmtDate(premium.until)})`
+        ? `${premium.plan === 'pagado' ? 'Plan Profesional (7 consultas de IA al día)' : 'Periodo de prueba (2 consultas de IA al día)'} · ${premium.daysLeft} día(s) restantes, hasta el ${fmtDate(premium.until)}`
         : premium.reason === 'vencido'
           ? `Su acceso premium venció el ${fmtDate(premium.until)}`
           : premium.reason === 'deshabilitado'
@@ -134,7 +155,7 @@ export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: ()
 
   return (
     <section className="panel account-panel" aria-labelledby="account-title">
-      <h2 id="account-title"><CalendarClock size={18} aria-hidden="true" /> Mi acceso premium</h2>
+      <h2 id="account-title"><CalendarClock size={18} aria-hidden="true" /> Mi plan</h2>
       <p className={`form-note ${tone}`}>{premium?.active ? <CheckCircle2 size={15} aria-hidden="true" /> : null} {label}</p>
       {premium?.reason !== 'administrador' && (
         <div className="account-grid">
@@ -145,10 +166,19 @@ export function AccountPanel({ user, onRefresh }: { user: ApiUser; onRefresh: ()
             <button type="submit" className="btn-primary small" disabled={busy}>{busy ? 'Verificando…' : 'Activar'}</button>
           </form>
           <div className="account-box">
-            <h3><Send size={16} aria-hidden="true" /> Solicitar extensión o precio</h3>
-            <select value={plan} onChange={(event) => setPlan(event.target.value)}>{PLANS.map((item) => <option key={item}>{item}</option>)}</select>
+            <h3><Send size={16} aria-hidden="true" /> Extender o cambiar de plan</h3>
+            <select value={plan} onChange={(event) => setPlan(event.target.value)} aria-label="Plan">{PLANS.map((item) => <option key={item}>{item}</option>)}</select>
+            <div className="invoice-pick" role="radiogroup" aria-label="Comprobante">
+              {(['boleta', 'factura', 'ninguno'] as const).map((item) => (
+                <label key={item} className={invoice === item ? 'on' : ''}>
+                  <input type="radio" name="invoice" checked={invoice === item} onChange={() => setInvoice(item)} />
+                  {item === 'ninguno' ? 'Sin comprobante' : item === 'boleta' ? 'Boleta' : 'Factura'}
+                </label>
+              ))}
+            </div>
+            {invoice === 'factura' && <input value={ruc} onChange={(event) => setRuc(event.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="RUC (11 dígitos)" inputMode="numeric" />}
             <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Comentario (opcional): empresa, número de usuarios…" maxLength={600} />
-            <button type="button" className="btn-secondary small" onClick={extension}>Enviar pedido</button>
+            <button type="button" className="btn-primary small" onClick={extension}>Solicitar</button>
           </div>
         </div>
       )}

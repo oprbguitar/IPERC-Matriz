@@ -10,6 +10,8 @@
  *   3) Agente probabilístico: Jev si hay llave; si no, motor local transparente con la misma forma de respuesta.
  */
 import { SSOMA_RISKS } from '../src/data/ssoma/riesgos'
+import { CONSULT_SYSTEM, consultPrompt, searchCatalog } from './consult'
+import MTPE from './data/mtpe-notificaciones.json'
 
 export interface AiEnv {
   DB: D1Database
@@ -268,12 +270,12 @@ async function diagnose(env: AiEnv, userId: string, body: { image?: string; note
     raw = await chat(env, settings.vision.provider, settings.vision.model, { system: VISION_SYSTEM, text: prompt, image: body.image })
   } catch (error) {
     await logRun(env, userId, settings.vision, false, Date.now() - started, String(error))
-    return json({ error: `El agente visor no respondió: ${error instanceof Error ? error.message : 'error'}` }, 502)
+    return json({ error: 'No se pudo analizar la foto en este momento. Intente de nuevo en unos minutos.', detail: error instanceof Error ? error.message : 'error' }, 502)
   }
   const vision = extractJson<VisionResult>(raw)
   if (!vision || !Array.isArray(vision.hazards)) {
     await logRun(env, userId, settings.vision, false, Date.now() - started, 'JSON inválido')
-    return json({ error: 'El modelo no devolvió un resultado estructurado. Pruebe otro modelo de visión.', raw: raw.slice(0, 800) }, 502)
+    return json({ error: 'No se pudo interpretar la foto. Pruebe con otra toma más nítida y con mejor luz.', detail: raw.slice(0, 800) }, 502)
   }
   const known = new Set(SSOMA_RISKS.map((risk) => risk.id))
   vision.hazards = vision.hazards.slice(0, 6).map((hazard) => ({
@@ -409,6 +411,8 @@ Reglas:
 - Escribe en español formal, en Markdown, con títulos ## y tablas Markdown donde la estructura lo pida.
 - Usa solo las normas que te indiquen o normas peruanas muy conocidas (Ley 29783, D.S. 005-2012-TR, R.M. 050-2013-TR). Si no estás seguro de un artículo, no lo cites.
 - Si falta un dato, deja el marcador [completar] en lugar de inventarlo.
+- El documento debe ser extenso y completo, listo para imprimir: desarrolla cada sección con contenido técnico real (no solo títulos), incluye tablas con al menos 5 filas donde corresponda y un bloque final de firmas.
+- No menciones que eres un modelo de IA ni qué proveedor usas.
 - Termina con una línea: "Documento preliminar generado con IA; revíselo un profesional SST antes de firmarlo."`
 
 async function generateReport(env: AiEnv, userId: string, body: { type?: string; context?: string; company?: string; area?: string; diagnosis?: string }) {
@@ -428,26 +432,38 @@ async function generateReport(env: AiEnv, userId: string, body: { type?: string;
     body.diagnosis ? `Resultado del diagnóstico por foto previo (úsalo como evidencia): ${body.diagnosis.slice(0, 3000)}` : '',
   ].filter(Boolean).join('\n')
   try {
-    const markdown = await chat(env, settings.text.provider, settings.text.model, { system: REPORT_SYSTEM, text: prompt, maxTokens: 2200 })
+    const markdown = await chat(env, settings.text.provider, settings.text.model, { system: REPORT_SYSTEM, text: prompt, maxTokens: 3500 })
     await logRun(env, userId, settings.text, true, Date.now() - started, type.label, 'informe')
     return json({ markdown, model: settings.text, ms: Date.now() - started })
   } catch (error) {
     await logRun(env, userId, settings.text, false, Date.now() - started, String(error), 'informe')
-    return json({ error: `El agente redactor no respondió: ${error instanceof Error ? error.message : 'error'}` }, 502)
+    return json({ error: 'No se pudo redactar el documento en este momento. Intente de nuevo en unos minutos.', detail: error instanceof Error ? error.message : 'error' }, 502)
   }
 }
 
 async function summarizeAlert(env: AiEnv, userId: string, id: number) {
   const row = await env.DB.prepare('SELECT id, title, summary, source, ai_summary FROM norm_alerts WHERE id = ?').bind(id).first<{ id: number; title: string; summary: string; source: string; ai_summary: string | null }>()
   if (!row) return json({ error: 'Alerta no encontrada.' }, 404)
-  if (row.ai_summary) return json({ summary: row.ai_summary, cached: true })
+  if (row.ai_summary && row.ai_summary.length > 450) return json({ summary: row.ai_summary, cached: true })
   const settings = await readSettings(env)
   const started = Date.now()
   try {
     const text = await chat(env, settings.text.provider, settings.text.model, {
-      system: 'Eres un analista normativo SSOMA peruano. Responde en español con tres viñetas Markdown: **Qué establece**, **A quién aplica**, **Acción recomendada**. Si el texto no basta, dilo. Máximo 90 palabras.',
+      system: `Eres un analista normativo SSOMA peruano que explica normas a jefes de seguridad de forma amigable.
+Responde en español, en Markdown, con estas secciones breves:
+### En pocas palabras
+(2 frases claras)
+### Qué establece
+(3 a 5 viñetas)
+### A quién aplica
+(1 o 2 viñetas: sectores, tamaño de empresa, cargos)
+### Qué debe hacer su empresa
+(3 viñetas accionables, con plazos si el texto los menciona)
+### Nivel de impacto
+(Alto, Medio o Bajo, con una frase de justificación)
+Si el extracto no basta para algún punto, dilo con honestidad. Entre 150 y 250 palabras. No menciones que eres IA.`,
       text: `Fuente: ${row.source}\nTítulo: ${row.title}\nExtracto: ${row.summary.slice(0, 1500)}`,
-      maxTokens: 300,
+      maxTokens: 700,
     })
     await env.DB.prepare('UPDATE norm_alerts SET ai_summary = ? WHERE id = ?').bind(text.slice(0, 1500), id).run()
     await logRun(env, userId, settings.text, true, Date.now() - started, row.title, 'alerta')
@@ -457,44 +473,135 @@ async function summarizeAlert(env: AiEnv, userId: string, id: number) {
   }
 }
 
-/** Cuota diaria por usuario premium (los administradores no tienen tope). */
-export const DAILY_AI_QUOTA = 25
+/** Cuota diaria de consultas de IA según plan (los administradores no tienen tope). */
+export type Plan = 'admin' | 'pagado' | 'prueba'
+export const PLAN_QUOTA: Record<Plan, number | null> = { admin: null, pagado: 7, prueba: 2 }
+export const PLAN_LABEL: Record<Plan, string> = { admin: 'Administrador', pagado: 'Plan Profesional', prueba: 'Periodo de prueba' }
 
 async function usedToday(env: AiEnv, userId: string): Promise<number> {
-  const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM ai_runs WHERE user_id = ? AND created_at >= ?")
+  const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM ai_runs WHERE user_id = ? AND ok = 1 AND created_at >= ?")
     .bind(userId, new Date(Date.now() - 86_400_000).toISOString())
     .first<{ n: number }>()
   return row?.n ?? 0
 }
 
 /** Rutas /api/ai/* para usuarios premium con consentimiento vigente. */
-export async function handlePremiumAi(request: Request, env: AiEnv, pathname: string, userId: string, isAdmin: boolean): Promise<Response> {
+/** Quita del resultado todo lo que revele proveedor, modelo o motor (solo lo ve el administrador). */
+async function forClient(response: Response, isAdmin: boolean): Promise<Response> {
+  if (isAdmin) return response
+  const data = (await response.json()) as Record<string, unknown>
+  delete data.model
+  delete data.ms
+  delete data.detail
+  delete data.raw
+  const probabilities = data.probabilities as Record<string, unknown> | undefined
+  if (probabilities) { delete probabilities.motor; delete probabilities.aviso }
+  return json(data, response.status)
+}
+
+export async function handlePremiumAi(request: Request, env: AiEnv, pathname: string, userId: string, plan: Plan): Promise<Response> {
   await ensureSchema(env)
   const method = request.method
   const sub = pathname.slice('/api/ai'.length)
+  const isAdmin = plan === 'admin'
+  const quota = PLAN_QUOTA[plan]
 
   if (sub === '/catalog' && method === 'GET') {
-    return json({ reportTypes: REPORT_TYPES.map(({ id, label }) => ({ id, label })), quota: isAdmin ? null : DAILY_AI_QUOTA, used: await usedToday(env, userId) })
+    return json({
+      reportTypes: REPORT_TYPES.map(({ id, label, outline, norms }) => ({ id, label, outline, norms })),
+      plan,
+      planLabel: PLAN_LABEL[plan],
+      quota,
+      used: await usedToday(env, userId),
+    })
   }
   if (sub === '/runs' && method === 'GET') {
-    const rows = await env.DB.prepare('SELECT task, provider, model, ok, ms, summary, created_at FROM ai_runs WHERE user_id = ? ORDER BY created_at DESC LIMIT 30').bind(userId).all()
-    return json({ runs: rows.results })
+    const rows = await env.DB.prepare('SELECT task, provider, model, ok, ms, summary, created_at FROM ai_runs WHERE user_id = ? ORDER BY created_at DESC LIMIT 30').bind(userId).all<Record<string, unknown>>()
+    return json({ runs: isAdmin ? rows.results : rows.results.map(({ task, ok, summary, created_at }) => ({ task, ok, summary, created_at })) })
   }
 
-  const costly = (sub === '/diagnose' || sub === '/report' || /^\/alerts\/\d+\/summary$/.test(sub)) && method === 'POST'
-  if (costly && !isAdmin && (await usedToday(env, userId)) >= DAILY_AI_QUOTA) {
-    return json({ error: `Alcanzó su cuota de ${DAILY_AI_QUOTA} consultas de IA en 24 horas. Intente más tarde.` }, 429)
+  if (sub === '/search' && method === 'GET') {
+    // Búsqueda en el catálogo interno: no consume cuota.
+    const q = new URL(request.url).searchParams.get('q') ?? ''
+    return json({ sources: searchCatalog(q.slice(0, 300), 12) })
+  }
+
+  if (sub === '/stats/months' && method === 'GET') {
+    // Serie completa de notificaciones del MTPE: análisis de todos los meses (premium).
+    return new Response(JSON.stringify(MTPE), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, max-age=3600' } })
+  }
+
+  const costly = ['/diagnose', '/report', '/consult', '/stats/analyze'].includes(sub) || /^\/alerts\/\d+\/summary$/.test(sub)
+  if (costly && method === 'POST' && quota !== null && (await usedToday(env, userId)) >= quota) {
+    return json({
+      error: plan === 'prueba'
+        ? `Usó sus ${quota} consultas de IA de hoy del periodo de prueba. Para seguir hoy, solicite un cambio de plan.`
+        : `Usó sus ${quota} consultas de IA de hoy. Para ampliar su cuota, solicite un cambio de plan.`,
+      upgrade: true,
+    }, 429)
   }
   if (sub === '/diagnose' && method === 'POST') {
     const body = (await request.json().catch(() => null)) as { image?: string; note?: string; area?: string } | null
-    return diagnose(env, userId, body ?? {})
+    return forClient(await diagnose(env, userId, body ?? {}), isAdmin)
   }
   if (sub === '/report' && method === 'POST') {
     const body = (await request.json().catch(() => null)) as Parameters<typeof generateReport>[2] | null
-    return generateReport(env, userId, body ?? {})
+    return forClient(await generateReport(env, userId, body ?? {}), isAdmin)
+  }
+  if (sub === '/stats/analyze' && method === 'POST') {
+    const body = (await request.json().catch(() => null)) as { period?: string; summary?: string } | null
+    const summary = (body?.summary ?? '').slice(0, 5000)
+    if (summary.length < 40) return json({ error: 'Faltan datos del periodo.' }, 400)
+    const sources = searchCatalog(summary.slice(0, 600))
+    const settings = await readSettings(env)
+    const started = Date.now()
+    try {
+      const answer = await chat(env, settings.text.provider, settings.text.model, {
+        system: `Eres un ingeniero de seguridad peruano que analiza las estadísticas oficiales de notificaciones de accidentes del MTPE (Sistema de Accidentes de Trabajo).
+Escribe en español, en Markdown, con estas secciones:
+### Qué pasó en el periodo
+### Por qué pudo fallar la prevención
+(causas probables por tipo de accidente y sector: actos, condiciones y fallas de gestión; aclara que son inferencias a partir de datos agregados)
+### Qué exige la norma
+(cita las fuentes del catálogo con [F1], [F2]…; si no hay fuente, menciona Ley 29783 y D.S. 005-2012-TR sin inventar artículos)
+### Qué hacer en su empresa este mes
+(5 acciones concretas y medibles)
+### Calidad del dato
+(comenta el peso de los registros «no clasificados» y la subnotificación)
+Entre 300 y 500 palabras. No menciones que eres IA.`,
+        text: [
+          `Periodo: ${body?.period ?? ''}`,
+          `Datos agregados:\n${summary}`,
+          `Fuentes del catálogo:\n${sources.map((source) => `[${source.ref}] (${source.kind}) ${source.title}: ${source.detail}`).join('\n')}`,
+        ].join('\n\n'),
+        maxTokens: 1800,
+      })
+      await logRun(env, userId, settings.text, true, Date.now() - started, `Estadísticas ${body?.period ?? ''}`, 'estadisticas')
+      return forClient(json({ answer, sources, model: settings.text, ms: Date.now() - started }), isAdmin)
+    } catch (error) {
+      await logRun(env, userId, settings.text, false, Date.now() - started, String(error), 'estadisticas')
+      return json({ error: 'El análisis no está disponible en este momento. Intente de nuevo en unos minutos.' }, 502)
+    }
+  }
+
+  if (sub === '/consult' && method === 'POST') {
+    const body = (await request.json().catch(() => null)) as { question?: string } | null
+    const question = (body?.question ?? '').trim()
+    if (question.length < 8) return json({ error: 'Escriba su consulta con un poco más de detalle.' }, 400)
+    const sources = searchCatalog(question.slice(0, 600))
+    const settings = await readSettings(env)
+    const started = Date.now()
+    try {
+      const answer = await chat(env, settings.text.provider, settings.text.model, { system: CONSULT_SYSTEM, text: consultPrompt(question.slice(0, 1200), sources), maxTokens: 1400 })
+      await logRun(env, userId, settings.text, true, Date.now() - started, question, 'consulta')
+      return forClient(json({ answer, sources, model: settings.text, ms: Date.now() - started }), isAdmin)
+    } catch (error) {
+      await logRun(env, userId, settings.text, false, Date.now() - started, String(error), 'consulta')
+      return json({ error: 'El consultor no está disponible en este momento. Intente de nuevo en unos minutos.', sources }, 502)
+    }
   }
   const summary = sub.match(/^\/alerts\/(\d+)\/summary$/)
-  if (summary && method === 'POST') return summarizeAlert(env, userId, Number(summary[1]))
+  if (summary && method === 'POST') return forClient(await summarizeAlert(env, userId, Number(summary[1])), isAdmin)
 
   return json({ error: 'Ruta de IA no encontrada.' }, 404)
 }

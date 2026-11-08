@@ -47,6 +47,7 @@ export type SiteViewId =
   | 'senales'
   | 'glosario'
   | 'diagramas'
+  | 'estadisticas'
   | 'ia'
   | 'simulador'
   | 'rutas'
@@ -65,6 +66,7 @@ export const NAV_ITEMS: Array<{ id: SiteViewId; label: string; description: stri
   { id: 'visor', label: 'Visor SSOMA', description: 'Normas SST y ambientales en detalle, cuadros, riesgos y químicos' },
   { id: 'ia', label: 'IA premium', description: 'Diagnóstico por foto, informes automáticos con IA y alertas normativas (premium)' },
   { id: 'diagramas', label: 'Diagramas de procesos', description: 'PHVA, IPERC, accidentes, residuos, SUNAFIL y emergencias en flujos interactivos' },
+  { id: 'estadisticas', label: 'Accidentes en el Perú (MTPE)', description: 'Estadística oficial de accidentes, incidentes y enfermedades notificados al MTPE, con lectura técnica' },
   { id: 'glosario', label: 'Glosario y colores', description: 'Términos, siglas, leyes y códigos de colores de la industria' },
   { id: 'senales', label: 'Señales y etiquetas', description: 'Señales de seguridad, stickers con QR y etiquetas SGA para imprimir' },
   { id: 'simulador', label: 'Simulador de ambientes', description: 'Oficina y almacén: identifique peligros y compare el riesgo inicial y residual' },
@@ -85,7 +87,7 @@ export const SPACES: Array<{ id: SpaceId; label: string; hint: string; views: Si
   { id: 'explorar', label: 'Explorar', hint: 'Riesgos, controles, normas y casos', views: ['explorador', 'normativa', 'visor', 'diagramas', 'glosario', 'iso', 'evolucion', 'casos'] },
   { id: 'diagnosticar', label: 'Diagnosticar', hint: 'Qué le aplica y qué falta', views: ['diagnostico', 'ruta', 'obligaciones', 'soma'] },
   { id: 'implementar', label: 'Implementar', hint: 'IPERC, formatos y planes', views: ['herramientas', 'formatos', 'ia'] },
-  { id: 'verificar', label: 'Verificar', hint: 'Evidencias y fiscalización', views: ['verificar', 'fiscalizacion'] },
+  { id: 'verificar', label: 'Verificar', hint: 'Evidencias, fiscalización y estadística', views: ['verificar', 'fiscalizacion', 'estadisticas'] },
   { id: 'aprender', label: 'Aprender', hint: 'Guías, plantillas y rutas de especialista', views: ['plantillas', 'senales', 'simulador', 'rutas', 'premium'] },
 ]
 

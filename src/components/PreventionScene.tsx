@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { PREVENTION_SCENES } from '../data/preventionScenes'
+import { project, SCENE_HEIGHT, SCENE_WIDTH, type Point3 } from '../lib/preventionScene'
 
 interface Props {
   sceneId: string
@@ -9,119 +10,214 @@ interface Props {
   onSelect: (hotspotId: string) => void
 }
 
-type Point = [number, number, number?]
-const point = ([x, y, z = 0]: Point) => [430 + (x - y) * 30, 105 + (x + y) * 17 - z]
-const points = (values: Point[]) => values.map(value => point(value).join(',')).join(' ')
-const C = { pale: 'var(--pr-scene-pale, #eaf1f6)', wall: 'var(--pr-scene-wall, #d7e3ec)', ink: 'var(--pr-ink, #20364b)', blue: 'var(--pr-accent, #1f6fe5)', teal: 'var(--pr-support, #117d76)', amber: 'var(--pr-warn, #b86213)', white: 'var(--pr-surface, #ffffff)', danger: 'var(--pr-danger, #ad4539)' }
+const points = (values: Point3[]) => values.map(value => project(value).join(',')).join(' ')
+const C = { pale: 'var(--surface-muted)', floor: 'var(--surface-soft)', wall: 'var(--border-strong)', ink: 'var(--text)', blue: 'var(--blue)', teal: 'var(--teal)', amber: 'var(--amber)', white: 'var(--surface)', danger: 'var(--red)', green: 'var(--green)' }
 
-function Block({ x, y, w = 1, d = 1, h = 30, z = 0, fill = C.blue }: { x: number; y: number; w?: number; d?: number; h?: number; z?: number; fill?: string }) {
-  return <g stroke={C.ink} strokeWidth="1" strokeLinejoin="round">
-    <polygon fill={fill} points={points([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]])} />
-    <polygon fill={fill} style={{ filter: 'brightness(.85)' }} points={points([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]])} />
-    <polygon fill={fill} style={{ filter: 'brightness(1.12)' }} points={points([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]])} />
+/** Prisma apoyado en el piso: tres caras visibles. Todo objeto se construye con bloques para que los bordes coincidan. */
+function Block({ x, y, w = 1, d = 1, h = 10, z = 0, fill = C.blue, opacity }: { x: number; y: number; w?: number; d?: number; h?: number; z?: number; fill?: string; opacity?: number }) {
+  return <g stroke={C.ink} strokeWidth="1" strokeLinejoin="round" opacity={opacity}>
+    <polygon fill={fill} points={points([[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]])} />
+    <polygon fill={fill} style={{ filter: 'brightness(.82)' }} points={points([[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]])} />
+    <polygon fill={fill} style={{ filter: 'brightness(1.12)' }} points={points([[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]])} />
   </g>
 }
 
-function Line({ path, color = C.ink, width = 2, dash }: { path: Point[]; color?: string; width?: number; dash?: string }) {
-  return <polyline fill="none" stroke={color} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" strokeLinejoin="round" points={points(path)} />
+/** Marca sobre el piso (ruta, derrame, zona delimitada). */
+function Zone({ x, y, w, d, fill = C.teal, opacity = 0.35, dash, stroke }: { x: number; y: number; w: number; d: number; fill?: string; opacity?: number; dash?: string; stroke?: string }) {
+  return <polygon points={points([[x, y, 0], [x + w, y, 0], [x + w, y + d, 0], [x, y + d, 0]])} fill={fill} fillOpacity={opacity} stroke={stroke ?? fill} strokeWidth="1.5" strokeDasharray={dash} strokeLinejoin="round" />
 }
 
-function Person({ x, y, protected: safe = false, seated = false }: { x: number; y: number; protected?: boolean; seated?: boolean }) {
-  const [px, py] = point([x,y])
-  return <g transform={`translate(${px} ${py})`} stroke={C.ink} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d={seated ? safe ? 'M-10 0 L-10-14 L3-14 L3-34 M3-26 L20-26' : 'M-13 0 L-16-14 L2-14 L12-32 M10-25 L25-32' : 'M-8 0 L0-20 L9 0 M0-20 L0-43 M0-35 L-13-25 M0-35 L13-26'} fill="none" />
-    <path d={seated ? safe ? 'M-4-18 L7-18 L7-35 L-4-35 Z' : 'M-5-18 L7-16 L17-33 L6-37 Z' : 'M-7-22 L7-22 L7-42 L-7-42 Z'} fill={safe ? C.teal : C.blue} strokeWidth="1" />
-    <circle cx={seated ? safe ? 2 : 16 : 0} cy={seated ? -43 : -51} r="7" fill={C.white} strokeWidth="1.5" />
-    {safe && !seated && <path d="M-9-54 Q0-68 9-54 Z" fill={C.amber} strokeWidth="1" />}
+function Legs({ x, y, w, d, h, t = 0.14, z = 0 }: { x: number; y: number; w: number; d: number; h: number; t?: number; z?: number }) {
+  return <g>{[[x, y], [x + w - t, y], [x, y + d - t], [x + w - t, y + d - t]].map(([lx, ly]) => <Block key={`${lx}-${ly}`} x={lx} y={ly} w={t} d={t} h={h} z={z} fill={C.ink} />)}</g>
+}
+
+function Head({ at, r = 6.5, fill = C.white }: { at: Point3; r?: number; fill?: string }) {
+  const [cx, cy] = project(at)
+  return <circle cx={cx} cy={cy} r={r} fill={fill} stroke={C.ink} strokeWidth="1.2" />
+}
+
+function Hat({ at }: { at: Point3 }) {
+  const [cx, cy] = project(at)
+  return <path d={`M${cx - 8} ${cy - 1} A8 8 0 0 1 ${cx + 8} ${cy - 1} Z`} fill={C.amber} stroke={C.ink} strokeWidth="1.2" />
+}
+
+function Worker({ x, y, z = 0, safe = false, hat = safe }: { x: number; y: number; z?: number; safe?: boolean; hat?: boolean }) {
+  return <g>
+    <Block x={x - 0.22} y={y - 0.09} w={0.18} d={0.18} h={22} z={z} fill={C.ink} /><Block x={x + 0.04} y={y - 0.09} w={0.18} d={0.18} h={22} z={z} fill={C.ink} />
+    <Block x={x - 0.26} y={y - 0.16} w={0.52} d={0.32} h={22} z={z + 22} fill={safe ? C.teal : C.blue} />
+    <Block x={x - 0.4} y={y - 0.08} w={0.13} d={0.16} h={18} z={z + 24} fill={safe ? C.teal : C.blue} /><Block x={x + 0.27} y={y - 0.08} w={0.13} d={0.16} h={18} z={z + 24} fill={safe ? C.teal : C.blue} />
+    <Head at={[x, y, z + 51]} />{hat && <Hat at={[x, y, z + 54]} />}
+  </g>
+}
+
+function SeatedWorker({ x, y, safe }: { x: number; y: number; safe: boolean }) {
+  return <g>
+    <Block x={x - 0.25} y={y - 0.7} w={0.5} d={0.7} h={5} z={18} fill={C.ink} />
+    <Block x={x - 0.25} y={y - 0.18} w={0.5} d={0.32} h={22} z={18} fill={safe ? C.teal : C.blue} />
+    <Head at={[x, y, 46]} />
   </g>
 }
 
 function Desk({ x, y, safe }: { x: number; y: number; safe: boolean }) {
+  const riser = safe ? 10 : 3
   return <g>
-    <Block x={x} y={y} w={2.5} d={1.5} h={7} z={35} fill={C.white} />
-    <Line path={[[x,y,35],[x,y,0]]} width={4} /><Line path={[[x+2.5,y+1.5,35],[x+2.5,y+1.5,0]]} width={4} />
-    {safe && <Block x={x+.65} y={y+.1} w={1.05} d={.4} h={8} z={42} fill={C.teal} />}
-    <Block x={x+.7} y={y+.15} w={.95} d={.18} h={safe ? 25 : 16} z={safe ? 50 : 42} fill={C.ink} />
-    <Block x={x+.75} y={y+.62} w={.8} d={.4} h={2} z={42} fill={C.pale} />
-    <Block x={x+1.35} y={y+2} w={.7} d={.7} h={safe ? 22 : 13} fill={C.blue} />
-    {safe && <g><Block x={x+1.35} y={y+2.55} w={.7} d={.16} h={39} fill={C.blue} /><Block x={x+1.7} y={y+2.85} w={1} d={.45} h={6} fill={C.teal} /></g>}
-    <Person x={x+1.7} y={y+2.25} seated protected={safe} />
+    <Legs x={x} y={y} w={2.4} d={1.4} h={34} />
+    <Block x={x} y={y} w={2.4} d={1.4} h={3} z={34} fill={C.white} />
+    <Block x={x + 1.05} y={y + 0.5} w={0.3} d={0.3} h={riser} z={37} fill={C.ink} />
+    <Block x={x + 0.6} y={y + 0.4} w={1.2} d={0.14} h={16} z={37 + riser} fill={C.ink} />
+    <Block x={x + 0.7} y={y + 0.85} w={1.0} d={0.34} h={1.5} z={37} fill={C.pale} />
+    <Block x={x + 1.1} y={y + 1.75} w={0.1} d={0.1} h={15} fill={C.ink} />
+    <Block x={x + 0.8} y={y + 1.5} w={0.8} d={0.8} h={3} z={15} fill={C.ink} />
+    <Block x={x + 0.8} y={y + 2.3} w={0.8} d={0.12} h={22} z={18} fill={C.ink} />
+    {safe && <Block x={x + 0.9} y={y + 0.95} w={0.6} d={0.4} h={4} fill={C.teal} />}
+    <SeatedWorker x={x + 1.2} y={y + 2.2} safe={safe} />
   </g>
 }
 
-function Shelves({ x, y, safe }: { x: number; y: number; safe: boolean }) {
+function Rack({ x, y, w, d = 1, safe, boxes = true }: { x: number; y: number; w: number; d?: number; safe: boolean; boxes?: boolean }) {
   return <g>
-    {[0,40,80].map(z => <g key={z}>
-      <Block x={x} y={y} w={3} d={1.2} h={5} z={z} fill={C.ink} />
-      <Block x={x+.2} y={y+.1} w={1} d={.9} h={25} z={z+5} fill={C.amber} />
-      <Block x={x+1.5} y={y+.1} w={safe ? 1 : 1.7} d={.9} h={safe ? 25 : 35} z={z+5} fill={C.amber} />
+    {[0, 45, 90].map(z => <g key={z}>
+      <Block x={x} y={y} w={w} d={d} h={3} z={z + 20} fill={C.ink} />
+      {boxes && <><Block x={x + 0.2} y={y + 0.1} w={w / 2 - 0.3} d={d - 0.2} h={22} z={z + 23} fill={C.amber} /><Block x={x + w / 2 + 0.1} y={y + 0.1} w={safe ? w / 2 - 0.4 : w / 2 - 0.2} d={d - 0.2} h={safe ? 20 : 30} z={z + 23} fill={C.amber} /></>}
     </g>)}
-    <Line path={[[x,y+1.2,0],[x,y+1.2,115]]} width={4}/><Line path={[[x+3,y+1.2,0],[x+3,y+1.2,115]]} width={4}/>
+    {[x, x + w - 0.12].map(px => [y, y + d - 0.12].map(py => <Block key={`${px}-${py}`} x={px} y={py} w={0.12} d={0.12} h={118} fill={safe ? C.teal : C.blue} />))}
   </g>
 }
 
-function Conveyor({ safe, food = false }: { safe: boolean; food?: boolean }) {
-  return <g>
-    <Block x={3} y={3} w={4} d={1.8} h={35} fill={food ? C.white : C.blue}/>
-    {Array.from({length:8}, (_,i) => <Line key={i} path={[[3+i*.5,3,38],[3+i*.5,4.8,38]]} color={C.ink} width={2}/>)}
-    {[0,1,2].map(i => <Block key={i} x={3.4+i} y={3.5} w={.5} d={.6} h={12} z={40} fill={food ? i === 0 ? C.danger : C.teal : C.amber}/>)}
-    <Block x={6} y={3} w={1} d={1.8} h={70} fill={food ? C.pale : C.ink}/>
-    {safe && <g opacity=".8"><Block x={5.5} y={2.8} w={1.7} d={.15} h={65} fill={C.teal}/><Line path={[[3,5,65],[7,5,65]]} color={C.teal} width={5}/></g>}
-    <Person x={4} y={6} protected={safe}/>
-  </g>
+function Table({ x, y, w, d, h = 34, fill = C.white }: { x: number; y: number; w: number; d: number; h?: number; fill?: string }) {
+  return <g><Legs x={x} y={y} w={w} d={d} h={h} /><Block x={x} y={y} w={w} d={d} h={3} z={h} fill={fill} /></g>
+}
+
+function Bin({ x, y, fill, lid }: { x: number; y: number; fill: string; lid: boolean }) {
+  return <g><Block x={x} y={y} w={0.7} d={0.7} h={34} fill={fill} />{lid && <Block x={x - 0.04} y={y - 0.04} w={0.78} d={0.78} h={4} z={34} fill={C.ink} />}</g>
+}
+
+function Sound({ at }: { at: Point3 }) {
+  const [cx, cy] = project(at)
+  return <g fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round"><path d={`M${cx} ${cy - 8}q10 8 0 16`} /><path d={`M${cx + 8} ${cy - 14}q16 14 0 28`} /></g>
+}
+
+function Sun({ x, y }: { x: number; y: number }) {
+  return <g className="pr-sun" transform={`translate(${x} ${y})`}><circle r="24" fill={C.amber} opacity=".16" /><circle r="13" fill={C.amber} />{Array.from({ length: 8 }, (_, i) => <line key={i} x1="19" y1="0" x2="26" y2="0" stroke={C.amber} strokeWidth="2" strokeLinecap="round" transform={`rotate(${i * 45})`} />)}</g>
 }
 
 function RoomObjects({ id, safe }: { id: string; safe: boolean }) {
   if (id === 'oficina') return <g>
-    <Desk x={2.3} y={3.6} safe={safe}/><Desk x={6.1} y={5.8} safe={safe}/>
-    <Block x={7.8} y={.4} w={1.2} d={.35} h={58} z={22} fill={safe ? C.teal : C.amber}/>
-    <Line path={[[8.4,.8,35],[8.4,2,0],[6,2.5,0]]} color={safe ? C.ink : C.danger} dash={safe ? undefined : '5 4'}/>
-    <Block x={2} y={.4} w={2.4} d={.3} h={27} z={72} fill={C.white}/>
+    <Block x={2} y={0.05} w={2.4} d={0.15} h={30} z={50} fill={C.white} />
+    <Block x={7.5} y={0.05} w={1.6} d={0.3} h={50} z={20} fill={safe ? C.teal : C.amber} />
+    {safe ? <Zone x={7.2} y={0.4} w={2.2} d={1.3} dash="5 4" /> : <Zone x={8.2} y={0.4} w={0.14} d={3.4} fill={C.danger} opacity={0.8} />}
+    <Desk x={2} y={3.4} safe={safe} />
+    <Desk x={5.7} y={6} safe={safe} />
   </g>
   if (id === 'almacen') return <g>
-    <Shelves x={1} y={1.3} safe={safe}/><Shelves x={6.2} y={.5} safe={safe}/>
-    <Block x={6.1} y={6} w={1.5} d={1.4} h={32} fill={C.amber}/><Block x={6.1} y={6} w={.3} d={1.4} h={58} fill={C.ink}/>
-    <Line path={[[6,6,3],[4.5,6,3],[4.5,7,3],[6,7,3]]} color={C.ink} width={5}/>
-    <Person x={4} y={6.6} protected={safe}/>
-    <Line path={[[1,5,1],[3,5,1],[3,9,1]]} color={safe ? C.teal : C.danger} width={safe ? 12 : 3} dash={safe ? '9 6' : '4 6'}/>
+    <Block x={0.05} y={7.6} w={0.18} d={1.2} h={75} fill={C.green} />
+    <Rack x={0.8} y={0.5} w={2.4} safe={safe} /><Rack x={3.6} y={0.5} w={3.2} safe={safe} />
+    <Zone x={0.4} y={8.0} w={5.2} d={0.5} dash="6 4" stroke={safe ? C.teal : C.danger} fill={safe ? C.teal : C.danger} opacity={0.18} />
+    <Zone x={3} y={6.1} w={3} d={1.3} fill={C.green} opacity={0.25} dash="4 3" />
+    <Block x={2.3} y={3.2} w={1} d={1} h={24} fill={C.amber} /><Block x={2.3} y={3.2} w={1} d={1} h={24} z={24} fill={C.amber} />{!safe && <Block x={2.3} y={3.2} w={1} d={1} h={24} z={48} fill={C.amber} />}
+    {!safe && <Block x={2.2} y={7.9} w={0.8} d={0.8} h={26} fill={C.amber} />}
+    <Worker x={4} y={6.7} safe={safe} />
+    {safe && <g><Block x={5.4} y={5.9} w={0.14} d={2.2} h={14} fill={C.teal} /><Block x={5.4} y={5.9} w={0.14} d={0.14} h={30} fill={C.teal} /><Block x={5.4} y={7.96} w={0.14} d={0.14} h={30} fill={C.teal} /></g>}
+    <Block x={6.1} y={6.1} w={1.4} d={1.4} h={22} z={6} fill={C.amber} />
+    {[[6.1, 6.1], [7.15, 6.1], [6.1, 7.15], [7.15, 7.15]].map(([wx, wy]) => <Block key={`${wx}-${wy}`} x={wx} y={wy} w={0.35} d={0.35} h={10} fill={C.ink} />)}
+    <Block x={6.2} y={5.8} w={1.2} d={0.15} h={64} fill={C.ink} /><Block x={6.3} y={5.0} w={0.22} d={0.8} h={2} z={3} fill={C.ink} /><Block x={7.0} y={5.0} w={0.22} d={0.8} h={2} z={3} fill={C.ink} />
+    {[[6.1, 6.2], [7.4, 6.2], [6.1, 7.4], [7.4, 7.4]].map(([px, py]) => <Block key={`${px}-${py}`} x={px} y={py} w={0.1} d={0.1} h={24} z={28} fill={C.ink} />)}
+    <Block x={6.05} y={6.15} w={1.5} d={1.4} h={2} z={52} fill={C.ink} />
   </g>
-  if (id === 'planta' || id === 'alimentos') return <g>
-    <Conveyor safe={safe} food={id === 'alimentos'}/>
-    <Block x={1} y={1} w={1.7} d={.8} h={70} fill={id === 'alimentos' ? C.white : C.amber}/>
-    <Block x={7.4} y={.6} w={1.4} d={1.2} h={95} fill={C.pale}/>
-    <Line path={[[8.1,.55,10],[8.1,.55,85]]} color={C.blue}/>
-    <Block x={1.8} y={7.4} w={.7} d={.7} h={27} fill={safe ? C.teal : C.amber}/>
-    <Block x={2.7} y={7.4} w={.7} d={.7} h={27} fill={C.blue}/>
-    {safe && id === 'alimentos' && <Line path={[[4.5,2,2],[4.5,5,2]]} color={C.teal} width={8}/>}
-  </g>
+  if (id === 'planta' || id === 'alimentos') {
+    const food = id === 'alimentos'
+    if (!food) return <g>
+      <Block x={4} y={0.05} w={1.4} d={0.35} h={82} fill={C.pale} />
+      {safe && <Block x={4.5} y={0.42} w={0.3} d={0.1} h={8} z={55} fill={C.danger} />}
+      <Block x={1} y={1} w={1.2} d={1.2} h={48} fill={C.amber} />
+      {safe && <Block x={0.85} y={0.85} w={1.5} d={1.5} h={56} fill={C.teal} opacity={0.5} />}
+      <Sound at={[1.6, 1.6, 62]} />
+      <Legs x={2.4} y={3.7} w={4.6} d={1} h={28} />
+      <Block x={2.4} y={3.7} w={4.6} d={1} h={4} z={28} fill={C.ink} />
+      {[0, 1, 2].map(i => <Block key={i} x={2.9 + i * 1.3} y={3.95} w={0.6} d={0.5} h={12} z={32} fill={C.amber} />)}
+      <Block x={7} y={3.4} w={1.8} d={1.6} h={70} fill={C.blue} />
+      <Block x={7} y={4.2} w={0.5} d={0.8} h={14} z={20} fill={C.ink} />
+      {safe && <g><Block x={6.75} y={3.3} w={0.1} d={2.1} h={60} fill={C.teal} opacity={0.55} /><Block x={6.75} y={5.3} w={2.3} d={0.1} h={60} fill={C.teal} opacity={0.55} /></g>}
+      <Worker x={4.6} y={6} safe={safe} />
+      <Bin x={1} y={7} fill={safe ? C.danger : C.amber} lid={safe} /><Bin x={1.9} y={7} fill={safe ? C.teal : C.amber} lid={safe} />{safe && <Bin x={2.8} y={7} fill={C.blue} lid />}
+      {!safe && <Zone x={1} y={7.9} w={2.5} d={0.9} fill={C.danger} opacity={0.4} dash="4 3" />}
+    </g>
+    return <g>
+      <Block x={7.4} y={0.05} w={2} d={0.2} h={80} fill={C.pale} /><Block x={7.7} y={0.28} w={0.14} d={0.1} h={14} z={34} fill={safe ? C.danger : C.ink} />
+      <Block x={1} y={0.5} w={1.4} d={1.4} h={3} z={22} fill={C.ink} /><Block x={1} y={0.5} w={1.4} d={1.4} h={3} z={44} fill={C.ink} />
+      {[[1, 0.5], [2.28, 0.5], [1, 1.78], [2.28, 1.78]].map(([px, py]) => <Block key={`${px}-${py}`} x={px} y={py} w={0.12} d={0.12} h={56} fill={C.ink} />)}
+      {[0.1, 0.8].map(o => <Block key={o} x={1.1 + o} y={0.7} w={0.3} d={0.3} h={12} z={25} fill={safe ? C.teal : C.danger} />)}
+      {[0.1, 0.8].map(o => <Block key={o} x={1.1 + o} y={0.7} w={0.3} d={0.3} h={12} z={47} fill={C.blue} />)}
+      <Table x={2.2} y={3.3} w={2} d={1} /><Block x={2.5} y={3.55} w={0.9} d={0.5} h={3} z={37} fill={C.danger} />
+      <Table x={2.2} y={5.6} w={2} d={1} /><Block x={2.5} y={5.85} w={0.9} d={0.5} h={3} z={37} fill={C.green} />
+      {safe && <Block x={2} y={4.95} w={2.4} d={0.1} h={46} fill={C.teal} opacity={0.6} />}
+      <Worker x={5.2} y={4.8} safe={safe} />
+      <Block x={6.4} y={5.7} w={1.2} d={1} h={30} fill={C.pale} />
+      <ellipse cx={project([7, 6.2, 40])[0]} cy={project([7, 6.2, 40])[1]} rx="15" ry="15" fill={C.white} stroke={C.ink} strokeWidth="1.5" />
+      {safe && <Block x={6.3} y={5.6} w={1.4} d={1.2} h={22} z={30} fill={C.teal} opacity={0.45} />}
+    </g>
+  }
   if (id === 'salud') return <g>
-    <Block x={3.5} y={3} w={1.8} d={3.2} h={33} fill={C.white}/><Block x={3.6} y={3.1} w={1.6} d={2.8} h={7} z={33} fill={C.pale}/>
-    <Block x={3.7} y={3.2} w={1.4} d={.6} h={9} z={40} fill={C.white}/>
-    <Person x={2.7} y={5.5} protected={safe}/>
-    <Block x={7.4} y={1.5} w={1} d={1} h={42} fill={C.white}/><Block x={7.5} y={1.6} w={.7} d={.7} h={14} z={42} fill={safe ? C.danger : C.amber}/>
-    <Block x={1.4} y={.8} w={1.8} d={.8} h={42} fill={C.white}/>
-    <Line path={[[2.2,1.3,42],[2.2,1.3,60],[2.6,1.3,60]]} color={C.blue} width={3}/>
-    {safe && <Line path={[[3.2,3,48],[3.2,6.2,48],[5.5,6.2,48]]} color={C.teal} width={4}/>}
+    <Block x={1.2} y={0.1} w={1.4} d={0.8} h={34} fill={C.white} />
+    <Block x={1.8} y={0.5} w={0.12} d={0.12} h={14} z={34} fill={C.ink} />
+    <Block x={1.8} y={0.1} w={0.25} d={0.25} h={14} z={44} fill={safe ? C.green : C.amber} />
+    <Legs x={3.6} y={3.2} w={1.6} d={2.8} h={20} />
+    <Block x={3.6} y={3.2} w={1.6} d={2.8} h={10} z={20} fill={C.white} />
+    <Block x={3.7} y={5.1} w={1.4} d={0.8} h={4} z={30} fill={C.pale} />
+    <Block x={3.8} y={3.5} w={1.2} d={1.6} h={6} z={30} fill={C.blue} />
+    <Head at={[4.4, 5.5, 38]} />
+    <Worker x={5.9} y={4.6} safe={safe} />
+    <Table x={7.4} y={1.5} w={1} d={1} h={42} />
+    <Block x={7.65} y={1.75} w={0.5} d={0.5} h={14} z={45} fill={safe ? C.danger : C.amber} />
+    {safe ? <g><Block x={2.2} y={5.5} w={0.14} d={0.14} h={80} fill={C.teal} /><Block x={3.6} y={5.5} w={0.14} d={0.14} h={80} fill={C.teal} /><Block x={2.2} y={5.5} w={1.54} d={0.14} h={6} z={80} fill={C.teal} /></g> : null}
+    <Block x={2.5} y={5.8} w={0.9} d={0.9} h={4} z={20} fill={C.ink} /><Block x={2.5} y={6.55} w={0.9} d={0.12} h={22} z={24} fill={C.ink} />
+    <Block x={2.7} y={6.05} w={0.5} d={0.3} h={22} z={24} fill={C.pale} /><Head at={[2.95, 6.2, 54]} />
+    <Worker x={3.5} y={7.3} safe={safe} />
   </g>
   if (id === 'construccion') return <g>
-    {[0,65,130].map(z => <g key={z}><Block x={1.5} y={2} w={3.5} d={1.6} h={7} z={z} fill={C.pale}/></g>)}
-    {[1.5,5].map(x => <g key={x}><Line path={[[x,2,0],[x,2,170]]} width={4}/><Line path={[[x,3.6,0],[x,3.6,170]]} width={4}/></g>)}
-    <Line path={[[1.5,3.6,0],[5,3.6,130],[1.5,3.6,130],[5,3.6,0]]} width={2}/>
-    {safe && <Line path={[[1.5,3.6,165],[5,3.6,165],[5,2,165]]} color={C.teal} width={5}/>}
-    <Block x={6.6} y={2} w={1.5} d={1.5} h={37} fill={C.amber}/><Person x={6} y={6} protected={safe}/>
-    <Block x={3} y={7} w={2} d={1} h={20} fill={C.wall}/>
+    {[0, 65, 130].map(z => <Block key={z} x={1.5} y={2} w={3.5} d={2} h={6} z={z} fill={C.pale} />)}
+    {[[1.5, 2], [4.85, 2], [1.5, 3.85], [4.85, 3.85]].map(([px, py]) => <Block key={`${px}-${py}`} x={px} y={py} w={0.15} d={0.15} h={130} z={6} fill={C.ink} />)}
+    <polyline fill="none" stroke={C.ink} strokeWidth="2" points={points([[1.65, 4, 6], [4.85, 4, 71], [1.65, 4, 71], [4.85, 4, 136]])} />
+    {safe && <g>
+      {[[1.5, 3.9], [3.2, 3.9], [4.9, 3.9]].map(([px, py]) => <Block key={px} x={px} y={py} w={0.1} d={0.1} h={50} z={136} fill={C.teal} />)}
+      <Block x={1.5} y={3.95} w={3.6} d={0.06} h={3} z={186} fill={C.teal} /><Block x={1.5} y={3.95} w={3.6} d={0.06} h={3} z={161} fill={C.teal} />
+    </g>}
+    <Worker x={4.2} y={3.2} z={136} safe={safe} />
+    <Worker x={5.9} y={6.1} safe={safe} />
+    <Block x={6.4} y={2.2} w={0.35} d={1.6} h={10} fill={C.ink} /><Block x={7.65} y={2.2} w={0.35} d={1.6} h={10} fill={C.ink} />
+    <Block x={6.6} y={2.4} w={1.2} d={1.2} h={24} z={8} fill={C.amber} /><Block x={6.7} y={2.5} w={0.7} d={0.7} h={22} z={32} fill={C.pale} />
+    <Block x={7.6} y={2.9} w={1.5} d={0.2} h={4} z={48} fill={C.amber} />
+    {safe && <Zone x={6} y={1.8} w={3.4} d={2.6} fill={C.teal} opacity={0.15} dash="5 4" />}
   </g>
   if (id === 'agricultura') return <g>
-    {[2.5,4,5.5,7,8.5].map(y => <g key={y}><Line path={[[3,y,2],[8.5,y,2]]} color={C.teal} width={13}/>{[3.5,5,6.5,8].map(x => <Line key={x} path={[[x,y,2],[x,y,18],[x+.25,y,24],[x,y,18],[x-.25,y,25]]} color={C.teal} width={3}/>)}</g>)}
-    <Block x={.7} y={2} w={1.5} d={1.7} h={70} fill={safe ? C.teal : C.amber}/><Person x={6.1} y={6.5} protected={safe}/>
-    {safe && <g><Block x={4.5} y={1} w={3.5} d={2} h={5} z={100} fill={C.pale}/><Line path={[[4.5,3,0],[4.5,3,100]]} width={4}/><Line path={[[8,3,0],[8,3,100]]} width={4}/></g>}
+    {[2.2, 3.2, 4.2].map(row => <g key={row}>
+      <Zone x={3.6} y={row} w={5.6} d={0.55} fill={C.green} opacity={0.35} />
+      {[3.9, 4.8, 5.7, 6.6, 7.5, 8.4].map(px => <Block key={px} x={px} y={row + 0.2} w={0.16} d={0.16} h={12} fill={C.green} />)}
+    </g>)}
+    <Block x={1} y={2} w={1.8} d={1.6} h={50} fill={safe ? C.teal : C.amber} />
+    <Block x={0.9} y={1.9} w={2} d={1.8} h={6} z={50} fill={C.pale} />
+    <Block x={1.4} y={3.6} w={0.7} d={0.05} h={34} fill={C.ink} />{safe && <Block x={1.85} y={3.66} w={0.16} d={0.06} h={5} z={16} fill={C.amber} />}
+    <Worker x={6.1} y={6.5} safe={safe} />
+    {safe && <g>{[[5.2, 5.7], [7.3, 5.7], [5.2, 7.2], [7.3, 7.2]].map(([px, py]) => <Block key={`${px}-${py}`} x={px} y={py} w={0.1} d={0.1} h={75} fill={C.ink} />)}<Block x={5.1} y={5.6} w={2.4} d={1.8} h={3} z={75} fill={C.teal} opacity={0.75} /></g>}
+    <Block x={5.4} y={6.8} w={1.2} d={0.8} h={20} fill={C.amber} /><Block x={5.4} y={6.8} w={1.2} d={0.8} h={20} z={20} fill={C.amber} />
+    <Worker x={4.5} y={7.2} safe={safe} />
   </g>
   return <g>
-    <Block x={1.4} y={2} w={3} d={1.4} h={32} fill={C.blue}/><Block x={1.4} y={2} w={3} d={.3} h={57} fill={C.blue}/>
-    <Block x={6.8} y={.5} w={2.2} d={1} h={45} fill={C.white}/><Block x={7.2} y={.6} w={1.2} d={.7} h={5} z={46} fill={C.ink}/>
-    <Block x={1.3} y={7} w={1.1} d={.8} h={50} fill={safe ? C.teal : C.amber}/>
-    <Person x={7} y={5.5} protected={false}/><Block x={4} y={5} w={1.8} d={1.6} h={20} fill={C.pale}/>
-    <Line path={[[1,1.5,28],[1.4,1.5,0],[3.6,3.8,0]]} color={safe ? C.ink : C.danger} dash={safe ? undefined : '4 3'}/>
+    <Block x={0.05} y={8} w={0.18} d={1.3} h={74} fill={C.pale} />
+    {!safe && <Block x={0.4} y={8.3} w={0.8} d={0.8} h={24} fill={C.amber} />}
+    <Block x={6.3} y={0.4} w={2.4} d={1.2} h={34} fill={C.white} />
+    <Block x={6.9} y={0.6} w={1.2} d={0.8} h={4} z={34} fill={C.ink} />
+    {[0.2, 0.5].map(o => <Block key={o} x={6.8 + o * 1.4} y={0.8} w={0.12} d={0.12} h={12} z={38} fill={C.amber} />)}
+    {safe && <Block x={6.6} y={0.1} w={1.6} d={0.9} h={14} z={62} fill={C.teal} />}
+    <Block x={9} y={0.5} w={0.6} d={0.6} h={40} fill={C.blue} />
+    <Block x={8.7} y={0.85} w={0.3} d={0.1} h={3} z={30} fill={safe ? C.ink : C.danger} />
+    <Block x={2.2} y={0.05} w={0.4} d={0.1} h={14} z={40} fill={C.white} />
+    {safe ? <Block x={3.2} y={0.05} w={0.5} d={0.1} h={18} z={48} fill={C.teal} /> : <Block x={1.9} y={0.15} w={1.1} d={0.3} h={3} fill={C.ink} />}
+    {!safe && <Block x={2.34} y={0.15} w={0.05} d={0.05} h={37} z={3} fill={C.ink} />}
+    <Block x={1} y={5.8} w={1.2} d={1} h={34} fill={safe ? C.teal : C.pale} />
+    {[0.1, 0.5, 0.85].map(o => <Block key={o} x={1.1 + o * 0.9} y={6} w={0.18} d={0.18} h={9} z={34} fill={safe ? C.white : [C.danger, C.amber, C.blue][Math.round(o * 2) % 3]} />)}
+    <Block x={5.5} y={6.3} w={0.4} d={0.4} h={30} fill={C.danger} />
+    <Block x={3.5} y={6} w={1.6} d={0.9} h={22} fill={C.blue} />
   </g>
 }
 
@@ -129,21 +225,23 @@ export default function PreventionScene({ sceneId, controlled, paused, selectedI
   const scene = PREVENTION_SCENES.find(item => item.id === sceneId) ?? PREVENTION_SCENES[0]
   const titleId = useId()
   const outdoor = scene.id === 'agricultura' || scene.id === 'construccion'
-  return <figure className={`pr-scene ${controlled ? 'pr-scene--controlled' : ''} ${paused ? 'pr-paused' : ''}`} style={{ margin: 0 }}>
-    <div className="pr-scene-canvas" style={{ position: 'relative', aspectRatio: '860 / 460' }}>
-      <svg viewBox="0 0 860 460" role="img" aria-labelledby={titleId} style={{ display: 'block', width: '100%', height: '100%' }}>
+  return <figure className={`pr-scene ${controlled ? 'pr-scene--controlled' : ''} ${paused ? 'pr-paused' : ''}`}>
+    <div className="pr-scene-canvas" style={{ aspectRatio: `${SCENE_WIDTH} / ${SCENE_HEIGHT}` }}>
+      <svg viewBox={`0 0 ${SCENE_WIDTH} ${SCENE_HEIGHT}`} role="img" aria-labelledby={titleId}>
         <title id={titleId}>{`${scene.label}: ${controlled ? 'representación con medidas de control' : 'identificación de peligros'}`}</title>
         <desc>{scene.description} Utilice los puntos numerados o la lista de peligros para consultar cada ficha.</desc>
-        <polygon points={points([[0,0],[10,0],[10,10],[0,10]])} fill={C.pale} stroke={C.wall} strokeWidth="2"/>
-        {!outdoor && <g><polygon points={points([[0,0],[0,10],[0,10,100],[0,0,100]])} fill={C.wall}/><polygon points={points([[0,0],[10,0],[10,0,100],[0,0,100]])} fill={C.pale}/></g>}
-        {Array.from({length:9},(_,i) => <g key={i} opacity=".28"><Line path={[[i+1,0],[i+1,10]]} color={C.wall} width={1}/><Line path={[[0,i+1],[10,i+1]]} color={C.wall} width={1}/></g>)}
-        {outdoor && <g className="pr-sun" transform="translate(677 73)"><circle r="25" fill={C.amber} opacity=".16"/><circle r="14" fill={C.amber}/>{Array.from({length:8},(_,i) => <line key={i} x1="20" y1="0" x2="27" y2="0" stroke={C.amber} strokeWidth="2" transform={`rotate(${i*45})`}/>)}</g>}
-        <RoomObjects id={scene.id} safe={controlled}/>
-        <path className="pr-scene-flow" d="M165 325 L424 438 L740 290" stroke={controlled ? C.teal : C.blue} strokeWidth="2" strokeDasharray="5 9" fill="none" opacity=".5"/>
-        <text x="429" y="453" textAnchor="middle" fill={C.ink} fontSize="10" letterSpacing="2">ESCENARIO ILUSTRATIVO · SIN MEDICIONES</text>
+        {!outdoor && <g>
+          <polygon points={points([[0, 0, 0], [0, 10, 0], [0, 10, 100], [0, 0, 100]])} fill={C.wall} stroke={C.ink} strokeWidth="1" strokeLinejoin="round" />
+          <polygon points={points([[0, 0, 0], [10, 0, 0], [10, 0, 100], [0, 0, 100]])} fill={C.pale} stroke={C.ink} strokeWidth="1" strokeLinejoin="round" />
+        </g>}
+        <polygon points={points([[0, 0], [10, 0], [10, 10], [0, 10]])} fill={C.floor} stroke={C.ink} strokeWidth="1" strokeLinejoin="round" />
+        {Array.from({ length: 9 }, (_, i) => <g key={i} stroke={C.wall} strokeWidth="1" opacity=".5"><line x1={project([i + 1, 0])[0]} y1={project([i + 1, 0])[1]} x2={project([i + 1, 10])[0]} y2={project([i + 1, 10])[1]} /><line x1={project([0, i + 1])[0]} y1={project([0, i + 1])[1]} x2={project([10, i + 1])[0]} y2={project([10, i + 1])[1]} /></g>)}
+        {outdoor && <Sun x={700} y={70} />}
+        <RoomObjects id={scene.id} safe={controlled} />
+        <text x={SCENE_WIDTH / 2} y={SCENE_HEIGHT - 6} textAnchor="middle" fill={C.ink} fontSize="10" letterSpacing="2" opacity=".7">ESCENARIO ILUSTRATIVO · SIN MEDICIONES</text>
       </svg>
-      {scene.hotspots.map((spot,index) => <button key={spot.id} type="button" className={`pr-hotspot ${selectedId === spot.id ? 'is-selected' : ''}`} aria-pressed={selectedId === spot.id} aria-label={`${index+1}. ${spot.label}`} title={spot.label} style={{ position: 'absolute', left: `${spot.x}%`, top: `${spot.y}%`, transform: 'translate(-50%, -50%)' }} onClick={() => onSelect(spot.id)}><span>{index+1}</span><span className="pr-hotspot-label">{spot.label}</span></button>)}
+      {scene.hotspots.map((spot, index) => <button key={spot.id} type="button" className={`pr-hotspot ${selectedId === spot.id ? 'is-selected' : ''}`} aria-pressed={selectedId === spot.id} aria-label={`${index + 1}. ${spot.label}`} title={spot.label} style={{ left: `${spot.x}%`, top: `${spot.y}%` }} onClick={() => onSelect(spot.id)}><span>{index + 1}</span><span className="pr-hotspot-label">{spot.label}</span></button>)}
     </div>
-    <figcaption className="pr-scene-caption">{scene.domestic ? 'Prevención doméstica general' : 'Ejemplo didáctico'} · {controlled ? 'Controles ilustrados; su eficacia requiere verificación en el lugar.' : 'Seleccione un punto para conocer el peligro y sus controles.'}</figcaption>
+    <figcaption className="pr-scene-caption">{scene.domestic ? 'Prevención doméstica general' : 'Ejemplo didáctico'} · {controlled ? 'controles ilustrados; su eficacia requiere verificación en el lugar.' : 'seleccione un punto para ver el peligro y su criterio normativo.'}</figcaption>
   </figure>
 }

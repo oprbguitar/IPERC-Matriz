@@ -1,4 +1,6 @@
-import { PREVENTION_TOPICS } from '../data/prevention'
+import { PREVENTION_TOPICS, type PreventionTopic } from '../data/prevention'
+import { PREVENTION_SCENES, type SceneFact } from '../data/preventionScenes'
+import { SECTOR_CONTEXT } from '../data/preventionSectors'
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
@@ -27,4 +29,25 @@ export function uvBand(index: number): { label: string; advice: string } | null 
   if (index < 8) return { label: 'Alto', advice: 'Reduzca la exposición cerca del mediodía; organice la tarea con sombra y barreras de protección.' }
   if (index < 11) return { label: 'Muy alto', advice: 'Evite exposición cerca del mediodía; reprograme labores exteriores y disponga sombra y protección.' }
   return { label: 'Extremo', advice: 'Evite exposición cerca del mediodía; priorice reprogramación, sombra efectiva y barreras de protección.' }
+}
+
+/** Con un sector elegido, sus fichas prioritarias van primero y conservan el orden definido para ese sector. */
+export function prioritizeForSector(topics: PreventionTopic[], sectorId: string): PreventionTopic[] {
+  const priority = SECTOR_CONTEXT[sectorId]?.priority ?? []
+  const rank = (id: string) => { const index = priority.indexOf(id); return index === -1 ? priority.length : index }
+  return [...topics].sort((a, b) => rank(a.id) - rank(b.id))
+}
+
+/** Datos con fuente reunidos de los puntos del visor que remiten a esta ficha, sin duplicados. */
+export function topicReferenceFacts(topicId: string): SceneFact[] {
+  const seen = new Set<string>()
+  const facts: SceneFact[] = []
+  for (const scene of PREVENTION_SCENES) for (const spot of scene.hotspots) {
+    if (spot.topicId !== topicId) continue
+    for (const fact of spot.facts) {
+      const key = `${fact.label}|${fact.value}`
+      if (!seen.has(key)) { seen.add(key); facts.push(fact) }
+    }
+  }
+  return facts
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Clock, Scale } from 'lucide-react'
 import { DIAGRAMS, type DNode, type NodeKind } from '../data/diagrams'
 import '../styles/diagrams.css'
+import { hashParam } from '../lib/hashParams'
 
 const W = 170
 const H = 54
@@ -25,7 +26,7 @@ function wrap(label: string): string[] {
 }
 
 export default function DiagramsView() {
-  const [diagramId, setDiagramId] = useState(DIAGRAMS[0].id)
+  const [diagramId, setDiagramId] = useState(() => DIAGRAMS.find((item) => item.id === hashParam('d'))?.id ?? DIAGRAMS[0].id)
   const [selected, setSelected] = useState<string | null>(null)
   const [path, setPath] = useState<number | null>(null)
   const diagram = DIAGRAMS.find((item) => item.id === diagramId) ?? DIAGRAMS[0]
