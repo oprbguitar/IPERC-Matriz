@@ -1,12 +1,14 @@
-import { ArrowRight, BarChart3, BookOpen, Boxes, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, GraduationCap, History, Library, Microscope, Route, Scale, ShieldCheck, Tags, TriangleAlert, Workflow } from 'lucide-react'
+import { ArrowRight, BadgeCheck, BarChart3, BookOpen, Boxes, ChevronRight, Crown, Download, FileSpreadsheet, FileText, FileType2, GraduationCap, History, Library, Microscope, Route, Scale, ShieldCheck, Tags, TriangleAlert, Workflow } from 'lucide-react'
 import { LegalReference } from '../components/LegalReference'
 import { GUIDES } from '../data/guides'
-import { findNorm } from '../data/legalDatabase'
+import { findNorm, LEGAL_CATALOGUE_VERIFIED_AT } from '../data/legalDatabase'
+import { FORMATS } from '../catalog'
 import type { DiagnosticAnswers } from '../lib/diagnostic'
 import {
   findTemplate,
   PLATFORM_DISCLAIMER,
   QUICK_DOWNLOADS,
+  TEMPLATES,
   ROUTE_CARDS,
   type RouteCardId,
   type SiteViewId,
@@ -32,6 +34,8 @@ const QUICK_ACCESS: Array<{ view: string; label: string; hint: string; icon: typ
   { view: 'rutas', label: 'Especialista', hint: 'Rutas para ser especialista en SST, SSOMA o IPERC', icon: GraduationCap, tone: 'green' },
   { view: 'ia', label: 'IA premium', hint: 'Consultor, diagnóstico por foto, informes y alertas', icon: Crown, tone: 'gold' },
 ]
+
+const verifiedAt = LEGAL_CATALOGUE_VERIFIED_AT.split('-').reverse().join('/')
 
 const FORMAT_ICON: Record<TemplateFormat, typeof FileSpreadsheet> = {
   xlsx: FileSpreadsheet,
@@ -71,26 +75,43 @@ export function HomeView({ onNavigate, onOpenRouteCard, onOpenNorm, onOpenGuide 
     <div className="home home-v2">
       <section className="hv-hero" aria-labelledby="hero-title">
         <div className="hv-hero-copy">
+          <p className="hv-badges">
+            <span className="hv-badge blue"><ShieldCheck size={12} aria-hidden="true" /> Ley N.° 29783</span>
+            <span className="hv-badge amber"><Download size={12} aria-hidden="true" /> Plantillas listas</span>
+            <span className="hv-badge green"><BadgeCheck size={12} aria-hidden="true" /> Catálogo verificado {verifiedAt}</span>
+          </p>
           <h1 id="hero-title">
             Prevenir es <span className="accent-blue">cumplir</span>: SST, <span className="accent-sky">SOMA</span> e <span className="accent-teal">IPERC</span> en un solo lugar
           </h1>
-          <p>Normas peruanas verificadas, plantillas listas y herramientas para cualquier organización.</p>
+          <p>Normas peruanas verificadas, plantillas listas y herramientas para supervisores, comités y prevencionistas.</p>
           <div className="hero-actions">
             <button type="button" className="btn-primary" onClick={() => onNavigate('ruta')}>Comenzar ruta <ArrowRight size={17} aria-hidden="true" /></button>
             <button type="button" className="btn-secondary" onClick={() => onNavigate('plantillas')}><Download size={17} aria-hidden="true" /> Plantillas</button>
           </div>
+          <ul className="hv-stats" aria-label="Contenido disponible">
+            <li><span className="tone-blue" aria-hidden="true"><Scale size={16} /></span><b>{HOME_NORM_IDS.length}+</b><small>Normas clave</small></li>
+            <li><span className="tone-red" aria-hidden="true"><FileSpreadsheet size={16} /></span><b>{TEMPLATES.length}</b><small>Plantillas</small></li>
+            <li><span className="tone-amber" aria-hidden="true"><FileText size={16} /></span><b>{FORMATS.length}</b><small>Formatos</small></li>
+            <li><span className="tone-green" aria-hidden="true"><BookOpen size={16} /></span><b>{GUIDES.length}</b><small>Guías</small></li>
+          </ul>
         </div>
-        <picture className="hv-hero-art">
-          <source srcSet={assetUrl('assets/hero-sst-workers.webp')} type="image/webp" />
-          <img
-            src={assetUrl('assets/hero-sst-workers.png')}
-            width={1100}
-            height={733}
-            alt="Dos profesionales de seguridad y salud en el trabajo, con casco y chaleco, revisan una lista de verificación en una tablet y un portapapeles."
-            fetchPriority="high"
-            decoding="async"
-          />
-        </picture>
+        <figure className="hv-hero-art">
+          <picture>
+            <source srcSet={assetUrl('assets/hero-sst-campo.webp')} type="image/webp" />
+            <img
+              src={assetUrl('assets/hero-sst-campo.jpg')}
+              width={1240}
+              height={768}
+              alt="Una supervisora y un supervisor de seguridad, con casco y chaleco, revisan una lista de verificación en una nave industrial."
+              fetchPriority="high"
+              decoding="async"
+            />
+          </picture>
+          <figcaption>
+            <span className="hv-live"><span aria-hidden="true" /> Inspección en planta</span>
+            <span className="hv-art-title"><small>Jerarquía de controles</small><b>Eliminar · sustituir · ingeniería · administrativos · EPP</b></span>
+          </figcaption>
+        </figure>
       </section>
 
       <nav className="hv-quick" aria-label="Accesos directos">

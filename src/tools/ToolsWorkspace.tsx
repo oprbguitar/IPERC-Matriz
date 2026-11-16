@@ -604,7 +604,7 @@ function Sidebar({
   return (
     <aside className="sidebar">
       <button type="button" className="tools-back" onClick={onBackToSite}>
-        <ChevronLeft size={16} /> Volver a Ruta SST Perú
+        <ChevronLeft size={16} /> Volver al Observatorio
       </button>
       <div className="brand">
         <div className="brand-mark"><Shield size={22} /></div>
