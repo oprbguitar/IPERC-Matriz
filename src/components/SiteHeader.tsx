@@ -1,4 +1,4 @@
-import { ChevronDown, Crown, Menu, Search, UserRound, X } from 'lucide-react'
+import { BadgeCheck, ChevronDown, Crown, Menu, Search, ShieldCheck, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NAV_ITEMS, spaceOf, spacesFor, type SiteViewId, type SpaceId } from '../data/platformContent'
 import type { ApiUser } from '../lib/api'
@@ -72,6 +72,16 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
 
   return (
     <header className={`site-header spaced ${scrolled ? 'scrolled' : ''}`}>
+      <div className="site-ticker" role="note" aria-label="Marco normativo">
+        <p>
+          <span className="ticker-dot" aria-hidden="true" />
+          <b>Marco vigente:</b> Ley N.° 29783, D.S. N.° 005-2012-TR y formatos R.M. N.° 050-2013-TR
+        </p>
+        <span className="ticker-meta">
+          <span><BadgeCheck size={13} aria-hidden="true" /> Enlaces oficiales verificados</span>
+          <span><ShieldCheck size={13} aria-hidden="true" /> Seguridad · salud · ambiente</span>
+        </span>
+      </div>
       <div className="header-row">
         <button type="button" className="site-brand" onClick={() => go('inicio')} aria-label="Observatorio Prevenir Perú, ir al inicio">
           <img className="site-logo-img" src={assetUrl('brand/logo-128.png')} width={40} height={40} alt="" />
@@ -122,7 +132,7 @@ export function SiteHeader({ active, onNavigate, onSearch, user, premiumPercent 
         </nav>
 
         <button type="button" className="search-trigger" onClick={onSearch} title="Buscar (Ctrl + K)" aria-label="Buscar en el Observatorio">
-          <Search size={16} aria-hidden="true" /> <span>Buscar</span> <kbd>Ctrl K</kbd>
+          <Search size={16} aria-hidden="true" /> <span>Buscar norma, IPERC o formato…</span> <kbd>Ctrl K</kbd>
         </button>
 
         <button

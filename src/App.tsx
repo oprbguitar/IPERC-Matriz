@@ -17,6 +17,8 @@ import { PremiumLock } from './components/PremiumLock'
 import {
   findTemplate,
   isSiteView,
+  NAV_ITEMS,
+  spacesFor,
   OBLIGATION_KIND_HELP,
   PREMIUM_VIEWS,
   OBLIGATION_KIND_LABELS,
@@ -32,6 +34,7 @@ import { api, type ApiUser } from './lib/api'
 import type { LibraryTab } from './views/LibraryView'
 import PremiumView from './views/PremiumView'
 import './styles/account.css'
+import './styles/theme.css'
 import HomeView from './views/HomeView'
 import type { ComplianceTab } from './views/ComplianceView'
 import FormatsView, { FormEditor } from './views/FormatsView'
@@ -335,9 +338,33 @@ function App() {
         )}
         </Suspense>
       </main>
-      <footer className="site-footer">
-        <p>{PLATFORM_DISCLAIMER}</p>
-        <p className="made-by">Elaborado por <a href="https://andesnova.solutions" target="_blank" rel="noopener">AndesNova Solutions</a></p>
+      <footer className="site-footer site-footer-v2">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <p className="footer-logo">
+              <img src={assetUrl('brand/logo-128.png')} width={34} height={34} alt="" />
+              <b>Observatorio Prevenir Perú</b>
+            </p>
+            <p>Normativa, herramientas y plantillas de seguridad, salud ocupacional y ambiente para organizaciones peruanas.</p>
+            <span className="footer-badge">Marco base: Ley N.° 29783</span>
+          </div>
+          {spacesFor(Boolean(user)).slice(0, 3).map((space) => (
+            <nav key={space.id} className="footer-col" aria-label={space.label}>
+              <h2>{space.label}</h2>
+              <ul>
+                {space.views.slice(0, 6).map((id) => (
+                  <li key={id}>
+                    <button type="button" onClick={() => navigate(id)}>{NAV_ITEMS.find((item) => item.id === id)?.label ?? id}</button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
+        <div className="footer-bottom">
+          <p>{PLATFORM_DISCLAIMER}</p>
+          <p className="made-by">Elaborado por <a href="https://andesnova.solutions" target="_blank" rel="noopener">AndesNova Solutions</a></p>
+        </div>
       </footer>
       {overlays}
 
